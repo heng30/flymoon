@@ -1,0 +1,273 @@
+import {ListView} from "std-widgets.slint";
+import { Store, Logic, Theme, Icons } from "../../def.slint";
+import { ConfirmDialogSetting, SettingDetail, IconBtn, SettingDetailInner, SettingDetailInnerVbox, Label, Divider, SettingDetailLabel, LineInput, TxtEdit, Select, CancelBtn, ConfirmBtn, TodoEntry, TodoList } from "../../../base/widgets.slint";
+import { Prompt } from "../../../store.slint";
+
+enum BtnType {
+    Home,
+    Add,
+    Edit,
+}
+
+export global BtnTypeSetting {
+    in-out property <BtnType> btn-type: BtnType.Home;
+    in-out property <Prompt> selected-entry;
+    in-out property <Prompt> default-entry;
+
+    public function reset() {
+        self.selected-entry = default-entry;
+        self.btn-type = BtnType.Home;
+    }
+}
+
+component PromptList inherits VerticalLayout {
+    padding: Theme.padding * 2;
+
+    lv := ListView {
+        vertical-scrollbar-policy: always-off;
+
+        for entry[index] in Store.prompt-entries: VerticalLayout {
+            padding-bottom: Theme.padding * 2;
+
+            Rectangle {
+                border-radius: Theme.border-radius;
+                border-color: BtnTypeSetting.selected-entry.uuid == entry.uuid ? Theme.secondary-brand-color : Theme.base-border-color;
+                border-width: 1px;
+
+                drop-shadow-blur: Theme.padding * 2;
+                drop-shadow-color: Theme.base-background-drop-shadow;
+
+                background: outer-ta.has-hover ? Theme.secondary-background : Theme.base-background;
+
+                outer-ta := TouchArea {
+                    clicked => {
+                        BtnTypeSetting.selected-entry = entry;
+                    }
+
+                    double-clicked => {
+                        BtnTypeSetting.selected-entry = entry;
+                        BtnTypeSetting.btn-type = BtnType.Edit;
+                    }
+                }
+
+                VerticalLayout {
+                    private property <bool> is-show-detail: entry.detail != "";
+
+                    alignment: LayoutAlignment.start;
+                    padding: Theme.padding * 2;
+
+                    title-rect := Rectangle {
+                        HorizontalLayout {
+                            alignment: LayoutAlignment.space-between;
+                            spacing: Theme.spacing * 2;
+                            padding: Theme.spacing;
+
+                            lb := Label {
+                                overflow: elide;
+                                text: entry.name + " (" + entry.shortcut + ")";
+                                font-size: Theme.title4-font-size;
+                                color: Theme.primary-text-color;
+                                font-weight: Theme.bold-font-weight;
+                            }
+
+                            if entry.detail != "": VerticalLayout {
+                                alignment: LayoutAlignment.center;
+                                Image {
+                                    width: Theme.icon-size;
+                                    height: self.width;
+                                    colorize: Theme.icon-color;
+                                    source: Icons.arrow-up;
+                                }
+                            }
+                        }
+                    }
+
+                    if is-show-detail: Divider { }
+
+                    Rectangle {
+                        height: parent.is-show-detail ? note-lb.preferred-height + Theme.padding * 2 : 0;
+
+                        clip: true;
+
+                        animate height {
+                            duration: Theme.default-animate-duration;
+                            easing: ease-in-out;
+                        }
+
+                        note-lb := Label {
+                            x: Theme.padding;
+                            y: Theme.padding;
+                            width: parent.width - Theme.padding * 2;
+                            text: entry.detail;
+                            font-size: Theme.default-font-size;
+                            color: Theme.regular-text-color;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component BtnField inherits VerticalLayout {
+    in-out property <BtnType> btn-type: Home;
+
+    private property <length> btn-width: Math.min(root.width * 25%, 120px);
+
+    alignment: LayoutAlignment.start;
+
+    HorizontalLayout {
+        spacing: Theme.spacing * 4;
+        alignment: LayoutAlignment.center;
+        height: Theme.icon-size + Theme.padding * 2;
+
+        IconBtn {
+            width: root.btn-width;
+            icon: Icons.add-light;
+            bg-color: Theme.success-color;
+            text-color: Theme.light-text-color;
+            colorize: self.text-color;
+            text: Logic.tr("Add");
+
+            clicked() => {
+                BtnTypeSetting.btn-type = BtnType.Add;
+            }
+        }
+
+        IconBtn {
+            width: root.btn-width;
+            icon: Icons.edit;
+            bg-color: Theme.info-color;
+            text-color: Theme.light-text-color;
+            colorize: self.text-color;
+            text: Logic.tr("Edit");
+
+            clicked() => {
+                if (BtnTypeSetting.selected-entry.uuid != "") {
+                    BtnTypeSetting.btn-type = BtnType.Edit;
+                }
+            }
+        }
+
+        IconBtn {
+            width: root.btn-width;
+            icon: Icons.delete;
+            bg-color: Theme.danger-color;
+            text-color: Theme.light-text-color;
+            colorize: self.text-color;
+            text: Logic.tr("Delete");
+
+            clicked() => {
+                BtnTypeSetting.btn-type = BtnType.Home;
+
+                ConfirmDialogSetting.set(true, Logic.tr("Warning"), Logic.tr("Delete or not?"), "delete-prompt", BtnTypeSetting.selected-entry.uuid);
+            }
+        }
+    }
+}
+
+component PromptEdit inherits SettingDetail {
+    is-show-header: false;
+
+    public function get() -> Prompt {
+        return {
+            name: name-lineedit.text,
+            shortcut: shortcut-lineedit.text,
+            detail: detail-txtedit.text,
+        };
+    }
+
+    public function set(setting: Prompt) {
+        name-lineedit.text = setting.name;
+        shortcut-lineedit.text = setting.shortcut;
+        detail-txtedit.text = setting.detail;
+    }
+
+    init => {
+        if (BtnTypeSetting.btn-type == BtnType.Edit) {
+            root.set(BtnTypeSetting.selected-entry);
+        }
+    }
+
+    SettingDetailInner {
+        SettingDetailInnerVbox {
+            SettingDetailLabel {
+                text: Logic.tr("Name");
+            }
+
+            name-lineedit := LineInput {
+                placeholder-text: Logic.tr("name");
+            }
+        }
+
+        SettingDetailInnerVbox {
+            SettingDetailLabel {
+                text: Logic.tr("Shortcut");
+            }
+
+            shortcut-lineedit := LineInput {
+                placeholder-text: Logic.tr("shortcut");
+            }
+        }
+
+        SettingDetailInnerVbox {
+            SettingDetailLabel {
+                text: Logic.tr("Detail");
+            }
+
+            detail-txtedit := TxtEdit {
+                width: root.width - Theme.padding * 4;
+                height: 200px;
+            }
+        }
+    }
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.end;
+        spacing: Theme.spacing * 4;
+        padding: Theme.padding * 4;
+        padding-bottom: 0;
+
+        CancelBtn {
+            icon: Icons.cancel;
+            text: Logic.tr("Cancel");
+
+            clicked => {
+                BtnTypeSetting.btn-type = BtnType.Home;
+            }
+        }
+
+        ConfirmBtn {
+            icon: Icons.success;
+            text: Logic.tr("Confirm");
+
+            clicked => {
+                BtnTypeSetting.btn-type = BtnType.Home;
+                Logic.save-prompt(root.get(), BtnTypeSetting.btn-type == BtnType.Add);
+            }
+        }
+    }
+}
+
+export component Prompt inherits SettingDetail {
+    title: Logic.tr("Prompt");
+
+    private property <BtnType> btn-type <=> BtnTypeSetting.btn-type;
+
+    VerticalLayout {
+        padding-top: Theme.padding * 4;
+        padding-bottom: Theme.padding * 4;
+        spacing: Theme.spacing * 4;
+
+        Rectangle {
+            if root.btn-type == BtnType.Home: PromptList { }
+
+            if root.btn-type == BtnType.Add || root.btn-type == BtnType.Edit: PromptEdit { }
+        }
+
+        if (root.btn-type == BtnType.Home): BtnField {
+            btn-type: root.btn-type;
+        }
+    }
+}

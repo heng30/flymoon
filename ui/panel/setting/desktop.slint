@@ -1,0 +1,235 @@
+import { Logic, Theme, Store, Util, TabIndex, Icons, SettingPreference, SettingProxy, SettingDetailIndex, DeviceType } from "../def.slint";
+import { IconBtn, SettingEntryV2, Head, SettingDetail, ToastStatus, About, Dialog, ComponentPosition, TabBtns, Help } from "../../base/widgets.slint";
+import { Preference } from "components/preference.slint";
+import { Donate } from "components/donate.slint";
+import { Prompt, BtnTypeSetting } from "components/prompt.slint";
+import { Model } from "components/model.slint";
+
+component RightPanel inherits Rectangle {
+    background: Theme.base-background;
+
+    init => {
+        Logic.switch-setting-detail(SettingDetailIndex.Preference);
+    }
+
+    preference := Preference {
+        visible: Store.current-setting-detail-index == SettingDetailIndex.Preference;
+        is-show-header: false;
+
+        confirmed => {
+            if (self.get().font-size == "" || self.get().win-width == "" || self.get().win-height == "") {
+                Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
+                return;
+            }
+
+            Store.setting-preference.win-width = self.get().win-width;
+            Store.setting-preference.win-height = self.get().win-height;
+            Store.setting-preference.font-size = self.get().font-size;
+            Store.setting-preference.font-family = self.get().font-family;
+
+            Logic.set-setting-preference(self.get());
+        }
+    }
+
+    model := Model {
+        visible: Store.current-setting-detail-index == SettingDetailIndex.Model;
+        is-show-header: false;
+
+        confirmed => {
+            if (self.get().api-base-url == "" || self.get().model-name == "" || self.get().api-key == "") {
+                Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
+                return;
+            }
+
+            Logic.set-setting-model(self.get());
+        }
+    }
+
+    prompt := Prompt {
+        visible: Store.current-setting-detail-index == SettingDetailIndex.Prompt;
+        is-show-header: false;
+    }
+}
+
+component Setting inherits Rectangle {
+    VerticalLayout {
+        padding-top: Theme.padding * 2;
+        spacing: Theme.spacing;
+
+        HorizontalLayout {
+            alignment: LayoutAlignment.center;
+
+            TabBtns {
+                items: [
+                    { icon: Icons.ui, text: Logic.tr("Preference") },
+                    { icon: Icons.model-light, text: Logic.tr("Model") },
+                    { icon: Icons.prompt-light, text: Logic.tr("Prompt") },
+                ];
+
+                clicked(index) => {
+                    if (index == 0) {
+                        Logic.switch-setting-detail(SettingDetailIndex.Preference);
+                    } else if (index == 1) {
+                        Logic.switch-setting-detail(SettingDetailIndex.Model);
+                    } else if (index == 2) {
+                        Logic.switch-setting-detail(SettingDetailIndex.Prompt);
+                    }
+                }
+            }
+        }
+
+        RightPanel { }
+    }
+}
+
+export component SettingDialog inherits Dialog {
+    title: Logic.tr("Setting");
+    is-hide-bottom-btns: true;
+    is-prevent-event-forward: true;
+
+    in-out property <length> inner-height: 650px;
+
+    setting := Setting {
+        height: root.inner-height;
+    }
+
+    cancel-clicked => {
+        BtnTypeSetting.reset();
+        Logic.switch-tab(TabIndex.Home);
+    }
+}
+
+export component AboutDialog inherits Dialog {
+    title: Logic.tr("About");
+    is-hide-bottom-btns: true;
+    is-prevent-event-forward: true;
+
+    in-out property <length> inner-height: 650px;
+
+    About {
+        height: root.inner-height;
+        is-show-header: false;
+    }
+
+    cancel-clicked => {
+        Logic.switch-tab(TabIndex.Home);
+    }
+}
+
+export component HelpDialog inherits Dialog {
+    title: Logic.tr("Help");
+    is-hide-bottom-btns: true;
+    is-prevent-event-forward: true;
+
+    in-out property <length> inner-height: 650px;
+
+    Help {
+        height: root.inner-height;
+        is-show-header: false;
+        entries: Store.helps;
+    }
+
+    cancel-clicked => {
+        Logic.switch-tab(TabIndex.Home);
+    }
+}
+
+export component DonateDialog inherits Dialog {
+    title: Logic.tr("Help");
+    is-hide-bottom-btns: true;
+    is-prevent-event-forward: true;
+
+    in-out property <length> inner-height: 650px;
+
+    Donate {
+        height: root.inner-height;
+        is-show-header: false;
+    }
+
+    cancel-clicked => {
+        Logic.switch-tab(TabIndex.Home);
+    }
+}
+
+export component SettingIconsBar inherits Rectangle {
+    width: hbox.preferred-width;
+    height: hbox.preferred-height;
+    border-radius: Theme.border-radius;
+
+    in-out property <bool> show-icon-hover-background: false;
+    in-out property <length> icon-size: Theme.icon-size;
+    in-out property <bool> is-show-tip: false;
+    in-out property <ComponentPosition> tip-position;
+    in-out property h-padding <=> hbox.padding;
+    in-out property h-spacing <=> hbox.spacing;
+
+    hbox := HorizontalLayout {
+        padding: Theme.padding * 2;
+        spacing: Theme.spacing * 4;
+
+        IconBtn {
+            icon: Icons.setting-fill;
+            icon-size: root.icon-size;
+            show-icon-hover-background: root.show-icon-hover-background;
+            is-show-tip: root.is-show-tip;
+            tip-position: root.tip-position;
+            tip: Logic.tr("setting");
+
+            clicked => {
+                Logic.switch-tab(TabIndex.Setting);
+            }
+        }
+
+        IconBtn {
+            icon: Icons.help;
+            icon-size: root.icon-size;
+            show-icon-hover-background: root.show-icon-hover-background;
+            is-show-tip: root.is-show-tip;
+            tip-position: root.tip-position;
+            tip: Logic.tr("help");
+
+            clicked => {
+                Logic.switch-tab(TabIndex.Help);
+            }
+        }
+
+        IconBtn {
+            icon: Icons.about-fill;
+            icon-size: root.icon-size;
+            show-icon-hover-background: root.show-icon-hover-background;
+            is-show-tip: root.is-show-tip;
+            tip-position: root.tip-position;
+            tip: Logic.tr("about");
+
+            clicked => {
+                Logic.switch-tab(TabIndex.About);
+            }
+        }
+
+        IconBtn {
+            icon: Icons.donate;
+            icon-size: root.icon-size;
+            show-icon-hover-background: root.show-icon-hover-background;
+            is-show-tip: root.is-show-tip;
+            tip-position: root.tip-position;
+            tip: Logic.tr("donate");
+
+            clicked => {
+                Logic.switch-tab(TabIndex.Donate);
+            }
+        }
+
+        IconBtn {
+            icon: Icons.github;
+            icon-size: root.icon-size;
+            show-icon-hover-background: root.show-icon-hover-background;
+            is-show-tip: root.is-show-tip;
+            tip-position: root.tip-position;
+            tip: Logic.tr("github");
+
+            clicked => {
+                Util.open-url("Default","https://github.com/Heng30/flybot");
+            }
+        }
+    }
+}

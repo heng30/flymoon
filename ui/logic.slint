@@ -1,0 +1,53 @@
+import { Store,  SettingPreference, SettingProxy, SettingModel, TabIndex, SettingDetailIndex, Prompt } from "store.slint";
+
+
+export global Logic {
+    callback update-cache-size();
+    callback remove-all-cache();
+
+    callback copy-to-clipboard(string);
+    callback copy-from-clipboard() -> string;
+
+    callback get-setting-preference() -> SettingPreference;
+    callback set-setting-preference(SettingPreference);
+
+    callback get-setting-proxy() -> SettingProxy;
+    callback set-setting-proxy(SettingProxy);
+
+    callback get-setting-model() -> SettingModel;
+    callback set-setting-model(SettingModel);
+
+
+    pure callback inner-tr(bool, string) -> string;
+    inner-tr(is-cn, text) => {
+        return text;
+    }
+
+    pure public function tr(text: string) -> string {
+        inner-tr(Store.is-cn, text)
+    }
+
+    public function switch-setting-detail(index: SettingDetailIndex) {
+        if (Store.current-setting-detail-index == index) {
+            return;
+        }
+        Store.current-setting-detail-index = index;
+    }
+
+    public function switch-tab(index: TabIndex) {
+        if (Store.current-tab-index == index) {
+            return;
+        }
+        Store.current-tab-index = index;
+    }
+
+    //////////////////////////////// Logic Start  ////////////////////////////////
+
+    pure callback generate-input-popup-values([Prompt]) -> [string];
+    // pure callback get-prompt(uuid: string) -> Prompt;
+
+    callback save-prompt(promt: Prompt, is-add: bool);
+    callback delete-prompt(uuid: string);
+
+    //////////////////////////////// Logic End  ////////////////////////////////
+}

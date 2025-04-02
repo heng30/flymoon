@@ -1,0 +1,37 @@
+import { Theme, Icons } from "../../theme.slint";
+import { Store, SettingDetailIndex } from "../../store.slint";
+import { Logic } from "../../logic.slint";
+import { Label, Head } from "../../base/widgets.slint";
+
+import { CircleProgress } from "../../base/widgets.slint";
+import { Util } from "../../util.slint";
+
+component TopHead inherits Head {
+    icon: Icons.home-fill;
+    title: Logic.tr("Home");
+    hbox-alignment: LayoutAlignment.start;
+}
+
+component Body inherits Rectangle {
+    VerticalLayout {
+        alignment: center;
+        spacing: Theme.spacing * 4;
+
+        HorizontalLayout {
+
+            alignment: center;
+            CircleProgress {
+                ring-width: 15px;
+                progress: Util.progress-value(5s);
+            }
+        }
+    }
+}
+
+export component Home inherits Rectangle {
+    VerticalLayout {
+        TopHead { }
+
+        Body { }
+    }
+}
