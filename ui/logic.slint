@@ -43,7 +43,7 @@ export global Logic {
     //////////////////////////////// Logic Start  ////////////////////////////////
 
     pure callback input-popup-entries(text: string) -> [string];
-    pure callback history-popup-entries(text: string) -> [string];
+
 
     callback save-prompt(promt: Prompt, is-add: bool);
     callback delete-prompt(uuid: string);
@@ -52,6 +52,11 @@ export global Logic {
     callback send-question(question: string);
     callback stop-question();
     callback retry-last-question();
+
+    callback load-chat-history(uuid: string);
+    callback chat-histories-select-all();
+    callback chat-histories-update-list(text: string);
+    callback chat-histories-remove-selected();
 
     //////////////////////////////// Logic End  ////////////////////////////////
 }

@@ -61,18 +61,25 @@ export struct ChatEntry {
     bot: string,
 }
 
-export struct ChatHistory {
-uuid: string,
+export struct ChatSession {
+    uuid: string,
     prompt: string,
     histories: [ChatEntry],
+}
+
+export struct ChatHistory {
+    uuid: string,
+    checked: bool,
+    time: string,
+    summary: string,
 }
 
 //////////////////////////////// Logic Struct End  ////////////////////////////////
 
 export global Store {
-    in-out property <DeviceType> device-type: DeviceType.Desktop;
     in-out property <bool> is-first-run;
     in-out property <bool> is-show-landing-page: false;
+    in-out property <DeviceType> device-type: DeviceType.Desktop;
 
     in-out property <TabIndex> current-tab-index: TabIndex.Home;
 
@@ -116,7 +123,8 @@ export global Store {
             is-open: false,
         },
     ];
-    in-out property <ChatHistory> chat-histories: {
+
+    in-out property <ChatSession> current-chat: {
         uuid: "chat-uuid-1",
         prompt: "You are a chat bot",
         histories: [
@@ -130,5 +138,33 @@ export global Store {
             },
         ]
     };
+
+    in-out property <[ChatHistory]> chat-histories-cache;
+    in-out property <[ChatHistory]> chat-histories: [
+        {
+            uuid: "chat-uuid-1",
+            checked: false,
+            time: "10-09:23:10",
+            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        },
+        {
+            uuid: "chat-uuid-2",
+            checked: true,
+            time: "10-09:23:20",
+            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        },
+        {
+            uuid: "chat-uuid-1",
+            checked: false,
+            time: "10-09:23:10",
+            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        },
+        {
+            uuid: "chat-uuid-2",
+            checked: true,
+            time: "10-09:23:20",
+            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        },
+    ];
     //////////////////////////////// Logic End  ////////////////////////////////
 }
