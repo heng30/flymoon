@@ -1,0 +1,26 @@
+import { Theme, Logic, Store } from "../../def.slint";
+// import { Header } from "header.slint";
+// import { Body } from "body/panel.slint";
+import { Input } from "input.slint";
+import { Divider } from "../../../base/widgets.slint";
+
+export component Chat inherits VerticalLayout {
+    in-out property <length> win-height;
+    in-out property question <=> input.question;
+
+    padding: Theme.padding * 2;
+    spacing: Theme.spacing * 2;
+
+    Rectangle {
+        Rectangle {
+            // background: red;
+        }
+
+        // body := Body {
+        // }
+
+    input := Input {
+            y: parent.height - self.height;
+        }
+    }
+}

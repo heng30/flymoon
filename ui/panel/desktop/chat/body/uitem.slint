@@ -1,0 +1,133 @@
+import { Theme } from "../../theme.slint";
+import { Store } from "../../store.slint";
+import { IconBtn } from "../../base/icon-btn.slint";
+import { Avatar } from "../../base/avatar.slint";
+import { Logic } from "../../logic.slint";
+import { MD, MDTextItem } from "../../base/md.slint";
+
+export component UItem inherits VerticalLayout{
+    in-out property text <=> txt.org-text;
+    in-out property items <=> txt.items;
+    in-out property timestamp <=> timestamp-txt.text;
+    in-out property<string> uuid;
+    in-out property<int> index: -1;
+    in-out property<bool> is-show: true;
+
+    padding-left: Theme.scroll-width;
+    spacing: Theme.spacing;
+
+    HorizontalLayout {
+        padding-bottom: Theme.padding;
+        alignment: space-between;
+        spacing: Theme.spacing * 4;
+
+        HorizontalLayout {
+            spacing: Theme.spacing * 4;
+
+            Avatar {
+                icon-source: @image-url("../../images/skull.svg");
+            }
+
+            timestamp-txt := Text {
+                color: Theme.secondary-text-color;
+                font-size: Theme.icon-size * 0.5;
+                vertical-alignment: center;
+            }
+        }
+
+        HorizontalLayout {
+            spacing: Theme.spacing * 2;
+
+            VerticalLayout {
+                alignment: center;
+                IconBtn {
+                    tip-pos: "left";
+                    tip-text: !root.is-show ? Store.translator.tip-show : Store.translator.tip-hide;
+                    icon: root.is-show ? @image-url("../../images/arrow-down.svg") : @image-url("../../images/arrow-up.svg");
+                    clicked => {
+                        Logic.toggle-show-chat-item(root.index);
+                    }
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                up-icon := IconBtn {
+                    icon: @image-url("../../images/btn-up.svg");
+                    tip-pos: "left";
+                    tip-text: Store.translator.tip-up;
+                    clicked => {
+                        Logic.switch-chat-item(root.index, root.index - 1);
+                    }
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                IconBtn {
+                    icon: @image-url("../../images/speaker.svg");
+                    tip-pos: "left";
+                    tip-text: Store.translator.tip-play;
+                    clicked => {
+                        Logic.text-to-speech(root.uuid + "-user", root.text);
+                    }
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                copy-icon := IconBtn {
+                    icon: @image-url("../../images/copy.svg");
+                    tip-pos: "left";
+                    tip-text: Store.translator.tip-copy;
+                    clicked => {
+                        Logic.copy_to_clipboard(root.text);
+                    }
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                IconBtn {
+                    icon: @image-url("../../images/delete-light.svg");
+                    tip-pos: "left";
+                    tip-text: Store.translator.tip-delete;
+                    clicked => {
+                        Store.ok-cancel-dialog-setting.title-type = "warning";
+                        Store.ok-cancel-dialog-setting.title-text = Store.translator.warning;
+                        Store.ok-cancel-dialog-setting.body-text = Store.translator.delete-or-not;
+                        Store.ok-cancel-dialog-setting.handle-type = "chat-item";
+                        Store.ok-cancel-dialog-setting.handle-uuid = root.uuid;
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        background: Theme.base-fill-color.brighter(2%);
+        border-radius: Theme.border-radius;
+
+        txt-vbox := VerticalLayout{
+            padding: Theme.padding * 2;
+            txt := MD {
+                visible: root.is-show;
+                height: root.is-show ? self.preferred-height : 0px;
+                tip-text: Store.translator.tip-copy;
+
+                copy(text) => {
+                    Logic.copy-to-clipboard(text);
+                }
+            }
+
+            MDTextItem {
+                visible: !root.is-show;
+                height: !root.is-show ? self.font-size + Theme.padding * 2 : 0px;
+                text: root.text;
+                single-line: true;
+                wrap: no-wrap;
+            }
+        }
+    }
+}
+

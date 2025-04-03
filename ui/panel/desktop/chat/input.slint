@@ -1,0 +1,112 @@
+import { Button, TextEdit } from "std-widgets.slint";
+import { Theme, Logic, Store, Icons } from "../../def.slint";
+import { Divider, ElevatedBtn } from "../../../base/widgets.slint";
+
+export component Input inherits Rectangle {
+    in-out property question <=> te.text;
+
+    private property <bool> is-ctrl-pressed;
+
+    public function force-focus() {
+        te.focus();
+    }
+
+    height: 120px;
+    forward-focus: fscope;
+
+    fscope := FocusScope {
+        key-pressed(event) => {
+            if (event.text == Key.Control) {
+                is-ctrl-pressed = true;
+            }
+            if (is-ctrl-pressed) {
+                if (event.text == Key.Return) {
+                    // Logic.switch-session-shortcut-inst(Store.current-session-uuid);
+                    // Logic.send-input-text(root.question);
+                    root.question = "";
+                    ensure-show-cursor();
+                } else if (event.text == "m") {
+                    // Logic.retry-send-input-text();
+                } else if (event.text == "g") {
+                    // Logic.reset-current-session();
+                } else if (event.text == "l") {
+                    // Logic.remove-current-chats-last();
+                }
+            }
+            reject
+        }
+
+        key-released(event) => {
+            if (event.text == Key.Control) {
+                is-ctrl-pressed = false;
+            }
+            reject
+        }
+
+        function ensure-show-cursor() {
+            if (flick.viewport-height <= flick.height) {
+                flick.viewport-y = 0;
+            } else {
+                if (-flick.viewport-y + te.font-size * 2 < flick.viewport-height - flick.height) {
+                    return;
+                }
+                flick.viewport-y = -flick.viewport-height + flick.height;
+            }
+        }
+
+        Rectangle {
+            border-radius: Theme.border-radius * 4;
+            border-width: te.has-focus ? 2px : 1px;
+            border-color: te.has-focus ? Theme.focus-color : Theme.disabled-color;
+            background: Theme.base-background;
+
+            VerticalLayout {
+                Rectangle {
+                    flick := Flickable {
+                        VerticalLayout {
+                            padding: Theme.padding * 2;
+
+                            te := TextInput {
+                                single-line: false;
+                                wrap: word-wrap;
+                                color: Theme.regular-text-color;
+                                font-size: Theme.default-font-size;
+
+                                edited => {
+                                    ensure-show-cursor();
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        x: Theme.padding * 2;
+                        y: Theme.padding * 2;
+                        visible: te.text == "";
+                        text: "Ctrl+Enter";
+                        color: Theme.placeholder-text-color;
+                    }
+                }
+
+                HorizontalLayout {
+                    padding-right: Theme.padding * 2;
+                    height: Theme.icon-size * 2;
+                    alignment: LayoutAlignment.end;
+
+                    ElevatedBtn {
+                        icon: Icons.send-up;
+                        colorize: Theme.thirdly-brand-color;
+                        icon-rotation-angle: -90deg;
+
+                        clicked => {
+                            if (te.text != "") {
+                                te.text = "";
+                                ensure-show-cursor();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

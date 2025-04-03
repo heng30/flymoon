@@ -1,0 +1,228 @@
+import { Theme } from "../theme.slint";
+import { Store } from "../store.slint";
+import { Logic } from "../logic.slint";
+import { IconBtn } from "../base/icon-btn.slint";
+import { LivingCircle } from "../base/living-circle.slint";
+import { Divider } from "../base/divider.slint";
+import { CenterLayout } from "../base/center-layout.slint";
+import { Btn } from "../base/btn.slint";
+import { Tip } from "../base/tip.slint";
+
+export component Header inherits Rectangle {
+    height: Theme.header-height;
+
+    in property<string> cur-pos-text <=> cur-pos-txt.text;
+    in property<string> last-pos-text <=> last-pos-txt.text;
+
+    property<length> text-font-size: Theme.icon-size * 0.7;
+
+    callback show-archive-dialog();
+    callback jump-to-last-pos <=> last-pos-touch.clicked;
+
+    public function start-record-indicator() {
+        record-indicator.start();
+    }
+
+    public function stop-record-indicator() {
+        record-indicator.stop();
+    }
+
+    animate x {
+        duration: Theme.default-animate-duration;
+        easing: ease-in-out;
+    }
+
+    VerticalLayout {
+        alignment: center;
+        padding-left: Theme.padding * 2;
+        padding-right: Theme.padding * 2;
+
+        HorizontalLayout {
+            spacing: Theme.spacing * 2;
+
+            HorizontalLayout {
+                alignment: start;
+                spacing: Theme.spacing * 2;
+
+                CenterLayout {
+                    IconBtn {
+                        icon: Theme.left-panel-width > 0 ?
+                                  @image-url("../images/arrow-left.svg") :
+                                  @image-url("../images/arrow-right.svg");
+
+                        clicked => {
+                            Theme.toggle-sessions-panel();
+                        }
+                    }
+                }
+
+                Rectangle {
+                    border-radius: Theme.border-radius;
+                    background: last-pos-touch.pressed ? Theme.hover-color.darker(50%) : last-pos-touch.has-hover ? Theme.hover-color : Colors.transparent;
+                    width: last-pos-txt.preferred-width + Theme.padding * 4;
+
+                    animate background {
+                        duration: Theme.default-animate-duration;
+                        easing: ease-in-out;
+                    }
+
+                    last-pos-txt := Text {
+                        color: Theme.regular-text-color;
+                        font-size: root.text-font-size;
+                        vertical-alignment: center;
+                    }
+
+                    last-pos-touch := TouchArea {
+                        mouse-cursor: self.has-hover ? pointer : default;
+                    }
+
+                    Tip {
+                        is-show: last-pos-touch.has-hover;
+                        pos: "left";
+                        pwidth: parent.width;
+                        pheight: parent.height;
+                        text: Store.translator.tip-last-session-pos;
+                    }
+                }
+
+                cur-pos-txt := Text {
+                    color: Theme.regular-text-color;
+                    font-size: root.text-font-size;
+                    vertical-alignment: center;
+
+                    Tip {
+                        is-show: cur-pos-touch.has-hover;
+                        pos: "left";
+                        pwidth: parent.width;
+                        pheight: parent.height;
+                        text: Store.translator.tip-cur-session-pos;
+                    }
+
+                    cur-pos-touch := TouchArea {}
+                }
+            }
+
+            HorizontalLayout {
+                alignment: end;
+
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: Theme.spacing * 2;
+
+                    Rectangle {
+                        width: Theme.icon-size;
+
+                        // Warning: animation will cause high used cpu rate
+                        record-indicator := LivingCircle { }
+                    }
+
+                    IconBtn {
+                        icon: @image-url("../images/mute-light.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-mute;
+                        clicked => {
+                            Logic.stop-audio-play();
+                        }
+                    }
+
+                    IconBtn {
+                        icon: @image-url("../images/launching-screen.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-show-session-screen;
+                        clicked => {
+                            Logic.show-session-screen(Store.current-session-uuid);
+                        }
+                    }
+
+                    screen-btn := IconBtn {
+                        icon: @image-url("../images/edit-text.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-edit-session-screen;
+                        clicked => {
+                            Logic.show-session-screen-dialog(Store.current-session-uuid);
+                        }
+                    }
+
+
+                    IconBtn {
+                        icon: @image-url("../images/copy.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-copy;
+                        clicked => {
+                            Logic.copy-session-chats(Store.current-session-uuid);
+                            Logic.show-message(Store.translator.session-chat-copy-success, "success");
+                        }
+                    }
+
+                    IconBtn {
+                        icon: @image-url("../images/file-archive.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-archive;
+                        clicked => {
+                            root.show-archive-dialog();
+                        }
+                    }
+                }
+
+
+                VerticalLayout {
+                    alignment: center;
+                    padding-left: Theme.padding * 2;
+                    padding-right: Theme.padding * 2;
+
+                    Divider {
+                        width: 2px;
+                        height: root.height * 0.5;
+                        background: Theme.base-border-color;
+                    }
+                }
+
+
+                HorizontalLayout {
+                    spacing: Theme.spacing * 2;
+                    IconBtn {
+                        icon: @image-url("../images/setting-fill.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-setting;
+                        clicked => {
+                            Store.setting-dialog-config.show = true;
+                        }
+                    }
+
+                    IconBtn {
+                        icon: @image-url("../images/help.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-help;
+                        clicked => {
+                            Store.help-dialog.show = true;
+                        }
+                    }
+
+                    IconBtn {
+                        icon: @image-url("../images/info-dark.svg");
+                        tip-pos: "left";
+                        tip-text: Store.translator.tip-about;
+                        clicked => {
+                            Store.about-dialog.show = true;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    padding-left: Theme.padding * 2;
+
+                    IconBtn {
+                        icon: Theme.right-panel-width > 0 ?
+                                  @image-url("../images/arrow-right.svg")
+                                  : @image-url("../images/arrow-left.svg");
+
+                        clicked => {
+                            Theme.toggle-archive-panel();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
