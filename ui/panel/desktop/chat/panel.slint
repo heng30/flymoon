@@ -1,6 +1,5 @@
 import { Theme, Logic, Store } from "../../def.slint";
-// import { Header } from "header.slint";
-// import { Body } from "body/panel.slint";
+import { Session } from "session.slint";
 import { Input } from "input.slint";
 import { Divider } from "../../../base/widgets.slint";
 
@@ -11,16 +10,6 @@ export component Chat inherits VerticalLayout {
     padding: Theme.padding * 2;
     spacing: Theme.spacing * 2;
 
-    Rectangle {
-        Rectangle {
-            // background: red;
-        }
-
-        // body := Body {
-        // }
-
-    input := Input {
-            y: parent.height - self.height;
-        }
-    }
+    session := Session { }
+    input := Input { }
 }

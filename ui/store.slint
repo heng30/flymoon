@@ -62,6 +62,7 @@ export struct ChatEntry {
 }
 
 export struct ChatHistory {
+uuid: string,
     prompt: string,
     histories: [ChatEntry],
 }
@@ -115,6 +116,19 @@ export global Store {
             is-open: false,
         },
     ];
-    in-out property <ChatHistory> chat-histories;
+    in-out property <ChatHistory> chat-histories: {
+        uuid: "chat-uuid-1",
+        prompt: "You are a chat bot",
+        histories: [
+            {
+                user: "hi",
+                bot: "how are you?",
+            },
+            {
+                user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+                bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+            },
+        ]
+    };
     //////////////////////////////// Logic End  ////////////////////////////////
 }

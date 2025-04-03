@@ -17,7 +17,6 @@ export global Logic {
     callback get-setting-model() -> SettingModel;
     callback set-setting-model(SettingModel);
 
-
     pure callback inner-tr(bool, string) -> string;
     inner-tr(is-cn, text) => {
         return text;
@@ -43,11 +42,16 @@ export global Logic {
 
     //////////////////////////////// Logic Start  ////////////////////////////////
 
-    pure callback generate-input-popup-values([Prompt]) -> [string];
-    // pure callback get-prompt(uuid: string) -> Prompt;
+    pure callback input-popup-entries(text: string) -> [string];
+    pure callback history-popup-entries(text: string) -> [string];
 
     callback save-prompt(promt: Prompt, is-add: bool);
     callback delete-prompt(uuid: string);
+
+    callback new-chat();
+    callback send-question(question: string);
+    callback stop-question();
+    callback retry-last-question();
 
     //////////////////////////////// Logic End  ////////////////////////////////
 }

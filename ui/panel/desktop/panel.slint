@@ -1,7 +1,53 @@
 import { Theme, Store, TabIndex, SettingDetailIndex, Logic, Icons } from "../def.slint";
 import { SettingDialog, AboutDialog, HelpDialog, DonateDialog, SettingIconsBar } from "../setting/desktop.slint";
-import { Blanket, StatusBar, Divider, AboutSetting, ToolTip, ToolTipSetting, PopupAction, PopupActionSetting } from "../../base/widgets.slint";
+import { Blanket, StatusBar, Divider, AboutSetting, ToolTip, ToolTipSetting, PopupAction, PopupActionSetting, ComponentPosition, IconBtn } from "../../base/widgets.slint";
 import { Home } from "home.slint";
+
+
+component HomeIconsBar inherits Rectangle {
+    width: hbox.preferred-width;
+    height: hbox.preferred-height;
+    border-radius: Theme.border-radius;
+
+    in-out property <bool> show-icon-hover-background: false;
+    in-out property <length> icon-size: Theme.icon-size;
+    in-out property <bool> is-show-tip: false;
+    in-out property <ComponentPosition> tip-position;
+    in-out property h-padding <=> hbox.padding;
+    in-out property h-spacing <=> hbox.spacing;
+
+    hbox := HorizontalLayout {
+        padding: Theme.padding * 2;
+        spacing: Theme.spacing * 4;
+
+        IconBtn {
+            icon: Icons.chat;
+            icon-size: root.icon-size;
+            show-icon-hover-background: root.show-icon-hover-background;
+            is-show-tip: root.is-show-tip;
+            tip-position: root.tip-position;
+            tip: Logic.tr("chat");
+
+            clicked => {
+                Logic.switch-tab(TabIndex.Home);
+            }
+        }
+
+        IconBtn {
+            icon: Icons.notify;
+            icon-size: root.icon-size;
+            show-icon-hover-background: root.show-icon-hover-background;
+            is-show-tip: root.is-show-tip;
+            tip-position: root.tip-position;
+            tip: Logic.tr("history");
+
+            clicked => {
+                Logic.switch-tab(TabIndex.History);
+            }
+        }
+    }
+}
+
 
 export component DesktopPanel inherits Rectangle {
     private property <bool> is-show-setting-dialog: Store.current-tab-index == TabIndex.Setting;
@@ -25,6 +71,22 @@ export component DesktopPanel inherits Rectangle {
 
             HorizontalLayout {
                 padding-right: Theme.padding * 2;
+
+                HomeIconsBar {
+                    icon-size: Theme.default-font-size;
+                    h-spacing: Theme.spacing * 3;
+                    show-icon-hover-background: false;
+                    is-show-tip: sb.is-show-tip;
+                    tip-position: sb.tip-position;
+                }
+
+                VerticalLayout {
+                    alignment: LayoutAlignment.center;
+                    Divider {
+                        height: Theme.default-font-size;
+                        width: 2px;
+                    }
+                }
 
                 SettingIconsBar {
                     icon-size: Theme.default-font-size;
@@ -52,7 +114,7 @@ export component DesktopPanel inherits Rectangle {
 
     if is-show-setting-dialog || is-show-about-dialog || is-show-help-dialog || is-show-donate-dialog: Blanket {
         clicked => {
-            Logic.switch-tab(TabIndex.None);
+            Logic.switch-tab(TabIndex.Home);
         }
     }
 

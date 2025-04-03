@@ -1,0 +1,75 @@
+import { ListView } from "std-widgets.slint";
+import { Theme, Store, Logic } from "../../def.slint";
+import { NoMessageImg, CenterLayout } from "../../../base/widgets.slint";
+
+component ChatDetail inherits HorizontalLayout {
+    in-out property text <=> txt.text;
+    in-out property <bool> is-user;
+
+    alignment: is-user ? LayoutAlignment.end : LayoutAlignment.start;
+
+    Rectangle {
+        background: is-user ? Theme.thirdly-brand-color : Theme.hover-background;
+        border-top-left-radius: is-user ? Theme.border-radius * 3 : Theme.border-radius * 6;
+        border-top-right-radius: is-user ? Theme.border-radius * 6 : Theme.border-radius * 3;
+        border-bottom-left-radius: is-user ? Theme.border-radius * 3 : 0;
+        border-bottom-right-radius: is-user ? 0 : Theme.border-radius * 3;
+        width: Math.min(root.width * (is-user ? 0.8 : 0.95), vbox.preferred-width);
+        height: vbox.preferred-height;
+
+        vbox := VerticalLayout {
+            padding: Theme.padding * 2;
+            padding-left: Theme.padding * 4;
+            padding-right: Theme.padding * 4;
+            alignment: LayoutAlignment.center;
+
+            HorizontalLayout {
+                alignment: LayoutAlignment.end;
+
+                txt := TextInput {
+                    wrap: word-wrap;
+                    color: is-user ? Theme.light-text-color : Theme.primary-text-color;
+                    font-size: Theme.title4-font-size;
+                    single-line: false;
+                    read-only: true;
+                }
+            }
+        }
+    }
+}
+
+export component Session inherits Rectangle {
+    in-out property viewport-y <=> lv.viewport-y;
+    in-out property viewport-height <=> lv.viewport-height;
+
+    CenterLayout {
+        NoMessageImg {
+            visible: Store.chat-histories.histories.length <= 0;
+            width: root.width;
+            text: Logic.tr("No Message");
+        }
+    }
+
+    lv := ListView {
+        width: root.width;
+        height: root.height;
+        for data[index] in Store.chat-histories.histories: VerticalLayout {
+            padding-bottom: Theme.padding * 4;
+            spacing: Theme.spacing * 3;
+
+            user := ChatDetail {
+                is-user: true;
+                text: data.user;
+            }
+
+            bot := ChatDetail {
+                text: data.bot;
+            }
+        }
+    }
+
+    // InstTip {
+    //     x: Theme.scroll-width;
+    //     y: root.height - self.height - Theme.padding;
+    // }
+}

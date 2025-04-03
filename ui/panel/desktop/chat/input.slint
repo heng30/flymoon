@@ -1,18 +1,36 @@
 import { Button, TextEdit } from "std-widgets.slint";
 import { Theme, Logic, Store, Icons } from "../../def.slint";
-import { Divider, ElevatedBtn } from "../../../base/widgets.slint";
+import { Divider, ElevatedBtn, IconBtn, TextBtnWithoutIcon } from "../../../base/widgets.slint";
 
 export component Input inherits Rectangle {
     in-out property question <=> te.text;
 
     private property <bool> is-ctrl-pressed;
-
-    public function force-focus() {
-        te.focus();
-    }
+    private property <bool> enabled-network;
 
     height: 120px;
-    forward-focus: fscope;
+    forward-focus: te;
+
+    function ensure-show-cursor() {
+        if (flick.viewport-height <= flick.height) {
+            flick.viewport-y = 0;
+        } else {
+            if (-flick.viewport-y + te.font-size * 2 < flick.viewport-height - flick.height) {
+                return;
+            }
+            flick.viewport-y = -flick.viewport-height + flick.height;
+        }
+    }
+
+    function send-question() {
+        Logic.send-question(question);
+        root.question = "";
+        ensure-show-cursor();
+    }
+
+    init => {
+        te.focus();
+    }
 
     fscope := FocusScope {
         key-pressed(event) => {
@@ -21,16 +39,13 @@ export component Input inherits Rectangle {
             }
             if (is-ctrl-pressed) {
                 if (event.text == Key.Return) {
-                    // Logic.switch-session-shortcut-inst(Store.current-session-uuid);
-                    // Logic.send-input-text(root.question);
-                    root.question = "";
-                    ensure-show-cursor();
-                } else if (event.text == "m") {
-                    // Logic.retry-send-input-text();
-                } else if (event.text == "g") {
-                    // Logic.reset-current-session();
-                } else if (event.text == "l") {
-                    // Logic.remove-current-chats-last();
+                    send-question();
+                } else if (event.text == "r") {
+                    Logic.retry-last-question();
+                } else if (event.text == "n") {
+                    Logic.new-chat();
+                } else if (event.text == "s") {
+                    Logic.stop-question();
                 }
             }
             reject
@@ -43,17 +58,6 @@ export component Input inherits Rectangle {
             reject
         }
 
-        function ensure-show-cursor() {
-            if (flick.viewport-height <= flick.height) {
-                flick.viewport-y = 0;
-            } else {
-                if (-flick.viewport-y + te.font-size * 2 < flick.viewport-height - flick.height) {
-                    return;
-                }
-                flick.viewport-y = -flick.viewport-height + flick.height;
-            }
-        }
-
         Rectangle {
             border-radius: Theme.border-radius * 4;
             border-width: te.has-focus ? 2px : 1px;
@@ -63,6 +67,8 @@ export component Input inherits Rectangle {
             VerticalLayout {
                 Rectangle {
                     flick := Flickable {
+                        y: Theme.padding * 2;
+
                         VerticalLayout {
                             padding: Theme.padding * 2;
 
@@ -81,7 +87,7 @@ export component Input inherits Rectangle {
 
                     Text {
                         x: Theme.padding * 2;
-                        y: Theme.padding * 2;
+                        y: Theme.padding * 4;
                         visible: te.text == "";
                         text: "Ctrl+Enter";
                         color: Theme.placeholder-text-color;
@@ -89,19 +95,76 @@ export component Input inherits Rectangle {
                 }
 
                 HorizontalLayout {
-                    padding-right: Theme.padding * 2;
                     height: Theme.icon-size * 2;
-                    alignment: LayoutAlignment.end;
+                    alignment: LayoutAlignment.space-between;
 
-                    ElevatedBtn {
-                        icon: Icons.send-up;
-                        colorize: Theme.thirdly-brand-color;
-                        icon-rotation-angle: -90deg;
+                    HorizontalLayout {
+                        padding: Theme.padding;
+                        padding-left: Theme.padding * 2;
+                        alignment: LayoutAlignment.start;
 
-                        clicked => {
-                            if (te.text != "") {
-                                te.text = "";
-                                ensure-show-cursor();
+                        TextBtnWithoutIcon {
+                            border-color: root.enabled-network ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
+                            border-width: self.has-hover || root.enabled-network ? 2px : 1px;
+                            border-radius: Theme.border-radius * 4;
+                            hpadding: Theme.padding * 4;
+                            vpadding: Theme.padding * 2;
+                            bg-color: Theme.hover-background;
+                            text-color: self.border-color;
+                            text: Logic.tr("Network");
+
+                            clicked => {
+                                root.enabled-network = !root.enabled-network;
+                            }
+                        }
+                    }
+
+                    HorizontalLayout {
+                        alignment: LayoutAlignment.end;
+                        spacing: Theme.spacing * 4;
+
+                        IconBtn {
+                            icon: Icons.new;
+                            tip: Logic.tr("new chat");
+                            is-show-tip: true;
+
+                            clicked => {
+                                Logic.new-chat();
+                            }
+                        }
+
+                        IconBtn {
+                            icon: Icons.retry;
+                            tip: Logic.tr("retry");
+                            is-show-tip: true;
+
+                            clicked => {
+                                Logic.retry-last-question();
+                            }
+                        }
+
+                        IconBtn {
+                            icon: Icons.stop;
+                            tip: Logic.tr("stop");
+                            is-show-tip: true;
+
+                            clicked => {
+                                Logic.stop-question();
+                            }
+                        }
+
+                        HorizontalLayout {
+                            padding-left: Theme.padding * 4;
+                            padding-right: Theme.padding * 2;
+
+                            ElevatedBtn {
+                                icon: Icons.send-up;
+                                colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
+                                icon-rotation-angle: -90deg;
+
+                                clicked => {
+                                    root.send-question();
+                                }
                             }
                         }
                     }

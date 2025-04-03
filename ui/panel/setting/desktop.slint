@@ -21,7 +21,6 @@ component RightPanel inherits Rectangle {
                 Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
                 return;
             }
-
             Store.setting-preference.win-width = self.get().win-width;
             Store.setting-preference.win-height = self.get().win-height;
             Store.setting-preference.font-size = self.get().font-size;
@@ -40,7 +39,6 @@ component RightPanel inherits Rectangle {
                 Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
                 return;
             }
-
             Logic.set-setting-model(self.get());
         }
     }
