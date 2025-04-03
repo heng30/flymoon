@@ -8,11 +8,20 @@ import { Search, Label, ConfirmBtn, CancelBtn } from "../../base/widgets.slint";
 component HistoryList inherits VerticalLayout {
     spacing: Theme.spacing * 2;
 
+    private property <bool> is-edit;
+
     ListView {
         for entry[index] in Store.chat-histories: Rectangle {
-            background: ta.has-hover || la-ta.has-hover ? Theme.checked-background : Math.mod(index, 2) == 0 ? Theme.hover-background : Colors.transparent;
+            background: ta.has-hover ? Theme.checked-background : Math.mod(index, 2) == 0 ? Theme.hover-background : Colors.transparent;
 
-            ta := TouchArea { }
+            ta := TouchArea {
+                mouse-cursor: self.has-hover && !is-edit ? MouseCursor.pointer : MouseCursor.default;
+                clicked => {
+                    if (!is-edit) {
+                        Logic.load-chat-history(entry.uuid);
+                    }
+                }
+            }
 
             VerticalLayout {
                 spacing: Theme.spacing * 2;
@@ -21,7 +30,7 @@ component HistoryList inherits VerticalLayout {
                 HorizontalLayout {
                     spacing: Theme.spacing;
 
-                    CheckBtn {
+                    if is-edit: CheckBtn {
                         checked: entry.checked;
 
                         toggled => {
@@ -37,13 +46,6 @@ component HistoryList inherits VerticalLayout {
                     Label {
                         overflow: elide;
                         text: entry.summary;
-
-                        la-ta := TouchArea {
-                            mouse-cursor: self.has-hover ? MouseCursor.pointer : MouseCursor.default;
-                            clicked => {
-                                Logic.load-chat-history(entry.uuid);
-                            }
-                        }
                     }
                 }
             }
@@ -51,22 +53,19 @@ component HistoryList inherits VerticalLayout {
     }
 
     hbox := HorizontalLayout {
-        alignment: is-edit ? LayoutAlignment.end : LayoutAlignment.space-between;
+        alignment: !is-edit ? LayoutAlignment.end : LayoutAlignment.space-between;
         padding: Theme.padding * 2;
-        private property <bool> is-edit: true;
 
-        if is-edit: CancelBtn {
-            text: Logic.tr("Delete");
-            icon: Icons.delete;
-            bg-color: Theme.danger-color;
-            colorize: Theme.light-text-color;
+        if !is-edit: ConfirmBtn {
+            text: Logic.tr("Edit");
+            icon: Icons.edit;
 
             clicked => {
-                is-edit = false;
+                is-edit = true;
             }
         }
 
-        if !is-edit: CancelBtn {
+        if is-edit: CancelBtn {
             text: Logic.tr("Select all");
             icon: Icons.checked;
             icon-size: Theme.icon-size * 0.85;
@@ -78,18 +77,22 @@ component HistoryList inherits VerticalLayout {
             }
         }
 
-        if !is-edit: HorizontalLayout {
+        if is-edit: HorizontalLayout {
             spacing: Theme.spacing * 4;
 
             CancelBtn {
                 clicked => {
-                    is-edit = true;
+                    is-edit = false;
                 }
             }
 
             ConfirmBtn {
+                text: Logic.tr("Delete");
+                icon: Icons.delete;
+                bg-color: Theme.danger-color;
+
                 clicked => {
-                    is-edit = true;
+                    is-edit = false;
                     Logic.chat-histories-remove-selected();
                 }
             }
