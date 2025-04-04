@@ -1,5 +1,6 @@
 import { Theme, Logic, Store } from "../../def.slint";
 import { Session } from "session.slint";
+import { InputPromptList } from "input-prompt-list.slint";
 import { Input } from "input.slint";
 import { Divider } from "../../../base/widgets.slint";
 
@@ -10,6 +11,14 @@ export component Chat inherits VerticalLayout {
     padding: Theme.padding * 2;
     spacing: Theme.spacing * 2;
 
-    session := Session { }
+    Rectangle {
+        session := Session { }
+
+        if Store.input-prompt-list-entries.length > 0: InputPromptList {
+            x: 0;
+            y: input.y - self.height - Theme.padding * 3;
+        }
+    }
+
     input := Input { }
 }

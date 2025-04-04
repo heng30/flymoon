@@ -1,48 +1,73 @@
+use serde::{Deserialize, Serialize};
+
+use crate::slint_generatedAppWindow::{ChatEntry as UIChatEntry, PromptEntry as UIPromptEntry};
+pub const PROMPT_TABLE: &str = "prompt";
+pub const CHAT_SESSION_TABLE: &str = "chat_session";
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct PromptEntry {
+    pub uuid: String,
+    pub name: String,
+    pub shortcut: String,
+    pub detail: String,
+}
+
+impl From<UIPromptEntry> for PromptEntry {
+    fn from(entry: UIPromptEntry) -> Self {
+        PromptEntry {
+            uuid: entry.uuid.into(),
+            name: entry.name.into(),
+            shortcut: entry.shortcut.into(),
+            detail: entry.detail.into(),
+        }
+    }
+}
+
+impl From<PromptEntry> for UIPromptEntry {
+    fn from(entry: PromptEntry) -> Self {
+        UIPromptEntry {
+            uuid: entry.uuid.into(),
+            name: entry.name.into(),
+            shortcut: entry.shortcut.into(),
+            detail: entry.detail.into(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct ChatEntry {
+    user: String,
+    bot: String,
+}
+
+impl From<UIChatEntry> for ChatEntry {
+    fn from(entry: UIChatEntry) -> Self {
+        ChatEntry {
+            user: entry.user.into(),
+            bot: entry.bot.into(),
+        }
+    }
+}
+
+impl From<ChatEntry> for UIChatEntry {
+    fn from(entry: ChatEntry) -> Self {
+        UIChatEntry {
+            user: entry.user.into(),
+            bot: entry.bot.into(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct ChatSession {
+    pub uuid: String,
+    pub time: String,
+    pub prompt: String,
+    pub histories: Vec<ChatEntry>,
+}
+
 // use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // use serde_with::{serde_as, DeserializeAs, SerializeAs};
-
-// use crate::slint_generatedAppWindow::{
-//     AccountEntry as UIAccountEntry, AddressBookEntry as UIAddressBookEntry,
-//     TokenTileEntry as UITokenTileEntry, TransactionTileEntry as UIHistoryEntry,
-//     TransactionTileStatus,
-// };
-// pub const ACCOUNTS_TABLE: &str = "accounts";
-// pub const ADDRESS_BOOK_TABLE: &str = "address_book";
-// pub const HISTORY_TABLE: &str = "history";
-// pub const TOKENS_TABLE: &str = "tokens";
-
-// #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-// pub struct AccountEntry {
-//     pub uuid: String,
-//     pub name: String,
-//     pub pubkey: String,
-//     pub derive_index: i32,
-//     pub avatar_index: i32,
-// }
-
-// impl From<UIAccountEntry> for AccountEntry {
-//     fn from(entry: UIAccountEntry) -> Self {
-//         AccountEntry {
-//             uuid: entry.uuid.into(),
-//             name: entry.name.into(),
-//             pubkey: entry.pubkey.into(),
-//             derive_index: entry.derive_index,
-//             avatar_index: entry.avatar_index,
-//         }
-//     }
-// }
-
-// impl From<AccountEntry> for UIAccountEntry {
-//     fn from(entry: AccountEntry) -> Self {
-//         UIAccountEntry {
-//             uuid: entry.uuid.into(),
-//             name: entry.name.into(),
-//             pubkey: entry.pubkey.into(),
-//             derive_index: entry.derive_index,
-//             avatar_index: entry.avatar_index,
-//         }
-//     }
-// }
 
 // #[serde_as]
 // #[derive(Serialize, Deserialize, Debug, Clone, Default)]

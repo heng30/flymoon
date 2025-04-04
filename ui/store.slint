@@ -11,7 +11,7 @@ export enum TabIndex {
     About,
     Donate,
     Help,
-    None,
+    Back,
 }
 
 export enum SettingDetailIndex {
@@ -19,7 +19,6 @@ export enum SettingDetailIndex {
     Proxy,
     Model,
     Prompt,
-    None,
 }
 
 export struct SettingPreference {
@@ -49,7 +48,7 @@ export struct SettingModel {
     api-key: string,
 }
 
-export struct Prompt {
+export struct PromptEntry {
     uuid: string,
     name: string,
     shortcut: string,
@@ -63,15 +62,16 @@ export struct ChatEntry {
 
 export struct ChatSession {
     uuid: string,
+    time: string,
     prompt: string,
     histories: [ChatEntry],
 }
 
 export struct ChatHistory {
     uuid: string,
-    checked: bool,
     time: string,
     summary: string,
+    checked: bool,
 }
 
 //////////////////////////////// Logic Struct End  ////////////////////////////////
@@ -81,7 +81,8 @@ export global Store {
     in-out property <bool> is-show-landing-page: false;
     in-out property <DeviceType> device-type: DeviceType.Desktop;
 
-    in-out property <TabIndex> current-tab-index: TabIndex.History;
+    in-out property <TabIndex> previous-tab-index: TabIndex.Home;
+    in-out property <TabIndex> current-tab-index: TabIndex.Home;
 
     in-out property <SettingDetailIndex> current-setting-detail-index: SettingDetailIndex.Preference;
 
@@ -106,25 +107,37 @@ export global Store {
     ];
 
     //////////////////////////////// Logic Start ////////////////////////////////
-    in-out property <[string]> search-entries;
-    in-out property <[Prompt]> prompt-entries: [
-        {
-            uuid: "uuid-1",
-            name: "text-1",
-            shortcut: "cn",
-            detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            is-open: true,
-        },
-        {
-            uuid: "uuid-2",
-            name: "text-2",
-            shortcut: "en",
-            detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            is-open: false,
-        },
+
+    in-out property <bool> enabled-network;
+
+    in-out property <[PromptEntry]> input-prompt-list-entries: [
+        // {
+        //     shortcut: "cn",
+        //     name: "text-1",
+        // },
+        // {
+        //     shortcut: "en",
+        //     name: "text-20000000",
+        // },
     ];
 
-    in-out property <ChatSession> current-chat: {
+    in-out property <[PromptEntry]> prompt-entries: [
+        // {
+        //     uuid: "uuid-1",
+        //     name: "text-1",
+        //     shortcut: "cn",
+        //     detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        // },
+        // {
+        //     uuid: "uuid-2",
+        //     name: "text-2",
+        //     shortcut: "en",
+        //     detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        //     is-open: false,
+        // },
+    ];
+
+    in-out property <ChatSession> current-chat-session: {
         uuid: "chat-uuid-1",
         prompt: "You are a chat bot",
         histories: [
@@ -141,18 +154,6 @@ export global Store {
 
     in-out property <[ChatHistory]> chat-histories-cache;
     in-out property <[ChatHistory]> chat-histories: [
-        {
-            uuid: "chat-uuid-1",
-            checked: false,
-            time: "10-09:23:10",
-            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-        },
-        {
-            uuid: "chat-uuid-2",
-            checked: true,
-            time: "10-09:23:20",
-            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-        },
         {
             uuid: "chat-uuid-1",
             checked: false,

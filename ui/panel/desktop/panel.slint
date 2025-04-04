@@ -3,7 +3,6 @@ import { SettingDialog, AboutDialog, HelpDialog, DonateDialog, SettingIconsBar }
 import { Blanket, StatusBar, Divider, AboutSetting, ToolTip, ToolTipSetting, PopupAction, PopupActionSetting, ComponentPosition, IconBtn } from "../../base/widgets.slint";
 import { Home } from "home.slint";
 
-
 component HomeIconsBar inherits Rectangle {
     width: hbox.preferred-width;
     height: hbox.preferred-height;
@@ -114,7 +113,7 @@ export component DesktopPanel inherits Rectangle {
 
     if is-show-setting-dialog || is-show-about-dialog || is-show-help-dialog || is-show-donate-dialog: Blanket {
         clicked => {
-            Logic.switch-tab(TabIndex.Home);
+            Logic.switch-tab(TabIndex.Back);
         }
     }
 

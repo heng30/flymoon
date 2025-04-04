@@ -42,9 +42,8 @@ export component Session inherits Rectangle {
     in-out property viewport-y <=> lv.viewport-y;
     in-out property viewport-height <=> lv.viewport-height;
 
-    CenterLayout {
+    if Store.current-chat-session.histories.length == 0: CenterLayout {
         NoMessageImg {
-            visible: Store.current-chat.histories.length <= 0;
             width: root.width;
             text: Logic.tr("No Message");
         }
@@ -53,7 +52,7 @@ export component Session inherits Rectangle {
     lv := ListView {
         width: root.width;
         height: root.height;
-        for data[index] in Store.current-chat.histories: VerticalLayout {
+        for data[index] in Store.current-chat-session.histories: VerticalLayout {
             padding-bottom: Theme.padding * 4;
             spacing: Theme.spacing * 3;
 
@@ -67,9 +66,4 @@ export component Session inherits Rectangle {
             }
         }
     }
-
-    // InstTip {
-    //     x: Theme.scroll-width;
-    //     y: root.height - self.height - Theme.padding;
-    // }
 }

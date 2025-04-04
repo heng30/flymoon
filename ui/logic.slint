@@ -1,5 +1,4 @@
-import { Store,  SettingPreference, SettingProxy, SettingModel, TabIndex, SettingDetailIndex, Prompt } from "store.slint";
-
+import { Store,  SettingPreference, SettingProxy, SettingModel, TabIndex, SettingDetailIndex, PromptEntry } from "store.slint";
 
 export global Logic {
     callback update-cache-size();
@@ -37,24 +36,29 @@ export global Logic {
         if (Store.current-tab-index == index) {
             return;
         }
-        Store.current-tab-index = index;
+        if (index == TabIndex.Back) {
+            Store.current-tab-index = Store.previous-tab-index;
+        } else {
+            Store.previous-tab-index = Store.current-tab-index;
+            Store.current-tab-index = index;
+        }
     }
 
     //////////////////////////////// Logic Start  ////////////////////////////////
 
-    pure callback input-popup-entries(text: string) -> [string];
 
+    callback prompt-update(promt: PromptEntry);
+    callback prompt-delete(uuid: string);
+    callback prompt-popup(text: string);
 
-    callback save-prompt(promt: Prompt, is-add: bool);
-    callback delete-prompt(uuid: string);
-
-    callback new-chat();
+    callback new-chat-session();
     callback send-question(question: string);
     callback stop-question();
     callback retry-last-question();
 
-    callback load-chat-history(uuid: string);
+    callback chat-history-load(uuid: string);
     callback chat-histories-select-all();
+    callback chat-histories-cancel-select-all();
     callback chat-histories-update-list(text: string);
     callback chat-histories-remove-selected();
 

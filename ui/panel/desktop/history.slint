@@ -1,7 +1,7 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Icons, Store, Util, Logic } from "../def.slint";
-import { CheckBtn} from "../../base/widgets.slint";
 import { SettingIconsBar }  from "../setting/desktop.slint";
+import { CheckBtn, ConfirmDialogSetting, CenterLayout, NoMessageImg } from "../../base/widgets.slint";
 
 import { Search, Label, ConfirmBtn, CancelBtn } from "../../base/widgets.slint";
 
@@ -18,7 +18,7 @@ component HistoryList inherits VerticalLayout {
                 mouse-cursor: self.has-hover && !is-edit ? MouseCursor.pointer : MouseCursor.default;
                 clicked => {
                     if (!is-edit) {
-                        Logic.load-chat-history(entry.uuid);
+                        Logic.chat-history-load(entry.uuid);
                     }
                 }
             }
@@ -53,8 +53,8 @@ component HistoryList inherits VerticalLayout {
     }
 
     hbox := HorizontalLayout {
-        alignment: !is-edit ? LayoutAlignment.end : LayoutAlignment.space-between;
         padding: Theme.padding * 2;
+        alignment: !is-edit ? LayoutAlignment.end : LayoutAlignment.space-between;
 
         if !is-edit: ConfirmBtn {
             text: Logic.tr("Edit");
@@ -65,15 +65,22 @@ component HistoryList inherits VerticalLayout {
             }
         }
 
-        if is-edit: CancelBtn {
-            text: Logic.tr("Select all");
-            icon: Icons.checked;
-            icon-size: Theme.icon-size * 0.85;
-            bg-color: Theme.success-color;
-            colorize: Theme.light-text-color;
+        if is-edit:  VerticalLayout {
+            alignment: LayoutAlignment.center;
+            private property <bool> is-selected-all;
 
-            clicked => {
-                Logic.chat-histories-select-all();
+            CheckBtn {
+                text: Logic.tr(is-selected-all ? "Cancel select all" : "Select all");
+                checked: is-selected-all;
+
+                toggled => {
+                    is-selected-all = !is-selected-all;
+                    if (is-selected-all) {
+                        Logic.chat-histories-select-all();
+                    } else {
+                        Logic.chat-histories-cancel-select-all();
+                    }
+                }
             }
         }
 
@@ -92,8 +99,7 @@ component HistoryList inherits VerticalLayout {
                 bg-color: Theme.danger-color;
 
                 clicked => {
-                    is-edit = false;
-                    Logic.chat-histories-remove-selected();
+                    ConfirmDialogSetting.set(true, Logic.tr("Warning"), Logic.tr("Delete or not?"), "chat-histories-remove-selected", "");
                 }
             }
         }
@@ -118,5 +124,14 @@ export component History inherits VerticalLayout {
         }
     }
 
-    HistoryList { }
+    Rectangle {
+        if Store.chat-histories.length == 0: CenterLayout {
+            NoMessageImg {
+                width: root.width;
+                text: Logic.tr("No Message");
+            }
+        }
+
+        HistoryList { }
+    }
 }

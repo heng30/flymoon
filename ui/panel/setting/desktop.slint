@@ -2,7 +2,7 @@ import { Logic, Theme, Store, Util, TabIndex, Icons, SettingPreference, SettingP
 import { IconBtn, SettingEntryV2, Head, SettingDetail, ToastStatus, About, Dialog, ComponentPosition, TabBtns, Help } from "../../base/widgets.slint";
 import { Preference } from "components/preference.slint";
 import { Donate } from "components/donate.slint";
-import { Prompt, BtnTypeSetting } from "components/prompt.slint";
+import { Prompt } from "components/prompt.slint";
 import { Model } from "components/model.slint";
 
 component RightPanel inherits Rectangle {
@@ -10,6 +10,7 @@ component RightPanel inherits Rectangle {
 
     init => {
         Logic.switch-setting-detail(SettingDetailIndex.Preference);
+        // Logic.switch-setting-detail(SettingDetailIndex.Prompt);
     }
 
     preference := Preference {
@@ -17,7 +18,7 @@ component RightPanel inherits Rectangle {
         is-show-header: false;
 
         confirmed => {
-            if (self.get().font-size == "" || self.get().win-width == "" || self.get().win-height == "") {
+            if (self.get().font-size.is_empty|| self.get().win-width.is_empty || self.get().win-height.is_empty) {
                 Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
                 return;
             }
@@ -35,7 +36,7 @@ component RightPanel inherits Rectangle {
         is-show-header: false;
 
         confirmed => {
-            if (self.get().api-base-url == "" || self.get().model-name == "" || self.get().api-key == "") {
+            if (self.get().api-base-url.is_empty || self.get().model-name.is_empty || self.get().api-key.is_empty) {
                 Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
                 return;
             }
@@ -92,8 +93,7 @@ export component SettingDialog inherits Dialog {
     }
 
     cancel-clicked => {
-        BtnTypeSetting.reset();
-        Logic.switch-tab(TabIndex.Home);
+        Logic.switch-tab(TabIndex.Back);
     }
 }
 
@@ -110,7 +110,7 @@ export component AboutDialog inherits Dialog {
     }
 
     cancel-clicked => {
-        Logic.switch-tab(TabIndex.Home);
+        Logic.switch-tab(TabIndex.Back);
     }
 }
 
@@ -128,7 +128,7 @@ export component HelpDialog inherits Dialog {
     }
 
     cancel-clicked => {
-        Logic.switch-tab(TabIndex.Home);
+        Logic.switch-tab(TabIndex.Back);
     }
 }
 
@@ -145,7 +145,7 @@ export component DonateDialog inherits Dialog {
     }
 
     cancel-clicked => {
-        Logic.switch-tab(TabIndex.Home);
+        Logic.switch-tab(TabIndex.Back);
     }
 }
 

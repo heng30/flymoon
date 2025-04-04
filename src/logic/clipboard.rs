@@ -3,7 +3,7 @@ use crate::{
     slint_generatedAppWindow::{AppWindow, Logic},
     toast_success, toast_warn,
 };
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use slint::ComponentHandle;
 
 #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]

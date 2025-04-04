@@ -1,12 +1,10 @@
-import { Button, TextEdit } from "std-widgets.slint";
-import { Theme, Logic, Store, Icons } from "../../def.slint";
-import { Divider, ElevatedBtn, IconBtn, TextBtnWithoutIcon } from "../../../base/widgets.slint";
+import { Theme, Logic, Store, Icons, Util } from "../../def.slint";
+import { Divider, ElevatedBtn, IconBtn, TextBtn } from "../../../base/widgets.slint";
 
 export component Input inherits Rectangle {
     in-out property question <=> te.text;
 
     private property <bool> is-ctrl-pressed;
-    private property <bool> enabled-network;
 
     height: 120px;
     forward-focus: te;
@@ -23,6 +21,10 @@ export component Input inherits Rectangle {
     }
 
     function send-question() {
+        if (root.question.is-empty) {
+            return;
+        }
+
         Logic.send-question(question);
         root.question = "";
         ensure-show-cursor();
@@ -43,9 +45,11 @@ export component Input inherits Rectangle {
                 } else if (event.text == "r") {
                     Logic.retry-last-question();
                 } else if (event.text == "n") {
-                    Logic.new-chat();
+                    Logic.new-chat-session();
                 } else if (event.text == "s") {
                     Logic.stop-question();
+                } else if (event.text == "q") {
+                    Util.close-window();
                 }
             }
             reject
@@ -79,6 +83,7 @@ export component Input inherits Rectangle {
                                 font-size: Theme.default-font-size;
 
                                 edited => {
+                                    Logic.prompt-popup(te.text);
                                     ensure-show-cursor();
                                 }
                             }
@@ -103,18 +108,17 @@ export component Input inherits Rectangle {
                         padding-left: Theme.padding * 2;
                         alignment: LayoutAlignment.start;
 
-                        TextBtnWithoutIcon {
-                            border-color: root.enabled-network ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
-                            border-width: self.has-hover || root.enabled-network ? 2px : 1px;
+                        TextBtn {
+                            border-color: Store.enabled-network ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
+                            border-width: self.has-hover || Store.enabled-network ? 2px : 1px;
                             border-radius: Theme.border-radius * 4;
-                            hpadding: Theme.padding * 4;
-                            vpadding: Theme.padding * 2;
                             bg-color: Theme.hover-background;
-                            text-color: self.border-color;
+                            icon: Icons.network;
+                            colorize: self.border-color;
                             text: Logic.tr("Network");
 
                             clicked => {
-                                root.enabled-network = !root.enabled-network;
+                                Store.enabled-network = !Store.enabled-network;
                             }
                         }
                     }
@@ -129,7 +133,7 @@ export component Input inherits Rectangle {
                             is-show-tip: true;
 
                             clicked => {
-                                Logic.new-chat();
+                                Logic.new-chat-session();
                             }
                         }
 
@@ -158,7 +162,8 @@ export component Input inherits Rectangle {
                             padding-right: Theme.padding * 2;
 
                             ElevatedBtn {
-                                icon: Icons.send-up;
+                                enable: te.text != "";
+                                icon: Icons.send2;
                                 colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
                                 icon-rotation-angle: -90deg;
 

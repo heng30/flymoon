@@ -27,6 +27,7 @@ export global Theme {
     out property <length> icon-size: Math.max(24px, default-font-size + 8px);
     out property <length> avatar-size: icon-size + Theme.padding * 2;
     out property <duration> default-animate-duration: 200ms;
+    out property <length> default-border-width: 2px;
 
     out property <color> brand-color: is-dark ? #3F51B5 : #0000B8;
     out property <color> secondary-brand-color: is-dark ? #324090 : #3F51B5;
@@ -128,7 +129,7 @@ export global Icons {
     out property <image> feedback: @image-url("./images/feedback.svg");
     out property <image> donate: @image-url("./images/donate.svg");
     out property <image> send: @image-url("./images/send.svg");
-    out property <image> send-up: @image-url("./images/send-up.svg");
+    out property <image> send2: @image-url("./images/send2.svg");
     out property <image> search: @image-url("./images/search.svg");
     out property <image> version: @image-url("./images/version.svg");
     out property <image> download: @image-url("./images/download.svg");
@@ -239,4 +240,7 @@ export global Icons {
     out property <image> retry: @image-url("./images/retry.svg");
     out property <image> new-chat: @image-url("./images/new-chat.svg");
     out property <image> new: @image-url("./images/new.svg");
+    out property <image> wifi: @image-url("./images/test-network.svg");
+    out property <image> proxy: @image-url("./images/proxy.svg");
+    out property <image> network: @image-url("./images/network.svg");
 }

@@ -11,6 +11,7 @@ export component StatusBar inherits Rectangle {
     in-out property <length> icon-size: Theme.default-font-size;
     in-out property <bool> show-icon-hover-background: false;
 
+    in-out property <bool> disable-maximal: true;
     in-out property <bool> is-app-window-bar: true;
 
     in-out property <bool> is-show-icon;
@@ -121,9 +122,10 @@ export component StatusBar inherits Rectangle {
                 }
 
                 IconBtn {
+                    enabled-toucharea: !root.disable-maximal;
                     icon: Icons.status-bar-max;
                     icon-size: root.icon-size;
-                    colorize: Theme.success-color;
+                    colorize: root.disable-maximal ? Theme.disabled-color : Theme.success-color;
                     show-icon-hover-background: root.show-icon-hover-background;
                     is-show-tip: root.is-show-tip;
                     tip-position: root.tip-position;
@@ -131,7 +133,6 @@ export component StatusBar inherits Rectangle {
 
                     clicked => {
                         if (root.is-app-window-bar) {
-
                             if (Util.get-is-max-window()) {
                                 Util.max-window(false);
                                 self.icon = Icons.status-bar-max;

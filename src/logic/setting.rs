@@ -1,7 +1,7 @@
 use super::tr::tr;
 use crate::{
     config,
-    slint_generatedAppWindow::{AppWindow, Logic, Store, Theme, SettingModel},
+    slint_generatedAppWindow::{AppWindow, Logic, SettingModel, Store, Theme},
 };
 use slint::ComponentHandle;
 

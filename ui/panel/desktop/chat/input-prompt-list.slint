@@ -1,0 +1,34 @@
+import { Theme, Store } from "../../def.slint";
+import { Label } from "../../../base/widgets.slint";
+
+export component InputPromptList inherits Rectangle {
+    border-color: Theme.base-border-color;
+    border-radius: Theme.border-radius * 2;
+    border-width: Theme.default-border-width;
+
+    height: Math.min(200px, vbox.preferred-height);
+    width: vbox.preferred-width;
+
+    Flickable {
+        vbox := VerticalLayout {
+            padding: Theme.padding * 2;
+            padding-left: Theme.padding * 4;
+            padding-right: Theme.padding * 4;
+
+            for entry[index] in Store.input-prompt-list-entries: HorizontalLayout {
+                spacing: Theme.spacing * 5;
+                alignment: LayoutAlignment.start;
+
+                Label {
+                    font-size: Theme.title4-font-size;
+                    text: entry.shortcut;
+                }
+
+                Label {
+                    font-size: Theme.title4-font-size;
+                    text: entry.name;
+                }
+            }
+        }
+    }
+}

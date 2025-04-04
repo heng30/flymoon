@@ -39,11 +39,14 @@ mod toast;
 #[allow(unused)]
 mod tr;
 
-// #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
-// mod examples;
+#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
+mod prompt;
 
-#[cfg(target_arch = "wasm32")]
-mod examples_web;
+#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
+mod chat_history;
+
+#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
+mod chat_session;
 
 pub fn init(ui: &AppWindow) {
     #[cfg(any(
@@ -63,11 +66,10 @@ pub fn init(ui: &AppWindow) {
     confirm_dialog::init(ui);
     popup_action::init(ui);
 
+    #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
     {
-        // #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
-        // examples::init(ui);
-
-        // #[cfg(target_arch = "wasm32")]
-        // examples_web::init(ui);
+        prompt::init(ui);
+        chat_history::init(ui);
+        chat_session::init(ui);
     }
 }
