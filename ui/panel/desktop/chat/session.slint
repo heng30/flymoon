@@ -1,6 +1,6 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic } from "../../def.slint";
-import { NoMessageImg, CenterLayout } from "../../../base/widgets.slint";
+import { NoDataImg, CenterLayout } from "../../../base/widgets.slint";
 
 component ChatDetail inherits HorizontalLayout {
     in-out property text <=> txt.text;
@@ -43,9 +43,9 @@ export component Session inherits Rectangle {
     in-out property viewport-height <=> lv.viewport-height;
 
     if Store.current-chat-session.histories.length == 0: CenterLayout {
-        NoMessageImg {
-            width: root.width;
-            text: Logic.tr("No Message");
+        NoDataImg {
+            width: Math.min(root.width * 0.8, 400px);
+            text: Logic.tr("No Data");
         }
     }
 

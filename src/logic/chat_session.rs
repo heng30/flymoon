@@ -5,7 +5,7 @@ use crate::slint_generatedAppWindow::{
     AppWindow, ChatEntry as UIChatEntry, ChatSession as UIChatSession, Logic, Store,
 };
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
-use uuid::Uuid;
+// use uuid::Uuid;
 
 #[macro_export]
 macro_rules! store_current_chat_session {
@@ -62,7 +62,7 @@ impl From<ChatSession> for UIChatSession {
     }
 }
 
-async fn get_from_db() -> Vec<UIChatSession> {
+pub async fn get_from_db() -> Vec<UIChatSession> {
     let entries = match db::entry::select_all(DB_TABLE).await {
         Ok(items) => items
             .into_iter()
@@ -96,6 +96,12 @@ pub fn init(ui: &AppWindow) {
     });
 
     let ui_handle = ui.as_weak();
+    ui.global::<Logic>().on_load_chat_session(move |uuid| {
+        let ui = ui_handle.unwrap();
+        load_entry_db(&ui, uuid);
+    });
+
+    let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_send_question(move |question| {
         let ui = ui_handle.unwrap();
         todo!();
@@ -126,9 +132,47 @@ pub fn init(ui: &AppWindow) {
         store_current_chat_session_histories!(ui).set_row_data(last_index, last_entry);
         ui.global::<Logic>().invoke_send_question(question);
     });
+
+    let ui_handle = ui.as_weak();
+    ui.global::<Logic>().on_remove_last_question(move || {
+        let ui = ui_handle.unwrap();
+
+        let mut last_index = store_current_chat_session_histories!(ui).row_count();
+        if last_index <= 0 {
+            return;
+        }
+        last_index -= 1;
+
+        store_current_chat_session_histories!(ui).remove(last_index);
+        update_db_entry(&ui);
+    });
 }
 
-fn add_entry(ui: &AppWindow) {
+fn load_entry_db(ui: &AppWindow, uuid: SharedString) {
+    let ui = ui.as_weak();
+
+    tokio::spawn(async move {
+        match db::entry::select(DB_TABLE, &uuid).await {
+            Ok(item) => match serde_json::from_str::<ChatSession>(&item.data) {
+                Ok(session) => {
+                    ui.unwrap()
+                        .global::<Store>()
+                        .set_current_chat_session(session.into());
+                }
+                Err(e) => toast::async_toast_warn(
+                    ui,
+                    format!("{}. {}: {e:?}", tr("Load entry failed"), tr("Reason")),
+                ),
+            },
+            Err(e) => toast::async_toast_warn(
+                ui,
+                format!("{}. {}: {e:?}", tr("Load entry failed"), tr("Reason")),
+            ),
+        };
+    });
+}
+
+fn add_db_entry(ui: &AppWindow) {
     let entry_db: ChatSession = store_current_chat_session!(ui).into();
 
     let ui = ui.as_weak();
@@ -144,7 +188,7 @@ fn add_entry(ui: &AppWindow) {
     });
 }
 
-fn update_entry(ui: &AppWindow) {
+fn update_db_entry(ui: &AppWindow) {
     let entry_db: ChatSession = store_current_chat_session!(ui).into();
 
     let ui = ui.as_weak();
@@ -160,7 +204,7 @@ fn update_entry(ui: &AppWindow) {
     });
 }
 
-fn delete_entry(ui: &AppWindow, uuid: SharedString) {
+pub fn delete_db_entry(ui: &AppWindow, uuid: SharedString) {
     let ui = ui.as_weak();
     tokio::spawn(async move {
         match db::entry::delete(DB_TABLE, uuid.as_str()).await {

@@ -137,6 +137,22 @@ export global Store {
         // },
     ];
 
+    in-out property <[ChatHistory]> chat-histories-cache:[];
+    in-out property <[ChatHistory]> chat-histories: [
+        // {
+        //     uuid: "chat-uuid-1",
+        //     checked: false,
+        //     time: "10-09:23:10",
+        //     summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        // },
+        // {
+        //     uuid: "chat-uuid-2",
+        //     checked: true,
+        //     time: "10-09:23:20",
+        //     summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        // },
+    ];
+
     in-out property <ChatSession> current-chat-session: {
         uuid: "chat-uuid-1",
         prompt: "You are a chat bot",
@@ -152,20 +168,5 @@ export global Store {
         ]
     };
 
-    in-out property <[ChatHistory]> chat-histories-cache;
-    in-out property <[ChatHistory]> chat-histories: [
-        {
-            uuid: "chat-uuid-1",
-            checked: false,
-            time: "10-09:23:10",
-            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-        },
-        {
-            uuid: "chat-uuid-2",
-            checked: true,
-            time: "10-09:23:20",
-            summary: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-        },
-    ];
     //////////////////////////////// Logic End  ////////////////////////////////
 }

@@ -56,7 +56,7 @@ component HistoryList inherits VerticalLayout {
         padding: Theme.padding * 2;
         alignment: !is-edit ? LayoutAlignment.end : LayoutAlignment.space-between;
 
-        if !is-edit: ConfirmBtn {
+        if !is-edit && Store.chat-histories-cache.length > 0: ConfirmBtn {
             text: Logic.tr("Edit");
             icon: Icons.edit;
 
@@ -112,6 +112,7 @@ export component History inherits VerticalLayout {
 
     init => {
         search.focus();
+        Logic.chat-histories-init();
     }
 
     search := Search {

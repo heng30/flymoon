@@ -1,6 +1,4 @@
-// use super::{toast, tr::tr};
-// use crate::db;
-// use crate::db::def::ChatSession;
+use super::chat_session;
 use crate::slint_generatedAppWindow::{AppWindow, ChatHistory as UIChatHistory, Logic, Store};
 use slint::{ComponentHandle, Model, VecModel};
 
@@ -15,23 +13,48 @@ macro_rules! store_chat_history_entries {
     };
 }
 
-// impl From<ChatSession> for UIChatHistoryEntry {
-//     fn from(entry: ChatHistoryEntry) -> Self {
-//         UIChatHistoryEntry {
-//             uuid: entry.uuid.into(),
-//             time: entry.time.into(),
-//             summary: entry.history.into(),
-//         }
-//     }
-// }
-//
+#[macro_export]
+macro_rules! store_chat_history_entries_cache {
+    ($ui:expr) => {
+        $ui.global::<Store>()
+            .get_chat_histories_cache()
+            .as_any()
+            .downcast_ref::<VecModel<UIChatHistory>>()
+            .expect("We know we set a VecModel earlier")
+    };
+}
+
+fn chat_history_init(ui: &AppWindow) {
+    store_chat_history_entries!(ui).set_vec(vec![]);
+    store_chat_history_entries_cache!(ui).set_vec(vec![]);
+}
 
 pub fn init(ui: &AppWindow) {
+    chat_history_init(ui);
+
+    let ui_handle = ui.as_weak();
+    ui.global::<Logic>().on_chat_histories_init(move || {
+        let ui = ui_handle.clone();
+
+        tokio::spawn(async move {
+            let entries = chat_session::get_from_db().await;
+
+            let entries = entries
+                .into_iter()
+                .map(|entry| entry.into())
+                .collect::<Vec<_>>();
+
+            _ = slint::invoke_from_event_loop(move || {
+                store_chat_history_entries!(ui.unwrap()).set_vec(entries.clone());
+                store_chat_history_entries_cache!(ui.unwrap()).set_vec(entries);
+            });
+        });
+    });
+
     let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_chat_history_load(move |uuid| {
         let ui = ui_handle.unwrap();
-
-        todo!();
+        ui.global::<Logic>().invoke_chat_history_load(uuid);
     });
 
     let ui_handle = ui.as_weak();
@@ -64,6 +87,7 @@ pub fn init(ui: &AppWindow) {
             for (index, entry) in store_chat_history_entries!(ui).iter().enumerate() {
                 if entry.checked {
                     remove_indexs.push(index);
+                    chat_session::delete_db_entry(&ui, entry.uuid);
                 }
             }
 
@@ -77,10 +101,21 @@ pub fn init(ui: &AppWindow) {
         .on_chat_histories_update_list(move |text| {
             let ui = ui_handle.unwrap();
 
-            todo!();
-            // for (index, entry) in store_chat_history_entries!(ui).iter().enumerate() {
-            //     entry.checked = false;
-            //     store_chat_history_entries!(ui).set_row_data(index, entry);
-            // }
+            if text.is_empty() {
+                let entries = store_chat_history_entries_cache!(ui)
+                    .iter()
+                    .collect::<Vec<_>>();
+
+                store_chat_history_entries!(ui).set_vec(entries);
+                return;
+            }
+
+            let entries = store_chat_history_entries!(ui)
+                .iter()
+                .filter(|entry| entry.summary.contains(text.as_str()))
+                .map(|entry| entry.into())
+                .collect::<Vec<_>>();
+
+            store_chat_history_entries!(ui).set_vec(entries);
         });
 }

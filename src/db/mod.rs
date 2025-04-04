@@ -8,4 +8,8 @@ pub async fn init(db_path: &str) {
     entry::new(def::PROMPT_TABLE)
         .await
         .expect("prompt table failed");
+
+    entry::new(def::CHAT_SESSION_TABLE)
+        .await
+        .expect("chat session table failed");
 }

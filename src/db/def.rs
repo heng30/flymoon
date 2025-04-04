@@ -1,6 +1,10 @@
+use crate::slint_generatedAppWindow::{
+    ChatEntry as UIChatEntry, ChatHistory, ChatSession as UIChatSession,
+    PromptEntry as UIPromptEntry,
+};
 use serde::{Deserialize, Serialize};
+use slint::Model;
 
-use crate::slint_generatedAppWindow::{ChatEntry as UIChatEntry, PromptEntry as UIPromptEntry};
 pub const PROMPT_TABLE: &str = "prompt";
 pub const CHAT_SESSION_TABLE: &str = "chat_session";
 
@@ -66,49 +70,13 @@ pub struct ChatSession {
     pub histories: Vec<ChatEntry>,
 }
 
-// use serde::{Deserialize, Deserializer, Serialize, Serializer};
-// use serde_with::{serde_as, DeserializeAs, SerializeAs};
-
-// #[serde_as]
-// #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-// pub struct HistoryEntry {
-//     pub uuid: String,
-//     pub network: String,
-//     pub hash: String,
-//     pub balance: String,
-//     pub time: String,
-
-//     #[serde_as(as = "TranStatus")]
-//     pub status: TransactionTileStatus,
-// }
-
-// struct TranStatus;
-// impl SerializeAs<TransactionTileStatus> for TranStatus {
-//     fn serialize_as<S>(source: &TransactionTileStatus, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         let status = match source {
-//             TransactionTileStatus::Success => "Success",
-//             TransactionTileStatus::Pending => "Pending",
-//             _ => "Error",
-//         };
-
-//         serializer.serialize_str(status)
-//     }
-// }
-
-// impl<'de> DeserializeAs<'de, TransactionTileStatus> for TranStatus {
-//     fn deserialize_as<D>(deserializer: D) -> Result<TransactionTileStatus, D::Error>
-//     where
-//         D: Deserializer<'de>,
-//     {
-//         let status = String::deserialize(deserializer)?;
-//         let status = match status.as_str() {
-//             "Success" => TransactionTileStatus::Success,
-//             "Pending" => TransactionTileStatus::Pending,
-//             _ => TransactionTileStatus::Error,
-//         };
-//         Ok(status)
-//     }
-// }
+impl From<UIChatSession> for ChatHistory {
+    fn from(entry: UIChatSession) -> Self {
+        ChatHistory {
+            uuid: entry.uuid,
+            time: entry.time,
+            summary: entry.histories.row_data(0).unwrap_or_default().user,
+            ..Default::default()
+        }
+    }
+}

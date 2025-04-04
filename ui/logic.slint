@@ -47,20 +47,24 @@ export global Logic {
     //////////////////////////////// Logic Start  ////////////////////////////////
 
 
-    callback prompt-update(promt: PromptEntry);
-    callback prompt-delete(uuid: string);
     callback prompt-popup(text: string);
+    callback prompt-delete(uuid: string);
+    callback prompt-update(promt: PromptEntry);
 
     callback new-chat-session();
-    callback send-question(question: string);
+    callback load-chat-session(uuid: string);
+
     callback stop-question();
     callback retry-last-question();
+    callback remove-last-question();
+    callback send-question(question: string);
 
     callback chat-history-load(uuid: string);
+    callback chat-histories-init();
     callback chat-histories-select-all();
     callback chat-histories-cancel-select-all();
-    callback chat-histories-update-list(text: string);
     callback chat-histories-remove-selected();
+    callback chat-histories-update-list(text: string);
 
     //////////////////////////////// Logic End  ////////////////////////////////
 }
