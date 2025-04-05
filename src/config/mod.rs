@@ -1,6 +1,5 @@
 mod conf;
-mod data;
-
+pub mod data;
 pub use conf::{all, app_name, init, is_first_run, model, preference, save};
 
 #[cfg(feature = "database")]

@@ -29,6 +29,7 @@ tokio = { version = "1.38", features = ["full"] }
 serde = { version = "1.0", features = ["serde_derive"] }
 image = { version = "0.24", optional = true }
 qrcode = { version = "0.13", optional = true }
+bot = { version = "0.1", path = "./libs/bot", optional = true }
 sqldb = { version = "0.1", path = "./libs/sqldb", optional = true }
 cutil = { version = "0.1", path = "./libs/cutil", features = [
   "default",
@@ -45,9 +46,9 @@ android_logger = "0.13"
 terminal-clipboard = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-console_log = { version = "1.0", features = ["color"] }
 wasm-bindgen = { version = "0.2" }
 getrandom = { version = "0.2", features = ["js"] }
+console_log = { version = "1.0", features = ["color"] }
 
 [build-dependencies]
 cmd_lib = "1.9"
@@ -57,20 +58,21 @@ slint-build = "1.10"
 embed-resource = "2.4"
 
 [profile.release]
-opt-level = "z"
-lto = true
 codegen-units = 1
+opt-level = "z"
 panic = "abort"
 strip = true
+lto = true
 
 [features]
 default = []
 web = []
-desktop = ["database"]
+desktop = ["database", "bot"]
 android = ["cutil/native-tls-vendored", "slint/backend-android-activity-06"]
+full = ["desktop", "qrcode", "database", "bot", "cutil/full"]
 qrcode = ["dep:image", "dep:qrcode"]
 database = ["dep:sqldb"]
-full = ["desktop", "qrcode", "database", "cutil/full"]
+bot = ["dep:bot"]
 
 [lib]
 path = "src/lib.rs"

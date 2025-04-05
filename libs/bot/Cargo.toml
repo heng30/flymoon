@@ -1,0 +1,16 @@
+[package]
+name = "bot"
+version = "0.1.0"
+edition = "2021"
+descriptions = "A chat bot for OpenAI compatible API"
+
+[dependencies]
+log = "0.4"
+serde_json = "1.0"
+tokio-stream = "0.1"
+serde = { version = "1", features = ["serde_derive"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+
+[dev-dependencies]
+env_logger = "0.9"
+tokio = { version = "1", features = ["full"] }
