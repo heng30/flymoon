@@ -1,4 +1,4 @@
-import { Theme, Logic, Store, Icons, Util } from "../../def.slint";
+import { Theme, Logic, Store, Icons, Util, TabIndex } from "../../def.slint";
 import { Divider, ElevatedBtn, IconBtn, TextBtn } from "../../../base/widgets.slint";
 
 export component Input inherits Rectangle {
@@ -24,7 +24,6 @@ export component Input inherits Rectangle {
         if (root.question.is-empty) {
             return;
         }
-
         Logic.send-question(question);
         root.question = "";
         ensure-show-cursor();
@@ -34,142 +33,138 @@ export component Input inherits Rectangle {
         te.focus();
     }
 
-    fscope := FocusScope {
-        key-pressed(event) => {
-            if (event.text == Key.Control) {
-                is-ctrl-pressed = true;
-            }
-            if (is-ctrl-pressed) {
-                if (event.text == Key.Return) {
-                    send-question();
-                } else if (event.text == "r") {
-                    Logic.retry-last-question();
-                } else if (event.text == "n") {
-                    Logic.new-chat-session();
-                } else if (event.text == "s") {
-                    Logic.stop-question();
-                } else if (event.text == "q") {
-                    Util.close-window();
-                }
-            }
-            reject
-        }
+    Rectangle {
+        border-radius: Theme.border-radius * 4;
+        border-width: te.has-focus ? 2px : 1px;
+        border-color: te.has-focus ? Theme.focus-color : Theme.disabled-color;
+        background: Theme.base-background;
 
-        key-released(event) => {
-            if (event.text == Key.Control) {
-                is-ctrl-pressed = false;
-            }
-            reject
-        }
+        VerticalLayout {
+            Rectangle {
+                flick := Flickable {
+                    y: Theme.padding * 2;
 
-        Rectangle {
-            border-radius: Theme.border-radius * 4;
-            border-width: te.has-focus ? 2px : 1px;
-            border-color: te.has-focus ? Theme.focus-color : Theme.disabled-color;
-            background: Theme.base-background;
+                    VerticalLayout {
+                        padding: Theme.padding * 2;
 
-            VerticalLayout {
-                Rectangle {
-                    flick := Flickable {
-                        y: Theme.padding * 2;
+                        te := TextInput {
+                            single-line: false;
+                            wrap: word-wrap;
+                            color: Theme.regular-text-color;
+                            font-size: Theme.default-font-size;
 
-                        VerticalLayout {
-                            padding: Theme.padding * 2;
+                            edited => {
+                                Logic.prompt-popup(te.text);
+                                ensure-show-cursor();
+                            }
 
-                            te := TextInput {
-                                single-line: false;
-                                wrap: word-wrap;
-                                color: Theme.regular-text-color;
-                                font-size: Theme.default-font-size;
-
-                                edited => {
-                                    Logic.prompt-popup(te.text);
-                                    ensure-show-cursor();
+                            key-pressed(event) => {
+                                if (event.modifiers.control) {
+                                    if (event.text == Key.Return) {
+                                        send-question();
+                                        return accept;
+                                    } else if (event.text == "r") {
+                                        Logic.retry-question(Store.current-chat-session.histories.length - 1);
+                                        return accept;
+                                    } else if (event.text == "n") {
+                                        Logic.new-chat-session();
+                                        return accept;
+                                    } else if (event.text == "s") {
+                                        Logic.stop-question();
+                                        return accept;
+                                    } else if (event.text == "h") {
+                                        Logic.switch-tab(TabIndex.History);
+                                        return accept;
+                                    } else if (event.text == "q") {
+                                        Util.close-window();
+                                        return accept;
+                                    }
                                 }
+                                return reject;
                             }
                         }
                     }
+                }
 
-                    Text {
-                        x: Theme.padding * 2;
-                        y: Theme.padding * 4;
-                        visible: te.text == "";
-                        text: "Ctrl+Enter";
-                        color: Theme.placeholder-text-color;
+                Text {
+                    x: Theme.padding * 2;
+                    y: Theme.padding * 4;
+                    visible: te.text == "";
+                    text: "Ctrl+Enter";
+                    color: Theme.placeholder-text-color;
+                }
+            }
+
+            HorizontalLayout {
+                height: Theme.icon-size * 2;
+                alignment: LayoutAlignment.space-between;
+
+                HorizontalLayout {
+                    padding: Theme.padding;
+                    padding-left: Theme.padding * 2;
+                    alignment: LayoutAlignment.start;
+
+                    TextBtn {
+                        border-color: Store.enabled-network ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
+                        border-width: self.has-hover || Store.enabled-network ? 2px : 1px;
+                        border-radius: Theme.border-radius * 4;
+                        bg-color: Theme.hover-background;
+                        icon: Icons.network;
+                        colorize: self.border-color;
+                        text: Logic.tr("Network");
+
+                        clicked => {
+                            Store.enabled-network = !Store.enabled-network;
+                        }
                     }
                 }
 
                 HorizontalLayout {
-                    height: Theme.icon-size * 2;
-                    alignment: LayoutAlignment.space-between;
+                    alignment: LayoutAlignment.end;
+                    spacing: Theme.spacing * 4;
 
-                    HorizontalLayout {
-                        padding: Theme.padding;
-                        padding-left: Theme.padding * 2;
-                        alignment: LayoutAlignment.start;
+                    IconBtn {
+                        icon: Icons.new;
+                        tip: Logic.tr("new chat");
+                        is-show-tip: true;
 
-                        TextBtn {
-                            border-color: Store.enabled-network ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
-                            border-width: self.has-hover || Store.enabled-network ? 2px : 1px;
-                            border-radius: Theme.border-radius * 4;
-                            bg-color: Theme.hover-background;
-                            icon: Icons.network;
-                            colorize: self.border-color;
-                            text: Logic.tr("Network");
+                        clicked => {
+                            Logic.new-chat-session();
+                        }
+                    }
 
-                            clicked => {
-                                Store.enabled-network = !Store.enabled-network;
-                            }
+                    IconBtn {
+                        icon: Icons.retry;
+                        tip: Logic.tr("retry");
+                        is-show-tip: true;
+
+                        clicked => {
+                            Logic.retry-question(Store.current-chat-session.histories.length - 1);
+                        }
+                    }
+
+                    IconBtn {
+                        icon: Icons.stop;
+                        tip: Logic.tr("stop");
+                        is-show-tip: true;
+
+                        clicked => {
+                            Logic.stop-question();
                         }
                     }
 
                     HorizontalLayout {
-                        alignment: LayoutAlignment.end;
-                        spacing: Theme.spacing * 4;
+                        padding-left: Theme.padding * 4;
+                        padding-right: Theme.padding * 2;
 
-                        IconBtn {
-                            icon: Icons.new;
-                            tip: Logic.tr("new chat");
-                            is-show-tip: true;
-
-                            clicked => {
-                                Logic.new-chat-session();
-                            }
-                        }
-
-                        IconBtn {
-                            icon: Icons.retry;
-                            tip: Logic.tr("retry");
-                            is-show-tip: true;
+                        ElevatedBtn {
+                            enable: te.text != "";
+                            icon: Icons.send2;
+                            colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
+                            icon-rotation-angle: -90deg;
 
                             clicked => {
-                                Logic.retry-last-question();
-                            }
-                        }
-
-                        IconBtn {
-                            icon: Icons.stop;
-                            tip: Logic.tr("stop");
-                            is-show-tip: true;
-
-                            clicked => {
-                                Logic.stop-question();
-                            }
-                        }
-
-                        HorizontalLayout {
-                            padding-left: Theme.padding * 4;
-                            padding-right: Theme.padding * 2;
-
-                            ElevatedBtn {
-                                enable: te.text != "";
-                                icon: Icons.send2;
-                                colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
-                                icon-rotation-angle: -90deg;
-
-                                clicked => {
-                                    root.send-question();
-                                }
+                                root.send-question();
                             }
                         }
                     }

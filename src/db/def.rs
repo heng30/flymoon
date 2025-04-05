@@ -58,6 +58,7 @@ impl From<ChatEntry> for UIChatEntry {
         UIChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
+            ..Default::default()
         }
     }
 }

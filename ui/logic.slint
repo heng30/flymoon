@@ -55,8 +55,9 @@ export global Logic {
     callback load-chat-session(uuid: string);
 
     callback stop-question();
-    callback retry-last-question();
-    callback remove-last-question();
+    callback retry-question(index: int);
+    callback remove-question(index: int);
+    callback toggle-edit-question(index: int);
     callback send-question(question: string);
 
     callback chat-history-load(uuid: string);

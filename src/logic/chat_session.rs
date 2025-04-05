@@ -114,37 +114,44 @@ pub fn init(ui: &AppWindow) {
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_retry_last_question(move || {
+    ui.global::<Logic>().on_retry_question(move |index| {
         let ui = ui_handle.unwrap();
+        let index = index as usize;
 
-        let mut last_index = store_current_chat_session_histories!(ui).row_count();
-        if last_index <= 0 {
-            return;
+        let rows = store_current_chat_session_histories!(ui).row_count();
+
+        // remove entries from [index + 1, rows)
+        for offset in 0..(rows - index - 1) {
+            store_current_chat_session_histories!(ui).remove(rows - offset - 1);
         }
-        last_index -= 1;
 
-        let mut last_entry = store_current_chat_session_histories!(ui)
-            .row_data(last_index)
+        let mut entry = store_current_chat_session_histories!(ui)
+            .row_data(index)
             .unwrap();
 
-        let question = last_entry.user.clone();
-        last_entry.bot = SharedString::default();
-        store_current_chat_session_histories!(ui).set_row_data(last_index, last_entry);
+        let question = entry.user.clone();
+        entry.bot = SharedString::default();
+        store_current_chat_session_histories!(ui).set_row_data(index, entry);
         ui.global::<Logic>().invoke_send_question(question);
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_remove_last_question(move || {
+    ui.global::<Logic>().on_remove_question(move |index| {
         let ui = ui_handle.unwrap();
-
-        let mut last_index = store_current_chat_session_histories!(ui).row_count();
-        if last_index <= 0 {
-            return;
-        }
-        last_index -= 1;
-
-        store_current_chat_session_histories!(ui).remove(last_index);
+        store_current_chat_session_histories!(ui).remove(index as usize);
         update_db_entry(&ui);
+    });
+
+    let ui_handle = ui.as_weak();
+    ui.global::<Logic>().on_toggle_edit_question(move |index| {
+        let ui = ui_handle.unwrap();
+        let index = index as usize;
+
+        let mut entry = store_current_chat_session_histories!(ui)
+            .row_data(index)
+            .unwrap();
+        entry.is_user_edit = !entry.is_user_edit;
+        store_current_chat_session_histories!(ui).set_row_data(index, entry);
     });
 }
 

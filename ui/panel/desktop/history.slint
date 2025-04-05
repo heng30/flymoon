@@ -1,5 +1,5 @@
 import { ListView } from "std-widgets.slint";
-import { Theme, Icons, Store, Util, Logic } from "../def.slint";
+import { Theme, Icons, Store, Util, Logic, TabIndex } from "../def.slint";
 import { SettingIconsBar }  from "../setting/desktop.slint";
 import { CheckBtn, ConfirmDialogSetting, CenterLayout, NoMessageImg } from "../../base/widgets.slint";
 
@@ -8,7 +8,7 @@ import { Search, Label, ConfirmBtn, CancelBtn } from "../../base/widgets.slint";
 component HistoryList inherits VerticalLayout {
     spacing: Theme.spacing * 2;
 
-    private property <bool> is-edit;
+    in-out property <bool> is-edit;
 
     ListView {
         for entry[index] in Store.chat-histories: Rectangle {
@@ -39,7 +39,12 @@ component HistoryList inherits VerticalLayout {
                     }
 
                     Label {
-                        width: self.preferred-width + Theme.padding * 2;
+                        width: Theme.default-font-size * 2;
+                        text: index;
+                    }
+
+                    Label {
+                        width: self.preferred-width + Theme.padding * 4;
                         text: entry.time;
                     }
 
@@ -123,6 +128,12 @@ export component History inherits VerticalLayout {
         edited(text) => {
             Logic.chat-histories-update-list(text);
         }
+
+        key-pressed(event) => {
+            if (event.modifiers.control && event.text == "h") {
+                Logic.switch-tab(TabIndex.Home);
+            }
+        }
     }
 
     Rectangle {
@@ -133,6 +144,10 @@ export component History inherits VerticalLayout {
             }
         }
 
-        HistoryList { }
+        HistoryList {
+            changed is-edit => {
+                search.focus();
+            }
+        }
     }
 }
