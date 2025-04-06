@@ -20,5 +20,21 @@ export component Chat inherits VerticalLayout {
         }
     }
 
-    input := Input { }
+    input := Input {
+        scroll-up => {
+            session.scroll-up();
+        }
+
+        scroll-down => {
+            session.scroll-down();
+        }
+
+        scroll-to-top => {
+            session.scroll-to-top();
+        }
+
+        scroll-to-bottom => {
+            session.scroll-to-bottom();
+        }
+    }
 }

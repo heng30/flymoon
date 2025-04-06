@@ -117,6 +117,44 @@ component User inherits Rectangle {
 }
 
 export component Session inherits Rectangle {
+    public function scroll-to-top() {
+        lv.viewport-y = 0;
+    }
+
+    public function scroll-to-bottom() {
+        lv.viewport-y = Math.min(0, -lv.viewport-height + lv.visible-height);
+    }
+
+    public function scroll-up() {
+        lv.viewport-y = Math.min(0, lv.viewport-y + lv.visible-height / 4);
+    }
+
+    public function scroll-down() {
+        lv.viewport-y = Math.min(0, Math.max(lv.viewport-y - lv.visible-height / 4, -lv.viewport-height + lv.visible-height));
+    }
+
+    public function jump-to-viewport-y(vy: length) {
+        lv.viewport-height = Math.clamp(vy, 0, -vy + lv.visible-height);
+    }
+
+    public function is-near-bottom() -> bool {
+        lv.viewport-y <= -lv.viewport-height + (lv.visible-height * 1.2);
+    }
+
+    public function scroll-auto() {
+        if (is-near-bottom()) {
+            scroll-to-bottom();
+        }
+    }
+
+    Timer {
+        interval: 100ms;
+        running: Store.is-chatting;
+        triggered() => {
+            scroll-auto();
+        }
+    }
+
     if Store.current-chat-session.histories.length == 0: CenterLayout {
         NoDataImg {
             width: Math.min(root.width * 0.8, 460px);

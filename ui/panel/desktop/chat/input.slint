@@ -5,6 +5,12 @@ export component Input inherits Rectangle {
     in-out property question <=> te.text;
 
     private property <bool> is-ctrl-pressed;
+    private property <bool> scroll-to-bottom-flag;
+
+    callback scroll-up;
+    callback scroll-down;
+    callback scroll-to-top;
+    callback scroll-to-bottom;
 
     height: 120px;
     forward-focus: te;
@@ -27,6 +33,16 @@ export component Input inherits Rectangle {
         Logic.send-question(question);
         root.question = "";
         ensure-show-cursor();
+        scroll-to-bottom-flag = true;
+    }
+
+    Timer {
+        interval: 200ms;
+        running: scroll-to-bottom-flag;
+        triggered() => {
+            scroll-to-bottom();
+            scroll-to-bottom-flag = false;
+        }
     }
 
     init => {
@@ -65,6 +81,7 @@ export component Input inherits Rectangle {
                                         return accept;
                                     } else if (event.text == "r") {
                                         Logic.retry-question(Store.current-chat-session.histories.length - 1, "");
+                                        scroll-to-bottom();
                                         return accept;
                                     } else if (event.text == "n") {
                                         Logic.new-chat-session();
@@ -77,6 +94,18 @@ export component Input inherits Rectangle {
                                         return accept;
                                     } else if (event.text == "q") {
                                         Util.close-window();
+                                        return accept;
+                                    } else if (event.text == "t") {
+                                        root.scroll-to-top();
+                                        return accept;
+                                    } else if (event.text == "b") {
+                                        root.scroll-to-bottom();
+                                        return accept;
+                                    } else if (event.text == "j") {
+                                        root.scroll-down();
+                                        return accept;
+                                    } else if (event.text == "k") {
+                                        root.scroll-up();
                                         return accept;
                                     }
                                 }
@@ -140,6 +169,7 @@ export component Input inherits Rectangle {
 
                         clicked => {
                             Logic.retry-question(Store.current-chat-session.histories.length - 1, "");
+                            scroll-to-bottom();
                         }
                     }
 

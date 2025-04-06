@@ -111,7 +111,7 @@ pub fn init(ui: &AppWindow) {
                 return;
             }
 
-            let entries = store_chat_history_entries!(ui)
+            let entries = store_chat_history_entries_cache!(ui)
                 .iter()
                 .filter(|entry| {
                     entry

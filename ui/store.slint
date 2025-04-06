@@ -109,8 +109,8 @@ export global Store {
 
     //////////////////////////////// Logic Start ////////////////////////////////
 
-    in-out property <bool> enabled-network;
     in-out property <bool> is-chatting;
+    in-out property <bool> enabled-network;
 
     in-out property <[PromptEntry]> input-prompt-list-entries: [
         // {
@@ -172,6 +172,30 @@ export global Store {
         uuid: "chat-uuid-1",
         prompt: "You are a chat bot",
         histories: [
+            {
+                user: "hi",
+                bot: "how are you?",
+            },
+            {
+                user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+                bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+            },
+            {
+                user: "hi",
+                bot: "how are you?",
+            },
+            {
+                user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+                bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+            },
+            {
+                user: "hi",
+                bot: "how are you?",
+            },
+            {
+                user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+                bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+            },
             {
                 user: "hi",
                 bot: "how are you?",

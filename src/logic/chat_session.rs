@@ -253,6 +253,8 @@ fn stream_text(id: u64, item: StreamTextItem) {
 
             entry.bot.push_str(&item.text.unwrap());
             store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
+            // ui.global::<Logic>()
+            //     .invoke_notify_chat_session_auto_scroll();
         }
     });
 }
