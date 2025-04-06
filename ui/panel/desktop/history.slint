@@ -18,6 +18,7 @@ component HistoryList inherits VerticalLayout {
                 mouse-cursor: self.has-hover && !is-edit ? MouseCursor.pointer : MouseCursor.default;
                 clicked => {
                     if (!is-edit) {
+                        Logic.switch-tab(TabIndex.Home);
                         Logic.chat-history-load(entry.uuid);
                     }
                 }
@@ -40,7 +41,7 @@ component HistoryList inherits VerticalLayout {
 
                     Label {
                         width: Theme.default-font-size * 2;
-                        text: index;
+                        text: index + 1;
                     }
 
                     Label {
@@ -61,7 +62,7 @@ component HistoryList inherits VerticalLayout {
         padding: Theme.padding * 2;
         alignment: !is-edit ? LayoutAlignment.end : LayoutAlignment.space-between;
 
-        if !is-edit && Store.chat-histories-cache.length > 0: ConfirmBtn {
+        if !is-edit && Store.chat-histories.length > 0: ConfirmBtn {
             text: Logic.tr("Edit");
             icon: Icons.edit;
 

@@ -64,7 +64,7 @@ export component Input inherits Rectangle {
                                         send-question();
                                         return accept;
                                     } else if (event.text == "r") {
-                                        Logic.retry-question(Store.current-chat-session.histories.length - 1);
+                                        Logic.retry-question(Store.current-chat-session.histories.length - 1, "");
                                         return accept;
                                     } else if (event.text == "n") {
                                         Logic.new-chat-session();
@@ -139,17 +139,7 @@ export component Input inherits Rectangle {
                         is-show-tip: true;
 
                         clicked => {
-                            Logic.retry-question(Store.current-chat-session.histories.length - 1);
-                        }
-                    }
-
-                    IconBtn {
-                        icon: Icons.stop;
-                        tip: Logic.tr("stop");
-                        is-show-tip: true;
-
-                        clicked => {
-                            Logic.stop-question();
+                            Logic.retry-question(Store.current-chat-session.histories.length - 1, "");
                         }
                     }
 
@@ -157,7 +147,7 @@ export component Input inherits Rectangle {
                         padding-left: Theme.padding * 4;
                         padding-right: Theme.padding * 2;
 
-                        ElevatedBtn {
+                        if !Store.is_chatting: ElevatedBtn {
                             enable: te.text != "";
                             icon: Icons.send2;
                             colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
@@ -165,6 +155,16 @@ export component Input inherits Rectangle {
 
                             clicked => {
                                 root.send-question();
+                            }
+                        }
+
+                        if Store.is_chatting: ElevatedBtn {
+                            icon: Icons.stop;
+                            colorize: Theme.thirdly-brand-color;
+
+                            clicked => {
+                                Store.is-chatting = false;
+                                Logic.stop-question();
                             }
                         }
                     }

@@ -54,7 +54,7 @@ pub fn init(ui: &AppWindow) {
     let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_chat_history_load(move |uuid| {
         let ui = ui_handle.unwrap();
-        ui.global::<Logic>().invoke_chat_history_load(uuid);
+        ui.global::<Logic>().invoke_load_chat_session(uuid);
     });
 
     let ui_handle = ui.as_weak();

@@ -1,4 +1,4 @@
-use log::{debug, warn};
+use log::debug;
 use reqwest::header::{ACCEPT, AUTHORIZATION, CACHE_CONTROL, CONTENT_TYPE, HeaderMap};
 use std::sync::mpsc;
 use std::time::Duration;
@@ -40,9 +40,9 @@ pub mod response {
 
     #[derive(Default, Clone, Debug)]
     pub struct StreamTextItem {
+        pub id: u64,
         pub text: Option<String>,
         pub etext: Option<String>,
-        pub uuid: String,
         pub finished: bool,
     }
 
@@ -132,7 +132,7 @@ impl Chat {
 
     pub async fn start(
         self,
-        uuid: String,
+        id: u64,
         cb: impl Fn(response::StreamTextItem),
     ) -> Result<(), Box<dyn std::error::Error>> {
         let headers = self.headers();
@@ -168,7 +168,7 @@ impl Chat {
                         if let Some(estr) = err.error.get("message") {
                             cb(response::StreamTextItem {
                                 etext: Some(estr.clone()),
-                                uuid: uuid.clone(),
+                                id,
                                 ..Default::default()
                             });
                             debug!("{}", estr);
@@ -192,12 +192,12 @@ impl Chat {
                                 let choice = &chunk.choices[0];
                                 if choice.finish_reason.is_some() {
                                     cb(response::StreamTextItem {
-                                        uuid: uuid.clone(),
+                                        id,
                                         finished: true,
                                         ..Default::default()
                                     });
 
-                                    println!();
+                                    // println!();
                                     debug!(
                                         "finish_reason: {}",
                                         choice.finish_reason.as_ref().unwrap()
@@ -208,10 +208,10 @@ impl Chat {
                                 if choice.delta.contains_key("content") {
                                     cb(response::StreamTextItem {
                                         text: Some(choice.delta["content"].clone()),
-                                        uuid: uuid.clone(),
+                                        id,
                                         ..Default::default()
                                     });
-                                    print!("{}", choice.delta["content"]);
+                                    // print!("{}", choice.delta["content"]);
                                 } else if choice.delta.contains_key("role") {
                                     debug!("role: {}", choice.delta["role"]);
                                     continue;
@@ -220,7 +220,7 @@ impl Chat {
                             Err(e) => {
                                 cb(response::StreamTextItem {
                                     etext: Some(e.to_string()),
-                                    uuid: uuid.clone(),
+                                    id,
                                     ..Default::default()
                                 });
 
@@ -231,12 +231,9 @@ impl Chat {
                         }
                     }
                 }
-                Some(Err(e)) => {
-                    warn!("{}", e);
-                    break;
-                }
+                Some(Err(_)) => (),
                 None => {
-                    println!();
+                    // println!();
                     break;
                 }
             }

@@ -35,6 +35,6 @@ mod tests {
             _ = stop_tx.send(());
         });
 
-        _ = chat.start("uuid".to_string(), stream_text).await;
+        _ = chat.start(1, stream_text).await;
     }
 }

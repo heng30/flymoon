@@ -67,7 +67,7 @@ lto = true
 [features]
 default = []
 web = []
-desktop = ["database", "bot"]
+desktop = ["database", "bot", "cutil/time"]
 android = ["cutil/native-tls-vendored", "slint/backend-android-activity-06"]
 full = ["desktop", "qrcode", "database", "bot", "cutil/full"]
 qrcode = ["dep:image", "dep:qrcode"]

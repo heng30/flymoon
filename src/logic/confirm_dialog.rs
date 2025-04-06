@@ -21,21 +21,6 @@ pub fn init(ui: &AppWindow) {
                 "chat-histories-remove-selected" => {
                     ui.global::<Logic>().invoke_chat_histories_remove_selected();
                 }
-                "retry-question" => {
-                    ui.global::<Logic>()
-                        .invoke_retry_question(user_data.parse::<i32>().unwrap());
-                }
-                "edit-question" => {
-                    ui.global::<Logic>()
-                        .invoke_toggle_edit_question(user_data.parse::<i32>().unwrap());
-                }
-                "remove-question" => {
-                    ui.global::<Logic>()
-                        .invoke_remove_question(user_data.parse::<i32>().unwrap());
-                }
-                "copy-question" => {
-                    ui.global::<Logic>().invoke_copy_to_clipboard(user_data);
-                }
                 _ => (),
             }
         });

@@ -5,16 +5,27 @@ use crate::slint_generatedAppWindow::{
 };
 use crate::{
     config::{data::Model as SettingModel, model as setting_chat_model},
-    db,
+    db, toast_warn,
 };
 use bot::openai::{
     Chat,
     request::{APIConfig, HistoryChat},
     response::StreamTextItem,
 };
+use once_cell::sync::Lazy;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
-use std::sync::{Arc, mpsc};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, mpsc};
 use uuid::Uuid;
+
+struct ChatCache {
+    id: u64,
+    ui: Weak<AppWindow>,
+    stop_tx: Arc<mpsc::Sender<()>>,
+}
+
+static INC_CHAT_ID: AtomicU64 = AtomicU64::new(0);
+static CHAT_CACHE: Lazy<Mutex<Option<ChatCache>>> = Lazy::new(|| Mutex::new(None));
 
 #[macro_export]
 macro_rules! store_current_chat_session {
@@ -135,33 +146,36 @@ pub fn init(ui: &AppWindow) {
         send_question(&ui, question);
     });
 
-    let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_stop_question(move || {
-        let ui = ui_handle.unwrap();
-        todo!();
+        tokio::spawn(async move {
+            let mut cc = CHAT_CACHE.lock().unwrap();
+            if let Some(cc) = cc.take() {
+                _ = cc.stop_tx.send(());
+            }
+        });
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_retry_question(move |index| {
-        let ui = ui_handle.unwrap();
-        let index = index as usize;
+    ui.global::<Logic>()
+        .on_retry_question(move |index, mut question| {
+            let ui = ui_handle.unwrap();
+            let index = index as usize;
 
-        let rows = store_current_chat_session_histories!(ui).row_count();
+            if question.is_empty() {
+                let entry = store_current_chat_session_histories!(ui)
+                    .row_data(index)
+                    .unwrap();
+                question = entry.user;
+            }
 
-        // remove entries from [index + 1, rows)
-        for offset in 0..(rows - index - 1) {
-            store_current_chat_session_histories!(ui).remove(rows - offset - 1);
-        }
+            // remove entries from [index, rows)
+            let rows = store_current_chat_session_histories!(ui).row_count();
+            for offset in 0..(rows - index) {
+                store_current_chat_session_histories!(ui).remove(rows - 1 - offset);
+            }
 
-        let mut entry = store_current_chat_session_histories!(ui)
-            .row_data(index)
-            .unwrap();
-
-        let question = entry.user.clone();
-        entry.bot = SharedString::default();
-        store_current_chat_session_histories!(ui).set_row_data(index, entry);
-        ui.global::<Logic>().invoke_send_question(question);
-    });
+            ui.global::<Logic>().invoke_send_question(question);
+        });
 
     let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_remove_question(move |index| {
@@ -183,51 +197,133 @@ pub fn init(ui: &AppWindow) {
     });
 }
 
-fn stream_text(
-    ui: Weak<AppWindow>,
-    item: StreamTextItem,
-    stop_tx: Arc<mpsc::Sender<()>>,
-    is_new_chat: bool,
-) {
-    println!("{item:?}");
-    todo!();
+fn stream_text(id: u64, item: StreamTextItem) {
+    // log::debug!("{item:?}");
+
+    if id != item.id {
+        return;
+    }
+
+    let (cc_id, ui) = {
+        let cc = CHAT_CACHE.lock().unwrap();
+        if cc.is_none() {
+            return;
+        }
+
+        let cc = cc.as_ref().unwrap();
+        (cc.id, cc.ui.clone())
+    };
+
+    if id != cc_id {
+        return;
+    }
+
+    let _ = slint::invoke_from_event_loop(move || {
+        let ui = ui.unwrap();
+
+        if item.etext.is_some() {
+            toast_warn!(
+                ui,
+                format!(
+                    "{}. {}: {}",
+                    tr("Chat failed"),
+                    tr("Reason"),
+                    item.etext.unwrap()
+                )
+            );
+            return;
+        }
+
+        if item.finished {
+            update_db_entry(&ui);
+            return;
+        }
+
+        if item.text.is_some() {
+            let rows = store_current_chat_session_histories!(ui).row_count();
+            if rows <= 0 {
+                return;
+            }
+
+            let last_index = rows - 1;
+            let mut entry = store_current_chat_session_histories!(ui)
+                .row_data(last_index)
+                .unwrap();
+
+            entry.bot.push_str(&item.text.unwrap());
+            store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
+        }
+    });
+}
+
+fn parse_prompt(ui: &AppWindow, question: &str) -> SharedString {
+    // todo
+    let mut session = store_current_chat_session!(ui);
+    SharedString::default()
 }
 
 fn send_question(ui: &AppWindow, question: SharedString) {
-    let session = store_current_chat_session!(ui);
-    let prompt = session.prompt;
+    let prompt = parse_prompt(ui, &question);
 
-    let (uuid, is_new_chat) = if session.uuid.is_empty() {
-        (Uuid::new_v4().to_string(), true)
+    let mut session = store_current_chat_session!(ui);
+    let (is_new_chat, histories) = if session.uuid.is_empty() {
+        session.uuid = Uuid::new_v4().to_string().into();
+        session.time = cutil::time::local_now("%m-%d %H:%M").into();
+        ui.global::<Store>().set_current_chat_session(session);
+
+        (true, vec![])
     } else {
-        (session.uuid.to_string(), false)
+        let histories = session
+            .histories
+            .iter()
+            .map(|entry| entry.into())
+            .collect::<Vec<HistoryChat>>();
+
+        (false, histories)
     };
 
-    let histories = session
-        .histories
-        .iter()
-        .map(|entry| entry.into())
-        .collect::<Vec<HistoryChat>>();
+    store_current_chat_session_histories!(ui).push(UIChatEntry {
+        user: question.clone(),
+        ..Default::default()
+    });
+
+    if is_new_chat {
+        add_db_entry(ui);
+    }
+
+    ui.global::<Store>().set_is_chatting(true);
 
     let ui = ui.as_weak();
     tokio::spawn(async move {
-        let ui = ui.clone();
         let config = setting_chat_model().into();
         let (chat, stop_tx) = Chat::new(prompt, question, config, histories);
-        let stop_tx = Arc::new(stop_tx);
+        let id = INC_CHAT_ID.fetch_add(1, Ordering::Relaxed);
 
-        // match chat
-        //     .start(uuid, |item| {
-        //         stream_text(ui, item, stop_tx, is_new_chat);
-        //     })
-        //     .await
-        // {
-        //     Err(e) => toast::async_toast_warn(
-        //         ui,
-        //         format!("{}. {}: {e:?}", tr("Chat failed"), tr("Reason")),
-        //     ),
-        //     _ => (),
-        // }
+        {
+            let mut cc = CHAT_CACHE.lock().unwrap();
+            *cc = Some(ChatCache {
+                id,
+                ui: ui.clone(),
+                stop_tx: Arc::new(stop_tx),
+            });
+        }
+
+        match chat
+            .start(id, |item| {
+                stream_text(id, item);
+            })
+            .await
+        {
+            Err(e) => toast::async_toast_warn(
+                ui.clone(),
+                format!("{}. {}: {e:?}", tr("Chat failed"), tr("Reason")),
+            ),
+            _ => (),
+        }
+
+        let _ = slint::invoke_from_event_loop(move || {
+            ui.unwrap().global::<Store>().set_is_chatting(false);
+        });
     });
 }
 
@@ -238,9 +334,11 @@ fn load_entry_db(ui: &AppWindow, uuid: SharedString) {
         match db::entry::select(DB_TABLE, &uuid).await {
             Ok(item) => match serde_json::from_str::<ChatSession>(&item.data) {
                 Ok(session) => {
-                    ui.unwrap()
-                        .global::<Store>()
-                        .set_current_chat_session(session.into());
+                    let _ = slint::invoke_from_event_loop(move || {
+                        ui.unwrap()
+                            .global::<Store>()
+                            .set_current_chat_session(session.into());
+                    });
                 }
                 Err(e) => toast::async_toast_warn(
                     ui,
@@ -266,7 +364,7 @@ fn add_db_entry(ui: &AppWindow) {
                 ui,
                 format!("{}. {}: {e:?}", tr("Add entry failed"), tr("Reason")),
             ),
-            _ => toast::async_toast_success(ui, tr("Add entry successfully")),
+            _ => (),
         }
     });
 }
@@ -282,7 +380,7 @@ fn update_db_entry(ui: &AppWindow) {
                 ui,
                 format!("{}. {}: {e:?}", tr("Update entry failed"), tr("Reason")),
             ),
-            _ => toast::async_toast_success(ui, tr("Update entry successfully")),
+            _ => (),
         }
     });
 }
