@@ -218,14 +218,7 @@ impl Chat {
                                 }
                             }
                             Err(e) => {
-                                cb(response::StreamTextItem {
-                                    etext: Some(e.to_string()),
-                                    id,
-                                    ..Default::default()
-                                });
-
-                                debug!("{}", &line);
-                                debug!("{}", e);
+                                debug!("{e:?} {}", &line);
                                 break;
                             }
                         }

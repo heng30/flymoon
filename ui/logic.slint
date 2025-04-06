@@ -54,10 +54,10 @@ export global Logic {
     callback new-chat-session();
     callback load-chat-session(uuid: string);
 
-    callback stop-question();
-
     // if question.is_empty, we get the question from the Store.current-chat-session.histories
     callback retry-question(index: int, question: string);
+
+    callback stop-question();
     callback remove-question(index: int);
     callback toggle-edit-question(index: int);
     callback send-question(question: string);

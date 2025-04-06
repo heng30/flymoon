@@ -42,6 +42,7 @@ pub fn init(ui: &AppWindow) {
             let entries = entries
                 .into_iter()
                 .map(|entry| entry.into())
+                .rev()
                 .collect::<Vec<_>>();
 
             _ = slint::invoke_from_event_loop(move || {
@@ -112,7 +113,12 @@ pub fn init(ui: &AppWindow) {
 
             let entries = store_chat_history_entries!(ui)
                 .iter()
-                .filter(|entry| entry.summary.contains(text.as_str()))
+                .filter(|entry| {
+                    entry
+                        .summary
+                        .to_lowercase()
+                        .contains(text.to_lowercase().as_str())
+                })
                 .map(|entry| entry.into())
                 .collect::<Vec<_>>();
 

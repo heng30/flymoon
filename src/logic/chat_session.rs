@@ -1,11 +1,12 @@
 use super::{toast, tr::tr};
 use crate::db::def::{CHAT_SESSION_TABLE as DB_TABLE, ChatEntry, ChatSession};
 use crate::slint_generatedAppWindow::{
-    AppWindow, ChatEntry as UIChatEntry, ChatSession as UIChatSession, Logic, Store,
+    AppWindow, ChatEntry as UIChatEntry, ChatSession as UIChatSession, Logic,
+    PromptEntry as UIPromptEntry, Store,
 };
 use crate::{
     config::{data::Model as SettingModel, model as setting_chat_model},
-    db, toast_warn,
+    db, store_prompt_entries, toast_warn,
 };
 use bot::openai::{
     Chat,
@@ -256,14 +257,34 @@ fn stream_text(id: u64, item: StreamTextItem) {
     });
 }
 
-fn parse_prompt(ui: &AppWindow, question: &str) -> SharedString {
-    // todo
+fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, SharedString) {
     let mut session = store_current_chat_session!(ui);
-    SharedString::default()
+
+    if question.is_empty() || !question.starts_with("/") {
+        return (session.prompt, question);
+    }
+
+    if let Some(shortcut) = question.split_whitespace().next() {
+        if let Some(entry) = store_prompt_entries!(ui)
+            .iter()
+            .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
+        {
+            let question = question
+                .trim_start_matches(&format!("/{}", entry.shortcut))
+                .trim_start()
+                .into();
+
+            session.prompt = entry.detail.clone();
+            ui.global::<Store>().set_current_chat_session(session);
+            return (entry.detail, question);
+        }
+    }
+
+    (session.prompt, question)
 }
 
 fn send_question(ui: &AppWindow, question: SharedString) {
-    let prompt = parse_prompt(ui, &question);
+    let (prompt, question) = parse_prompt(ui, question);
 
     let mut session = store_current_chat_session!(ui);
     let (is_new_chat, histories) = if session.uuid.is_empty() {

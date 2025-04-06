@@ -123,7 +123,12 @@ export component History inherits VerticalLayout {
 
     search := Search {
         search(text) => {
-            Logic.chat-histories-update-list(text);
+            if (Store.chat-histories.length == 1) {
+                Logic.switch-tab(TabIndex.Home);
+                Logic.chat-history-load(Store.chat-histories[0].uuid);
+            } else {
+                self.focus();
+            }
         }
 
         edited(text) => {

@@ -7,7 +7,7 @@ mod tests {
     };
 
     fn stream_text(item: StreamTextItem) {
-        // println!("{item:?}");
+        println!("{item:?}");
     }
 
     #[tokio::test]
