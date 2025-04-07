@@ -15,9 +15,9 @@ component ChatDetail inherits HorizontalLayout {
 
     Rectangle {
         background: is-user ? Theme.thirdly-brand-color : Theme.hover-background;
-        border-top-left-radius: is-user ? Theme.border-radius * 3 : Theme.border-radius * 6;
+        border-top-left-radius: Theme.border-radius * 3;
         border-top-right-radius: is-user ? Theme.border-radius * 6 : Theme.border-radius * 3;
-        border-bottom-left-radius: is-user ? Theme.border-radius * 3 : 0;
+        border-bottom-left-radius: Theme.border-radius * 3;
         border-bottom-right-radius: is-user ? 0 : Theme.border-radius * 3;
         width: Math.min(root.width * (is-user ? 0.8 : 1), vbox.preferred-width);
         height: vbox.preferred-height;
