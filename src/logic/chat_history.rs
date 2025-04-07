@@ -81,19 +81,41 @@ pub fn init(ui: &AppWindow) {
 
     let ui_handle = ui.as_weak();
     ui.global::<Logic>()
+        .on_chat_history_toggle_select(move |index| {
+            let ui = ui_handle.unwrap();
+            let index = index as usize;
+
+            let mut entry = store_chat_history_entries!(ui).row_data(index).unwrap();
+            entry.checked = !entry.checked;
+            store_chat_history_entries!(ui).set_row_data(index, entry);
+        });
+
+    let ui_handle = ui.as_weak();
+    ui.global::<Logic>()
         .on_chat_histories_remove_selected(move || {
             let ui = ui_handle.unwrap();
             let mut remove_indexs = vec![];
+            let mut remove_uuids = vec![];
 
             for (index, entry) in store_chat_history_entries!(ui).iter().enumerate() {
                 if entry.checked {
                     remove_indexs.push(index);
+                    remove_uuids.push(entry.uuid.clone());
                     chat_session::delete_db_entry(&ui, entry.uuid);
                 }
             }
 
             for index in remove_indexs.into_iter().rev() {
                 store_chat_history_entries!(ui).remove(index);
+            }
+
+            for uuid in remove_uuids.into_iter().rev() {
+                for (index, entry) in store_chat_history_entries_cache!(ui).iter().enumerate() {
+                    if entry.uuid == uuid {
+                        store_chat_history_entries_cache!(ui).remove(index);
+                        break;
+                    }
+                }
             }
         });
 

@@ -9,6 +9,7 @@ component HistoryList inherits VerticalLayout {
     spacing: Theme.spacing * 2;
 
     in-out property <bool> is-edit;
+    in-out property <bool> is-selected-all;
 
     ListView {
         for entry[index] in Store.chat-histories: Rectangle {
@@ -35,7 +36,7 @@ component HistoryList inherits VerticalLayout {
                         checked: entry.checked;
 
                         toggled => {
-                            entry.checked = !entry.checked;
+                            Logic.chat-history-toggle-select(index);
                         }
                     }
 
@@ -73,7 +74,6 @@ component HistoryList inherits VerticalLayout {
 
         if is-edit:  VerticalLayout {
             alignment: LayoutAlignment.center;
-            private property <bool> is-selected-all;
 
             CheckBtn {
                 text: Logic.tr(is-selected-all ? "Cancel select all" : "Select all");
@@ -138,6 +138,20 @@ export component History inherits VerticalLayout {
         key-pressed(event) => {
             if (event.modifiers.control && event.text == "h") {
                 Logic.switch-tab(TabIndex.Home);
+            } else if (event.modifiers.control && event.text == "e") {
+                if (Store.chat-histories.length > 0) {
+                    history-list.is-edit = true;
+                }
+            } else if (event.modifiers.control && event.text == "t") {
+                if (history-list.is-edit == true) {
+                    history-list.is-selected-all = !history-list.is-selected-all;
+
+                    if (history-list.is-selected-all) {
+                        Logic.chat-histories-select-all();
+                    } else {
+                        Logic.chat-histories-cancel-select-all();
+                    }
+                }
             }
         }
     }
@@ -150,7 +164,7 @@ export component History inherits VerticalLayout {
             }
         }
 
-        HistoryList {
+        history-list := HistoryList {
             changed is-edit => {
                 search.focus();
             }

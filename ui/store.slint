@@ -42,10 +42,14 @@ export struct SettingProxy {
 
 //////////////////////////////// Logic Struct Start ////////////////////////////////
 
-export struct SettingModel {
+export struct SettingChatModel {
     model-name: string,
     api-base-url: string,
     api-key: string,
+}
+
+export struct SettingModel {
+    chat: SettingChatModel,
 }
 
 export struct PromptEntry {
@@ -125,19 +129,19 @@ export global Store {
     ];
 
     in-out property <[PromptEntry]> prompt-entries: [
-        // {
-        //     uuid: "uuid-1",
-        //     name: "text-1",
-        //     shortcut: "cn",
-        //     detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-        // },
-        // {
-        //     uuid: "uuid-2",
-        //     name: "text-2",
-        //     shortcut: "en",
-        //     detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-        //     is-open: false,
-        // },
+        {
+            uuid: "uuid-1",
+            name: "text-1",
+            shortcut: "cn",
+            detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+        },
+        {
+            uuid: "uuid-2",
+            name: "text-2",
+            shortcut: "en",
+            detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+            is-open: false,
+        },
     ];
 
     in-out property <[ChatHistory]> chat-histories-cache:[

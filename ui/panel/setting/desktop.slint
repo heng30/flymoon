@@ -1,4 +1,5 @@
 import { Logic, Theme, Store, Util, TabIndex, Icons, SettingPreference, SettingProxy, SettingDetailIndex, DeviceType } from "../def.slint";
+import { SettingModel } from "../../store.slint";
 import { IconBtn, SettingEntryV2, Head, SettingDetail, ToastStatus, About, Dialog, ComponentPosition, TabBtns, Help } from "../../base/widgets.slint";
 import { Preference } from "components/preference.slint";
 import { Donate } from "components/donate.slint";
@@ -35,12 +36,15 @@ component RightPanel inherits Rectangle {
         visible: Store.current-setting-detail-index == SettingDetailIndex.Model;
         is-show-header: false;
 
+        private property <SettingModel> setting;
+
         confirmed => {
-            if (self.get().api-base-url.is_empty || self.get().model-name.is_empty || self.get().api-key.is_empty) {
+            setting = self.get();
+            if (setting.chat.api-base-url.is_empty || setting.chat.model-name.is_empty || setting.chat.api-key.is_empty) {
                 Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
                 return;
             }
-            Logic.set-setting-model(self.get());
+            Logic.set-setting-model(setting);
         }
     }
 

@@ -1,7 +1,7 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
 import { ChatEntry} from "../../../store.slint";
-import { NoDataImg, ElevatedBtn, Label, CenterLayout, PopupActionSetting } from "../../../base/widgets.slint";
+import { ElevatedBtn, Label, CenterLayout, PopupActionSetting } from "../../../base/widgets.slint";
 
 component ChatDetail inherits HorizontalLayout {
     in-out property text <=> txt.text;
@@ -152,13 +152,6 @@ export component Session inherits Rectangle {
         running: Store.is-chatting;
         triggered() => {
             scroll-auto();
-        }
-    }
-
-    if Store.current-chat-session.histories.length == 0: CenterLayout {
-        NoDataImg {
-            width: Math.min(root.width * 0.8, 460px);
-            text: Logic.tr("No Data");
         }
     }
 

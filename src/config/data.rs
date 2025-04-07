@@ -55,10 +55,15 @@ pub struct Preference {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct Model {
+pub struct ChatModel {
     pub api_base_url: String,
     pub model_name: String,
     pub api_key: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct Model {
+    pub chat: ChatModel,
 }
 
 pub fn appid_default() -> String {

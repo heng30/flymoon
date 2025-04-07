@@ -1,22 +1,28 @@
 use super::{toast, tr::tr};
-use crate::db::def::{CHAT_SESSION_TABLE as DB_TABLE, ChatEntry, ChatSession};
-use crate::slint_generatedAppWindow::{
-    AppWindow, ChatEntry as UIChatEntry, ChatSession as UIChatSession, Logic,
-    PromptEntry as UIPromptEntry, Store,
-};
 use crate::{
     config::{data::Model as SettingModel, model as setting_chat_model},
-    db, store_prompt_entries, toast_warn,
+    db::{
+        self,
+        def::{CHAT_SESSION_TABLE as DB_TABLE, ChatEntry, ChatSession},
+    },
+    slint_generatedAppWindow::{
+        AppWindow, ChatEntry as UIChatEntry, ChatSession as UIChatSession, Logic,
+        PromptEntry as UIPromptEntry, Store,
+    },
+    store_prompt_entries, toast_warn,
 };
 use bot::openai::{
     Chat,
-    request::{APIConfig, HistoryChat},
+    request::{APIConfig as ChatAPIConfig, HistoryChat},
     response::StreamTextItem,
 };
 use once_cell::sync::Lazy;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicU64, Ordering},
+    mpsc,
+};
 use uuid::Uuid;
 
 struct ChatCache {
@@ -47,12 +53,12 @@ macro_rules! store_current_chat_session_histories {
     };
 }
 
-impl From<SettingModel> for APIConfig {
+impl From<SettingModel> for ChatAPIConfig {
     fn from(setting: SettingModel) -> Self {
-        APIConfig {
-            api_base_url: setting.api_base_url,
-            api_model: setting.model_name,
-            api_key: setting.api_key,
+        ChatAPIConfig {
+            api_base_url: setting.chat.api_base_url,
+            api_model: setting.chat.model_name,
+            api_key: setting.chat.api_key,
         }
     }
 }

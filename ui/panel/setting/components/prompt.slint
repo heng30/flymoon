@@ -17,6 +17,7 @@ export global BtnTypeSetting {
     public function reset() {
         self.selected-entry = default-entry;
         self.btn-type = BtnType.Home;
+        // self.btn-type = BtnType.Add;
     }
 }
 
@@ -191,6 +192,17 @@ component PromptEdit inherits SettingDetail {
         } else {
             BtnTypeSetting.selected-entry = BtnTypeSetting.default-entry;
             name-lineedit.focus();
+        }
+    }
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+
+        Label {
+            color: Theme.warning-color;
+            text: Logic.tr("Input \"/\" to show prompts' tip panel at homepage");
+            font-size: Theme.title4-font-size;
+            font-weight: Theme.bold-font-weight;
         }
     }
 

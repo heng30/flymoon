@@ -1,7 +1,7 @@
 use super::tr::tr;
 use crate::{
     config,
-    slint_generatedAppWindow::{AppWindow, Logic, SettingModel, Store, Theme},
+    slint_generatedAppWindow::{AppWindow, Logic, SettingChatModel, SettingModel, Store, Theme},
 };
 use slint::ComponentHandle;
 
@@ -53,18 +53,22 @@ pub fn init(ui: &AppWindow) {
         let config = config::model();
 
         SettingModel {
-            api_base_url: config.api_base_url.into(),
-            model_name: config.model_name.into(),
-            api_key: config.api_key.into(),
+            chat: SettingChatModel {
+                api_base_url: config.chat.api_base_url.into(),
+                model_name: config.chat.model_name.into(),
+                api_key: config.chat.api_key.into(),
+            },
         }
     });
 
     ui.global::<Logic>().on_set_setting_model(move |setting| {
         let mut all = config::all();
 
-        all.model.api_base_url = setting.api_base_url.into();
-        all.model.model_name = setting.model_name.into();
-        all.model.api_key = setting.api_key.into();
+        all.model.chat = config::data::ChatModel {
+            api_base_url: setting.chat.api_base_url.into(),
+            model_name: setting.chat.model_name.into(),
+            api_key: setting.chat.api_key.into(),
+        };
         _ = config::save(all);
     });
 }
@@ -86,5 +90,5 @@ fn init_setting(ui: &AppWindow) {
     ui.global::<Theme>().invoke_set_dark(config.is_dark);
     ui.global::<Store>().set_setting_preference(setting);
     ui.global::<Store>()
-        .set_current_model_name(config::model().model_name.into());
+        .set_current_model_name(config::model().chat.model_name.into());
 }

@@ -1,5 +1,5 @@
 import { Store, Logic, Theme, DeviceType, Icons } from "../../def.slint";
-import { SettingDetail, SettingDetailInner, SettingDetailInnerVbox, SettingDetailLabel, LineInput, ConfirmBtn, Label } from "../../../base/widgets.slint";
+import { SettingDetail, SettingDetailInner, SettingDetailInnerVbox, SettingDetailLabel, LineInput, ConfirmBtn, Label, Select } from "../../../base/widgets.slint";
 import { SettingModel } from "../../../store.slint";
 
 export component Model inherits SettingDetail {
@@ -13,25 +13,27 @@ export component Model inherits SettingDetail {
 
     public function get() -> SettingModel {
         return {
-            api-base-url: api-base-url-lineedit.text,
-            model-name: model-name-lineedit.text,
-            api-key: api-key-lineedit.text,
+            chat: {
+                api-base-url: api-base-url-lineedit.text,
+                model-name: model-name-lineedit.text,
+                api-key: api-key-lineedit.text,
+            }
         };
     }
 
     public function set(setting: SettingModel) {
-        api-base-url-lineedit.text = setting.api-base-url;
-        model-name-lineedit.text = setting.model-name;
-        api-key-lineedit.text = setting.api-key;
+        api-base-url-lineedit.text = setting.chat.api-base-url;
+        model-name-lineedit.text = setting.chat.model-name;
+        api-key-lineedit.text = setting.chat.api-key;
     }
 
-    HorizontalLayout {
+    if type-select.current-value == "Chat": HorizontalLayout {
         padding: Theme.padding * 4;
         alignment: LayoutAlignment.center;
 
         Label {
             color: Theme.warning-color;
-            text: Logic.tr("Support OpenAI compatible API");
+            text: Logic.tr("Only support OpenAI compatible API");
             font-size: Theme.title4-font-size;
             font-weight: Theme.bold-font-weight;
         }
@@ -39,41 +41,55 @@ export component Model inherits SettingDetail {
 
     SettingDetailInner {
         SettingDetailInnerVbox {
-            SettingDetailLabel {
-                text: Logic.tr("API base URL");
-            }
-
-            api-base-url-lineedit := LineInput {
-                placeholder-text: Logic.tr("api base url");
+            type-select := Select {
+                values: ["Chat", "Search Engine"];
+                current-value: self.values[0];
             }
         }
 
-        SettingDetailInnerVbox {
-            SettingDetailLabel {
-                text: Logic.tr("Model name");
-            }
+        Rectangle {
+            VerticalLayout {
+                visible: type-select.current-value == "Chat";
+                spacing: Theme.spacing * 4;
 
-            model-name-lineedit := LineInput {
-                placeholder-text: Logic.tr("model name");
-            }
-        }
+                SettingDetailInnerVbox {
+                    SettingDetailLabel {
+                        text: Logic.tr("API base URL");
+                    }
 
-        SettingDetailInnerVbox {
-            SettingDetailLabel {
-                text: Logic.tr("API key");
-            }
+                    api-base-url-lineedit := LineInput {
+                        placeholder-text: Logic.tr("api base url");
+                    }
+                }
 
-            api-key-lineedit := LineInput {
-                is-show-icon: true;
-                icon: self.input-type == InputType.password ? Icons.close-eye : Icons.eye;
-                input-type: InputType.password;
-                placeholder-text: Logic.tr("api key");
+                SettingDetailInnerVbox {
+                    SettingDetailLabel {
+                        text: Logic.tr("Model name");
+                    }
 
-                clicked => {
-                    if (self.input-type == InputType.password) {
-                        self.input-type = InputType.text;
-                    } else {
-                        self.input-type = InputType.password;
+                    model-name-lineedit := LineInput {
+                        placeholder-text: Logic.tr("model name");
+                    }
+                }
+
+                SettingDetailInnerVbox {
+                    SettingDetailLabel {
+                        text: Logic.tr("API key");
+                    }
+
+                    api-key-lineedit := LineInput {
+                        is-show-icon: true;
+                        icon: self.input-type == InputType.password ? Icons.close-eye : Icons.eye;
+                        input-type: InputType.password;
+                        placeholder-text: Logic.tr("api key");
+
+                        clicked => {
+                            if (self.input-type == InputType.password) {
+                                self.input-type = InputType.text;
+                            } else {
+                                self.input-type = InputType.password;
+                            }
+                        }
                     }
                 }
             }

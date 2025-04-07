@@ -1,0 +1,97 @@
+import { Theme, Logic } from "../../def.slint";
+import { Label } from "../../../base/widgets.slint";
+
+export component ShortcutsHelp inherits VerticalLayout {
+    private property <[{shortcut: string, detail: string}]> shortcuts: [
+        {
+            shortcut: "Ctrl + N",
+            detail: Logic.tr("New chat"),
+        },
+        {
+            shortcut: "Ctrl + S",
+            detail: Logic.tr("Stop chatting"),
+        },
+        {
+            shortcut: "Ctrl + R",
+            detail: Logic.tr("Retry Last question"),
+        },
+        {
+            shortcut: "Ctrl + K",
+            detail: Logic.tr("Scroll up"),
+        },
+        {
+            shortcut: "Ctrl + J",
+            detail: Logic.tr("Scroll dowm"),
+        },
+        {
+            shortcut: "Ctrl + T",
+            detail: Logic.tr("Scroll to top"),
+        },
+        {
+            shortcut: "Ctrl + B",
+            detail: Logic.tr("Scroll to bottom"),
+        },
+        {
+            shortcut: "Ctrl + Q",
+            detail: Logic.tr("Close window"),
+        },
+        {
+            shortcut: "Ctrl + H",
+            detail: Logic.tr("Switch to Home or History Tab"),
+        },
+        {
+            shortcut: "Ctrl + Enter",
+            detail: Logic.tr("Send question"),
+        },
+        {
+            shortcut: "Ctrl + E",
+            detail: Logic.tr("[History Tab]: enter editing model"),
+        },
+        {
+            shortcut: "Ctrl + T",
+            detail: Logic.tr("[History Tab]: toggle select all or not"),
+        },
+    ];
+
+    spacing: Theme.spacing * 4;
+    height: vbox.preferred-height;
+
+    if false: Label {
+        text: Logic.tr("SHORTCUTS");
+        font-size: Theme.title2-font-size;
+        font-weight: Theme.bold-font-weight;
+        horizontal-alignment: TextHorizontalAlignment.center;
+    }
+
+    Rectangle {
+        border-color: Theme.base-border-color;
+        border-width: Theme.default-border-width;
+        width: root.width;
+
+        vbox := VerticalLayout {
+            padding: parent.border-width;
+            alignment: LayoutAlignment.start;
+
+            for entry[index] in shortcuts: Rectangle {
+                background: Math.mod(index, 2) == 0 ? Theme.hover-background : Colors.transparent;
+
+                HorizontalLayout {
+                    padding: Theme.padding * 2;
+
+                    Label {
+                        width: 30%;
+                        text: entry.shortcut;
+                        font-size: Theme.title4-font-size;
+                        overflow: elide;
+                    }
+
+                    Label {
+                        text: entry.detail;
+                        font-size: Theme.title4-font-size;
+                        overflow: elide;
+                    }
+                }
+            }
+        }
+    }
+}
