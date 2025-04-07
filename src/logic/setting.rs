@@ -85,4 +85,6 @@ fn init_setting(ui: &AppWindow) {
 
     ui.global::<Theme>().invoke_set_dark(config.is_dark);
     ui.global::<Store>().set_setting_preference(setting);
+    ui.global::<Store>()
+        .set_current_model_name(config::model().model_name.into());
 }

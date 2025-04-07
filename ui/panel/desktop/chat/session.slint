@@ -1,7 +1,7 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
 import { ChatEntry} from "../../../store.slint";
-import { NoDataImg, ElevatedBtn, CenterLayout, PopupActionSetting } from "../../../base/widgets.slint";
+import { NoDataImg, ElevatedBtn, Label, CenterLayout, PopupActionSetting } from "../../../base/widgets.slint";
 
 component ChatDetail inherits HorizontalLayout {
     in-out property text <=> txt.text;
@@ -162,23 +162,38 @@ export component Session inherits Rectangle {
         }
     }
 
-    lv := ListView {
-        width: root.width;
-        height: root.height;
-        vertical-scrollbar-policy: always-off;
+    VerticalLayout {
+        if Store.current-chat-session.histories.length == 0 && !Store.current-model-name.is-empty: Label {
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text: Store.current-model-name;
+            color: Theme.disabled-color;
+        }
 
-        for entry[index] in Store.current-chat-session.histories: VerticalLayout {
-            padding: Theme.padding * 2;
-            padding-bottom: Theme.padding * 4;
-            spacing: Theme.spacing * 3;
+        lv := ListView {
+            width: root.width;
+            height: root.height;
+            vertical-scrollbar-policy: always-off;
 
-            user := User {
-                index: index;
-                entry: entry;
-            }
+            for entry[index] in Store.current-chat-session.histories: VerticalLayout {
+                padding: Theme.padding * 2;
+                padding-top: 0;
+                padding-bottom: Theme.padding * 4;
+                spacing: Theme.spacing * 3;
 
-            if !entry.bot.is_empty: ChatDetail {
-                text: entry.bot;
+                if index == 0 && !Store.current-model-name.is-empty: Label {
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: Store.current-model-name;
+                    color: Theme.disabled-color;
+                }
+
+                user := User {
+                    index: index;
+                    entry: entry;
+                }
+
+                if !entry.bot.is_empty: ChatDetail {
+                    text: entry.bot;
+                }
             }
         }
     }
