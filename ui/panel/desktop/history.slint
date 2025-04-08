@@ -34,14 +34,15 @@ component HistoryList inherits VerticalLayout {
 
                     if is-edit: CheckBtn {
                         checked: entry.checked;
+                        not-allow-breaking-checked-binding: true;
 
                         toggled => {
-                            Logic.chat-history-toggle-select(index);
+                            entry.checked = !entry.checked;
                         }
                     }
 
                     Label {
-                        width: Theme.default-font-size * 2;
+                        width: self.font-size * 3;
                         text: index + 1;
                     }
 

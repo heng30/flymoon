@@ -4,10 +4,11 @@ import { Label } from "./label.slint";
 export component CheckBtn inherits Rectangle {
     in-out property text <=> txt.text;
     in-out property enabled <=> ta.enabled;
-    in-out property <bool> checked;
-    in-out property <color> text-color: Theme.primary-text-color;
-
     in-out property h-spacing <=> hbox.spacing;
+
+    in-out property <bool> checked;
+    in-out property <bool> not-allow-breaking-checked-binding;
+    in-out property <color> text-color: Theme.primary-text-color;
 
     width: hbox.preferred-width;
     height: hbox.preferred-height;
@@ -60,7 +61,9 @@ export component CheckBtn inherits Rectangle {
 
         clicked => {
             fs.focus();
-            root.checked = !root.checked;
+            if (!not-allow-breaking-checked-binding) {
+                root.checked = !root.checked;
+            }
             root.toggled();
         }
     }
