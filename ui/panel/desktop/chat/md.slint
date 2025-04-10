@@ -1,0 +1,151 @@
+import { Theme, Store, Logic, Icons } from "../../def.slint";
+import { ChatEntry, MdElementType, MdImage, MdElement, MdUrl, MdHeading, MdUrl, MdListItem } from "../../../store.slint";
+import { IconBtn, Label } from "../../../base/widgets.slint";
+
+component MdText inherits TextInput {
+    wrap: word-wrap;
+    color: Theme.primary-text-color;
+    font-size: Theme.title4-font-size;
+    single-line: false;
+}
+
+component MdHeading inherits HorizontalLayout {
+    in-out property <MdHeading> heading;
+
+    padding-top: Theme.padding * 2;
+    padding-bottom: Theme.padding * 2;
+
+    TextInput {
+        wrap: word-wrap;
+        color: Theme.primary-text-color;
+        font-size: Theme.title-font-size(heading.level);
+        single-line: false;
+        text: heading.text;
+        read-only: true;
+        font-weight: Theme.bold-font-weight;
+    }
+}
+
+component MdListItem inherits HorizontalLayout {
+    in-out property <MdListItem> entry;
+
+    private property <bool> is-multi-line: txt.preferred-width > root.width;
+
+    spacing: Theme.spacing * 2;
+    padding: Theme.padding;
+
+    VerticalLayout {
+        alignment: is-multi-line ? LayoutAlignment.start : LayoutAlignment.center;
+        padding-top: is-multi-line ? txt.font-size / 2 : 0;
+        padding-left: (entry.level - 1) * Theme.padding * 8;
+
+        Rectangle {
+            width: Theme.default-font-size / 2;
+            height: self.width;
+            border-radius: self.width / 2;
+            background: txt.color;
+        }
+    }
+
+    txt := TextInput {
+        wrap: word-wrap;
+        color: Theme.primary-text-color;
+        font-size: Theme.title4-font-size;
+        single-line: false;
+        read-only: true;
+        text: entry.text;
+    }
+}
+
+component MdCodeBlock inherits HorizontalLayout {
+    in-out property <string> code;
+
+    padding-top: Theme.padding * 4;
+    padding-bottom: Theme.padding * 4;
+
+    Rectangle {
+        border-radius: Theme.border-radius;
+        background: Theme.thirdly-background;
+
+        HorizontalLayout {
+            padding: Theme.padding * 3;
+
+            txt := TextInput {
+                wrap: word-wrap;
+                color: Theme.primary-text-color;
+                font-size: Theme.title4-font-size;
+                single-line: false;
+                read-only: true;
+                text: code;
+            }
+        }
+
+        VerticalLayout {
+            padding: Theme.padding * 2;
+            alignment: LayoutAlignment.start;
+
+            HorizontalLayout {
+                alignment: LayoutAlignment.end;
+
+                IconBtn {
+                    icon: Icons.copy;
+                    tip: Logic.tr("copy");
+                    is-show-tip: true;
+
+                    clicked => {
+                        Logic.new-chat-session();
+                    }
+                }
+            }
+        }
+    }
+}
+
+component MdImage inherits HorizontalLayout {
+    in-out property <MdImage> img;
+
+    padding-top: Theme.padding * 4;
+    padding-bottom: Theme.padding * 4;
+    alignment: LayoutAlignment.center;
+
+    Image {
+        source: img.img;
+    }
+}
+
+export component MdDetail inherits Rectangle {
+    in-out property <[MdElement]> entries;
+    in-out property <[MdUrl]> urls;
+
+    background: Theme.hover-background;
+    border-radius: Theme.border-radius * 2;
+    height: vbox.preferred-height;
+
+    vbox := VerticalLayout {
+        padding: Theme.padding * 2;
+        padding-left: Theme.padding * 4;
+        padding-right: Theme.padding * 4;
+
+        for entry[index] in entries: VerticalLayout {
+            if entry.ty == MdElementType.Text: MdText {
+                text: entry.text;
+            }
+
+            if entry.ty == MdElementType.Heading: MdHeading {
+                heading: entry.heading;
+            }
+
+            if entry.ty == MdElementType.ListItem: MdListItem {
+                entry: entry.list-item;
+            }
+
+            if entry.ty == MdElementType.CodeBlock: MdCodeBlock {
+                code: entry.code_block;
+            }
+
+            if entry.ty == MdElementType.Image && entry.img.is-loaded: MdImage {
+                img: entry.img;
+            }
+        }
+    }
+}

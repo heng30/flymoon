@@ -42,6 +42,43 @@ export struct SettingProxy {
 
 //////////////////////////////// Logic Struct Start ////////////////////////////////
 
+export enum MdElementType {
+    Text,
+    Image,
+    ListItem,
+    Heading,
+    CodeBlock,
+}
+
+export struct MdUrl {
+    text: string,
+    url: string,
+}
+
+export struct MdHeading {
+    level: int,
+    text: string,
+}
+
+export struct MdListItem {
+    level: int,
+    text: string,
+}
+
+export struct MdImage {
+    is-loaded: bool,
+    img: image,
+}
+
+export struct MdElement {
+    ty: MdElementType,
+    text: string,
+    code-block: string,
+    list-item: MdListItem,
+    img: MdImage,
+    heading: MdHeading,
+}
+
 export struct SettingChatModel {
     model-name: string,
     api-base-url: string,
@@ -61,8 +98,11 @@ export struct PromptEntry {
 
 export struct ChatEntry {
     user: string,
-    bot: string,
     is-user-edit: bool,
+
+    bot: string,
+    md-elems: [MdElement],
+    link-urls: [MdUrl],
 }
 
 export struct ChatSession {
@@ -180,34 +220,72 @@ export global Store {
             {
                 user: "hi",
                 bot: "how are you?",
+                md-elems : [
+                    {
+                        ty: MdElementType.Text,
+                        text: "how are you? I am fine.",
+                    },
+                ],
             },
             {
                 user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
                 bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            },
-            {
-                user: "hi",
-                bot: "how are you?",
-            },
-            {
-                user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-                bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            },
-            {
-                user: "hi",
-                bot: "how are you?",
-            },
-            {
-                user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-                bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            },
-            {
-                user: "hi",
-                bot: "how are you?",
-            },
-            {
-                user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-                bot: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+                md-elems : [
+                    {
+                        ty: MdElementType.Text,
+                        text: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+                    },
+                    {
+                        ty: MdElementType.Image,
+                        img:  {
+                            is-loaded: true,
+                            img: @image-url("../ui/images/landing-welcome.svg"),
+                        }
+                    },
+                    {
+                        ty: MdElementType.CodeBlock,
+                        code-block: "int main(void) {\n       printf(\"%s\", hello world);\n}",
+                    },
+                    {
+                        ty: MdElementType.Heading,
+                        heading: {
+                            level: 3,
+                            text: "Day 1: Understand Nix & NixOS Basics",
+                        }
+                    },
+                    {
+                        ty: MdElementType.ListItem,
+                        list-item: {
+                            level: 1,
+                            text: "The Nix language basics (functions, sets, lazy evaluation)",
+                        }
+                    },
+                    {
+                        ty: MdElementType.ListItem,
+                        list-item: {
+                            level: 2,
+                            text: "The Nix store (/nix/store)",
+                        }
+                    },
+                    {
+                        ty: MdElementType.ListItem,
+                        list-item: {
+                            level: 2,
+                            text: "Hello world",
+                        },
+                    },
+                    {
+                        ty: MdElementType.ListItem,
+                        list-item: {
+                            level: 1,
+                            text: "Derivations (how packages are built)",
+                        }
+                    },
+                ],
+                link-urls: [
+                    { text: "Nixos download page", url: "https://nixos.org" },
+                    { text: "Google homepage", url: "https://google.com" },
+                ],
             },
         ]
     };

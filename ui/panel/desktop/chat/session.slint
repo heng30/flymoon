@@ -3,6 +3,8 @@ import { Theme, Store, Logic, Icons } from "../../def.slint";
 import { ChatEntry} from "../../../store.slint";
 import { ElevatedBtn, Label, CenterLayout, PopupActionSetting } from "../../../base/widgets.slint";
 
+import { MdDetail } from "md.slint";
+
 component ChatDetail inherits HorizontalLayout {
     in-out property text <=> txt.text;
 
@@ -184,8 +186,8 @@ export component Session inherits Rectangle {
                     entry: entry;
                 }
 
-                if !entry.bot.is_empty: ChatDetail {
-                    text: entry.bot;
+                if !entry.bot.is_empty: MdDetail {
+                    entries: entry.md-elems;
                 }
             }
         }

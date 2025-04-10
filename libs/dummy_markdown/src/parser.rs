@@ -24,7 +24,6 @@ struct GenerateUIElemUserData {
     link_urls: Vec<UIUrl>,
 }
 
-
 pub fn run(doc: &str) -> (Vec<UIMarkdownElement>, Vec<UIUrl>) {
     let options = Options::empty();
     let mut parser = Parser::new_ext(doc, options);

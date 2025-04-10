@@ -15,6 +15,7 @@ export global Theme {
 
     in-out property <string> default-font-family: Store.setting-preference.font-family;
     in-out property <length> default-font-size: Store.setting-preference.font-size.to-float() * 1px;
+    in-out property <length> title6-font-size: default-font-size + 0px;
     in-out property <length> title5-font-size: default-font-size + 1px;
     in-out property <length> title4-font-size: default-font-size + 2px;
     in-out property <length> title3-font-size: default-font-size + 4px;
@@ -76,6 +77,22 @@ export global Theme {
     public function toggle() {
         Store.setting-preference.is-dark = !Store.setting-preference.is-dark;
         Palette.color-scheme = is-dark ? ColorScheme.dark : ColorScheme.light;
+    }
+
+    public pure function title-font-size(level: int) -> length {
+        if(level == 1) {
+            return title1-font-size;
+        } else if(level == 2) {
+            return title2-font-size;
+        } else if(level == 3) {
+            return title3-font-size;
+        } else if(level == 4) {
+            return title4-font-size;
+        } else if(level == 5) {
+            return title5-font-size;
+        } else {
+            return title6-font-size;
+        }
     }
 }
 

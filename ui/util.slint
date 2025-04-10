@@ -50,12 +50,16 @@ export global Util {
 
     pure callback text-len(string) -> int;
 
-    // (low-bound, up-bound) => void
-    pure callback rand-int(int, int) -> int;
+    pure callback rand-int(low-bound: int, up-bound: int) -> int;
 
-    pure callback qr-code(string) -> image;
+    pure callback qr-code(text: string) -> image;
     qr-code => {
         return Icons.no-data;
+    }
+
+    pure callback download-image(url: string) -> image;
+    download-image => {
+        return Icons.landing-welcome;
     }
 
     pure callback local-now(string) -> string;

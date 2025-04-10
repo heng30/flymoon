@@ -227,6 +227,12 @@ pub fn init(ui: &AppWindow) {
             init_qrcode(ui);
         }
     }
+
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "download_image")] {
+            init_download_image(ui);
+        }
+    }
 }
 
 #[cfg(feature = "qrcode")]
@@ -253,4 +259,30 @@ pub fn init_qrcode(ui: &AppWindow) {
             _ => ui.global::<Icons>().get_no_data(),
         }
     });
+}
+
+#[cfg(feature = "download_image")]
+pub fn init_download_image(ui: &AppWindow) {
+    use crate::slint_generatedAppWindow::Icons;
+    use image::Rgb;
+    use slint::{Image, Rgb8Pixel, SharedPixelBuffer};
+    use cutil::http;
+
+    // let ui_handle = ui.as_weak();
+    // ui.global::<Util>().on_download_image(move |text| {
+    //     let ui = ui_handle.unwrap();
+    //     match QrCode::new(text) {
+    //         Ok(code) => {
+    //             let qrc = code.render::<Rgb<u8>>().build();
+
+    //             let buffer = SharedPixelBuffer::<Rgb8Pixel>::clone_from_slice(
+    //                 qrc.as_raw(),
+    //                 qrc.width(),
+    //                 qrc.height(),
+    //             );
+    //             Image::from_rgb8(buffer)
+    //         }
+    //         _ => ui.global::<Icons>().get_no_data(),
+    //     }
+    // });
 }
