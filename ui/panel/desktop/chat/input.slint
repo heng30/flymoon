@@ -67,7 +67,7 @@ export component Input inherits Rectangle {
                             single-line: false;
                             wrap: word-wrap;
                             color: Theme.regular-text-color;
-                            font-size: Theme.default-font-size;
+                            font-size: Theme.title4-font-size;
 
                             edited => {
                                 Logic.prompt-popup(te.text);
@@ -116,10 +116,11 @@ export component Input inherits Rectangle {
                 }
 
                 Text {
+                    visible: te.text.is-empty;
                     x: Theme.padding * 2;
                     y: Theme.padding * 4;
-                    visible: te.text == "";
                     text: "Ctrl+Enter";
+                    font-size: Theme.title4-font-size;
                     color: Theme.placeholder-text-color;
                 }
             }

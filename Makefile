@@ -9,6 +9,11 @@ build-env=
 android-build-env=SLINT_STYLE=material $(build-env)
 desktop-build-env=SLINT_STYLE=fluent $(build-env)
 web-build-env=SLINT_STYLE=fluent $(build-env)
+# desktop-build-debug-env=SLINT_BACKEND=qt
+# desktop-build-debug-env=SLINT_BACKEND=winit-femtovg
+# desktop-build-debug-env=SLINT_BACKEND=linuxkms-femtovg
+# desktop-build-debug-env=SLINT_BACKEND=linuxkms-software
+# desktop-build-debug-env=SLINT_BACKEND=linuxkms-skia
 
 run-env=RUST_LOG=debug,sqlx=off,reqwest=off
 
@@ -24,19 +29,23 @@ android-debug:
 	$(android-build-env) $(run-env) cargo apk run --lib --features=android
 
 desktop-build-debug:
-	$(desktop-build-env) cargo build --features=desktop
+	$(desktop-build-debug-env) $(desktop-build-env) cargo build --features=desktop
 
 desktop-build-release:
 	$(desktop-build-env) cargo build --release --features=desktop
 
 desktop-build-debug-nixos:
-	nix-shell --run "$(desktop-build-env) cargo build --features=desktop"
+	nix-shell --run "$(desktop-build-debug-env) $(desktop-build-env) cargo build --features=desktop"
 
 desktop-build-release-nixos:
 	nix-shell --run "$(desktop-build-env) cargo build --release --features=desktop"
 
 desktop-debug:
-	$(desktop-build-env) $(run-env) cargo run --features=desktop
+	$(desktop-build-debug-env) $(desktop-build-env) $(run-env) cargo run --features=desktop
+
+desktop-debug-nixos-wayland:
+	nix-shell wayland-shell.nix --run "$(desktop-build-debug-env) $(desktop-build-env) cargo run --features=desktop"
+
 
 web-build-debug:
 	$(web-build-env) wasm-pack build --target web --out-dir ./web/pkg --features=web

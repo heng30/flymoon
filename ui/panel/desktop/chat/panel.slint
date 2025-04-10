@@ -19,6 +19,7 @@ export component Chat inherits VerticalLayout {
         if Store.current-chat-session.histories.length == 0: CenterLayout {
             ShortcutsHelp {
                 width: Math.min(root.width * 0.9, 600px);
+                height: Math.min((root.height - input.height) * 0.8, self.preferred-height);
             }
         }
 
