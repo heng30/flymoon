@@ -1,4 +1,4 @@
-use super::{toast, tr::tr};
+use super::{md, toast, tr::tr};
 use crate::{
     config::{data::Model as SettingModel, model as setting_chat_model},
     db::{
@@ -127,13 +127,12 @@ pub async fn get_from_db() -> Vec<UIChatSession> {
 
 fn chat_session_init(ui: &AppWindow) {
     let mut session = UIChatSession::default();
-    session.histories = store_current_chat_session!(ui).histories;
+    session.histories = ModelRc::new(VecModel::from(vec![]));
     ui.global::<Store>().set_current_chat_session(session);
-    store_current_chat_session_histories!(ui).set_vec(vec![]);
 }
 
 pub fn init(ui: &AppWindow) {
-    // chat_session_init(ui);
+    chat_session_init(ui);
 
     let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_new_chat_session(move || {
@@ -259,8 +258,10 @@ fn stream_text(id: u64, item: StreamTextItem) {
 
             entry.bot.push_str(&item.text.unwrap());
             store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
-            // ui.global::<Logic>()
-            //     .invoke_notify_chat_session_auto_scroll();
+
+            if md::need_parse_stream_bot_text(&ui) {
+                md::parse_stream_bot_text(&ui);
+            }
         }
     });
 }
@@ -313,6 +314,8 @@ fn send_question(ui: &AppWindow, question: SharedString) {
 
     store_current_chat_session_histories!(ui).push(UIChatEntry {
         user: question.clone(),
+        md_elems: ModelRc::new(VecModel::from(vec![])),
+        link_urls: ModelRc::new(VecModel::from(vec![])),
         ..Default::default()
     });
 

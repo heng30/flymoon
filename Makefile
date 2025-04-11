@@ -10,10 +10,6 @@ android-build-env=SLINT_STYLE=material $(build-env)
 desktop-build-env=SLINT_STYLE=fluent $(build-env)
 web-build-env=SLINT_STYLE=fluent $(build-env)
 # desktop-build-debug-env=SLINT_BACKEND=qt
-# desktop-build-debug-env=SLINT_BACKEND=winit-femtovg
-# desktop-build-debug-env=SLINT_BACKEND=linuxkms-femtovg
-# desktop-build-debug-env=SLINT_BACKEND=linuxkms-software
-# desktop-build-debug-env=SLINT_BACKEND=linuxkms-skia
 
 run-env=RUST_LOG=debug,sqlx=off,reqwest=off
 

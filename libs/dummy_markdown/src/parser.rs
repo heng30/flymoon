@@ -19,12 +19,12 @@ enum MarkdownElement {
 }
 
 #[derive(Debug, Clone, Default)]
-struct GenerateUIElemUserData {
+struct GenerateMdElemUserData {
     list_level: i32,
-    link_urls: Vec<UIUrl>,
+    link_urls: Vec<MdUrl>,
 }
 
-pub fn run(doc: &str) -> (Vec<UIMarkdownElement>, Vec<UIUrl>) {
+pub fn run(doc: &str) -> (Vec<MdElement>, Vec<MdUrl>) {
     let options = Options::empty();
     let mut parser = Parser::new_ext(doc, options);
 
@@ -34,7 +34,7 @@ pub fn run(doc: &str) -> (Vec<UIMarkdownElement>, Vec<UIUrl>) {
     let mut ui_elems = vec![];
     let mut elems_iter = elems.iter_mut();
     let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> = &mut elems_iter;
-    let mut user_data = GenerateUIElemUserData::default();
+    let mut user_data = GenerateMdElemUserData::default();
     generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
 
     (ui_elems, user_data.link_urls)
@@ -122,14 +122,14 @@ fn parse_events(parser: &mut Parser<'_>) -> Vec<MarkdownElement> {
 
 fn generate_ui_elements(
     elems_iter: &mut dyn Iterator<Item = &mut MarkdownElement>,
-    ui_elems: &mut Vec<UIMarkdownElement>,
-    user_data: &mut GenerateUIElemUserData,
+    ui_elems: &mut Vec<MdElement>,
+    user_data: &mut GenerateMdElemUserData,
 ) {
     while let Some(elem) = elems_iter.next() {
         match elem {
             MarkdownElement::Text(text) => {
-                ui_elems.push(UIMarkdownElement {
-                    ty: UIMarkdownElementType::Text,
+                ui_elems.push(MdElement {
+                    ty: MdElementType::Text,
                     text: text.clone().into(),
                     ..Default::default()
                 });
@@ -139,14 +139,14 @@ fn generate_ui_elements(
                     continue;
                 }
 
-                let mut ui_url = UIUrl::default();
+                let mut ui_url = MdUrl::default();
                 for item in elems.iter() {
                     match item {
                         MarkdownElement::Text(text) => {
                             ui_url.text = text.clone();
 
-                            ui_elems.push(UIMarkdownElement {
-                                ty: UIMarkdownElementType::Text,
+                            ui_elems.push(MdElement {
+                                ty: MdElementType::Text,
                                 text: text.clone().into(),
                                 ..Default::default()
                             });
@@ -164,8 +164,8 @@ fn generate_ui_elements(
                 for item in elems.iter() {
                     match item {
                         MarkdownElement::Url(url) => {
-                            ui_elems.push(UIMarkdownElement {
-                                ty: UIMarkdownElementType::ImageUrl,
+                            ui_elems.push(MdElement {
+                                ty: MdElementType::ImageUrl,
                                 image_url: url.clone().into(),
                                 ..Default::default()
                             });
@@ -178,8 +178,8 @@ fn generate_ui_elements(
                 for item in elems.iter() {
                     match item {
                         MarkdownElement::Text(text) => {
-                            ui_elems.push(UIMarkdownElement {
-                                ty: UIMarkdownElementType::CodeBlock,
+                            ui_elems.push(MdElement {
+                                ty: MdElementType::CodeBlock,
                                 code_block: text.clone().into(),
                                 ..Default::default()
                             });
@@ -197,14 +197,14 @@ fn generate_ui_elements(
                 generate_ui_elements(&mut elems_iter_ref, &mut heading_elems, user_data);
                 let mut heading_text = String::default();
                 for item in heading_elems.iter() {
-                    if item.ty == UIMarkdownElementType::Text {
+                    if item.ty == MdElementType::Text {
                         heading_text.push_str(&item.text);
                     }
                 }
 
-                ui_elems.push(UIMarkdownElement {
-                    ty: UIMarkdownElementType::Heading,
-                    heading: UIHeading {
+                ui_elems.push(MdElement {
+                    ty: MdElementType::Heading,
+                    heading: MdHeading {
                         level: heading_level_from(level),
                         text: heading_text,
                     },
@@ -242,17 +242,17 @@ fn generate_ui_elements(
 
                 let mut list_item_text = String::default();
                 for item in list_item_elems.iter() {
-                    if item.ty == UIMarkdownElementType::Text {
+                    if item.ty == MdElementType::Text {
                         list_item_text.push_str(&item.text);
                     }
-                    if item.ty == UIMarkdownElementType::ListItem {
+                    if item.ty == MdElementType::ListItem {
                         ui_elems.push(item.clone());
                     }
                 }
 
-                ui_elems.push(UIMarkdownElement {
-                    ty: UIMarkdownElementType::ListItem,
-                    list_item: UIListItem {
+                ui_elems.push(MdElement {
+                    ty: MdElementType::ListItem,
+                    list_item: MdListItem {
                         level: user_data.list_level,
                         text: list_item_text,
                     },

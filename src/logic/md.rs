@@ -1,10 +1,11 @@
-// use super::chat_session;
-use crate::config::cache_dir;
 use crate::slint_generatedAppWindow::{
-    AppWindow, ChatEntry as UIChatEntry, Logic, MdElement as UIMdElement, Store,
+    AppWindow, ChatEntry as UIChatEntry, Logic, MdElement as UIMdElement,
+    MdElementType as UIMdElementType, MdHeading as UIMdHeading, MdImage as UIMdImage,
+    MdListItem as UIMdListItem, MdUrl as UIMdUrl, Store,
 };
-use crate::store_current_chat_session_histories;
+use crate::{config::cache_dir, store_current_chat_session_histories};
 use cutil::{crypto, http};
+use dummy_markdown::{self, MdElement, MdElementType, MdHeading, MdListItem, MdUrl};
 use slint::{ComponentHandle, Image, Model, SharedString, VecModel, Weak};
 
 #[macro_export]
@@ -16,6 +17,78 @@ macro_rules! store_current_chat_session_histories_md_elems {
             .downcast_ref::<VecModel<UIMdElement>>()
             .expect("We know we set a VecModel earlier")
     };
+}
+
+#[macro_export]
+macro_rules! store_current_chat_session_histories_link_urls {
+    ($entry:expr) => {
+        $entry
+            .link_urls
+            .as_any()
+            .downcast_ref::<VecModel<UIMdUrl>>()
+            .expect("We know we set a VecModel earlier")
+    };
+}
+
+impl From<MdElementType> for UIMdElementType {
+    fn from(ty: MdElementType) -> Self {
+        match ty {
+            MdElementType::Text => UIMdElementType::Text,
+            MdElementType::ImageUrl => UIMdElementType::Image,
+            MdElementType::ListItem => UIMdElementType::ListItem,
+            MdElementType::Heading => UIMdElementType::Heading,
+            MdElementType::CodeBlock => UIMdElementType::CodeBlock,
+        }
+    }
+}
+
+impl From<MdUrl> for UIMdUrl {
+    fn from(entry: MdUrl) -> Self {
+        UIMdUrl {
+            text: entry.text.into(),
+            url: entry.url.into(),
+        }
+    }
+}
+
+impl From<MdHeading> for UIMdHeading {
+    fn from(entry: MdHeading) -> Self {
+        UIMdHeading {
+            level: entry.level,
+            text: entry.text.into(),
+        }
+    }
+}
+
+impl From<MdListItem> for UIMdListItem {
+    fn from(entry: MdListItem) -> Self {
+        UIMdListItem {
+            level: entry.level,
+            text: entry.text.into(),
+        }
+    }
+}
+
+impl From<String> for UIMdImage {
+    fn from(url: String) -> Self {
+        UIMdImage {
+            url: url.into(),
+            ..Default::default()
+        }
+    }
+}
+
+impl From<MdElement> for UIMdElement {
+    fn from(entry: MdElement) -> Self {
+        UIMdElement {
+            ty: entry.ty.into(),
+            text: entry.text.into(),
+            code_block: entry.code_block.into(),
+            list_item: entry.list_item.into(),
+            img: entry.image_url.into(),
+            heading: entry.heading.into(),
+        }
+    }
 }
 
 pub fn init(ui: &AppWindow) {
@@ -40,8 +113,98 @@ pub fn init(ui: &AppWindow) {
                 }
             });
         });
+}
 
-    // let ui_handle = ui.as_weak();
+pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {
+    let rows = store_current_chat_session_histories!(ui).row_count();
+    if rows == 0 {
+        return false;
+    }
+    let last_index = rows - 1;
+
+    let last_entry = store_current_chat_session_histories!(ui)
+        .row_data(last_index)
+        .unwrap();
+
+    !(last_entry.bot.ends_with("\n\n")
+        || last_entry.bot.ends_with("\r\n\r\n")
+        || last_entry.bot.ends_with("\n\r\n")
+        || last_entry.bot.ends_with("\r\n\n"))
+}
+
+pub fn parse_stream_bot_text(ui: &AppWindow) {
+    let rows = store_current_chat_session_histories!(ui).row_count();
+    if rows == 0 {
+        return;
+    }
+    let last_index = rows - 1;
+
+    let mut last_entry = store_current_chat_session_histories!(ui)
+        .row_data(last_index)
+        .unwrap();
+
+    if last_entry.bot.trim().is_empty() {
+        return;
+    }
+
+    let is_end_with_newline = last_entry.bot.ends_with('\n');
+    let bot_text = last_entry.bot.trim();
+
+    let ((md_elems, link_urls), unfinished_text) = {
+        if is_end_with_newline {
+            (dummy_markdown::parser::run(bot_text), "")
+        } else {
+            if let Some((before, after)) = bot_text.rsplit_once('\n') {
+                (dummy_markdown::parser::run(before), after)
+            } else {
+                (dummy_markdown::parser::run(bot_text), "")
+            }
+        }
+    };
+
+    // update Markdown elements
+    let rows = store_current_chat_session_histories_md_elems!(last_entry).row_count();
+
+    if rows == 0 || rows > md_elems.len() {
+        let elems = md_elems
+            .into_iter()
+            .map(|item| item.into())
+            .collect::<Vec<_>>();
+        store_current_chat_session_histories_md_elems!(last_entry).set_vec(elems);
+    } else {
+        let offset = md_elems.len() - rows;
+
+        store_current_chat_session_histories_md_elems!(last_entry)
+            .set_row_data(rows - 1, md_elems[rows - 1].clone().into());
+
+        for i in 0..offset {
+            store_current_chat_session_histories_md_elems!(last_entry)
+                .push(md_elems[rows + i].clone().into());
+        }
+    }
+
+    // update link_urls
+    let rows = store_current_chat_session_histories_link_urls!(last_entry).row_count();
+    if rows == 0 || rows > link_urls.len() {
+        let urls = link_urls
+            .into_iter()
+            .map(|item| item.into())
+            .collect::<Vec<_>>();
+        store_current_chat_session_histories_link_urls!(last_entry).set_vec(urls);
+    } else {
+        let offset = link_urls.len() - rows;
+        for i in 0..offset {
+            store_current_chat_session_histories_link_urls!(last_entry)
+                .push(link_urls[rows + i].clone().into());
+        }
+    }
+
+    last_entry.unfinished_bot = unfinished_text.to_string().into();
+    store_current_chat_session_histories!(ui).set_row_data(last_index, last_entry);
+}
+
+pub fn parse_histories_bot_text(ui: &AppWindow) {
+    todo!();
 }
 
 fn get_md_entry(ui: &AppWindow, histories_entry_index: usize, index: usize) -> Option<UIMdElement> {
