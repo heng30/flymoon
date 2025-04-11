@@ -3,7 +3,7 @@ use crate::slint_generatedAppWindow::{
     PromptEntry as UIPromptEntry,
 };
 use serde::{Deserialize, Serialize};
-use slint::Model;
+use slint::{Model, ModelRc, VecModel};
 
 pub const PROMPT_TABLE: &str = "prompt";
 pub const CHAT_SESSION_TABLE: &str = "chat_session";
@@ -58,6 +58,8 @@ impl From<ChatEntry> for UIChatEntry {
         UIChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
+            md_elems: ModelRc::new(VecModel::from(vec![])),
+            link_urls: ModelRc::new(VecModel::from(vec![])),
             ..Default::default()
         }
     }

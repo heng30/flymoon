@@ -83,7 +83,7 @@ impl From<MdElement> for UIMdElement {
         UIMdElement {
             ty: entry.ty.into(),
             text: entry.text.into(),
-            code_block: entry.code_block.into(),
+            code_block: entry.code_block.trim().to_string().into(),
             list_item: entry.list_item.into(),
             img: entry.image_url.into(),
             heading: entry.heading.into(),
@@ -120,16 +120,16 @@ pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {
     if rows == 0 {
         return false;
     }
-    let last_index = rows - 1;
 
     let last_entry = store_current_chat_session_histories!(ui)
-        .row_data(last_index)
+        .row_data(rows - 1)
         .unwrap();
 
-    !(last_entry.bot.ends_with("\n\n")
-        || last_entry.bot.ends_with("\r\n\r\n")
-        || last_entry.bot.ends_with("\n\r\n")
-        || last_entry.bot.ends_with("\r\n\n"))
+    last_entry
+        .bot
+        .chars()
+        .last()
+        .map_or(false, |c| c.is_whitespace())
 }
 
 pub fn parse_stream_bot_text(ui: &AppWindow) {
@@ -139,7 +139,7 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
     }
     let last_index = rows - 1;
 
-    let mut last_entry = store_current_chat_session_histories!(ui)
+    let last_entry = store_current_chat_session_histories!(ui)
         .row_data(last_index)
         .unwrap();
 
@@ -150,7 +150,7 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
     let is_end_with_newline = last_entry.bot.ends_with('\n');
     let bot_text = last_entry.bot.trim();
 
-    let ((md_elems, link_urls), unfinished_text) = {
+    let ((md_elems, link_urls), _unfinished_text) = {
         if is_end_with_newline {
             (dummy_markdown::parser::run(bot_text), "")
         } else {
@@ -198,13 +198,58 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
                 .push(link_urls[rows + i].clone().into());
         }
     }
+}
 
-    last_entry.unfinished_bot = unfinished_text.to_string().into();
-    store_current_chat_session_histories!(ui).set_row_data(last_index, last_entry);
+pub fn parse_last_history_bot_text(ui: &AppWindow) {
+    let rows = store_current_chat_session_histories!(ui).row_count();
+    if rows == 0 {
+        return;
+    }
+    let last_index = rows - 1;
+
+    let entry = store_current_chat_session_histories!(ui)
+        .row_data(last_index)
+        .unwrap();
+
+    if entry.bot.trim().is_empty() {
+        return;
+    }
+
+    let (md_elems, link_urls) = dummy_markdown::parser::run(&entry.bot);
+
+    let elems = md_elems
+        .into_iter()
+        .map(|item| item.into())
+        .collect::<Vec<_>>();
+    store_current_chat_session_histories_md_elems!(entry).set_vec(elems);
+
+    let urls = link_urls
+        .into_iter()
+        .map(|item| item.into())
+        .collect::<Vec<_>>();
+    store_current_chat_session_histories_link_urls!(entry).set_vec(urls);
 }
 
 pub fn parse_histories_bot_text(ui: &AppWindow) {
-    todo!();
+    for entry in store_current_chat_session_histories!(ui).iter() {
+        if entry.bot.trim().is_empty() {
+            continue;
+        }
+
+        let (md_elems, link_urls) = dummy_markdown::parser::run(&entry.bot);
+
+        let elems = md_elems
+            .into_iter()
+            .map(|item| item.into())
+            .collect::<Vec<_>>();
+        store_current_chat_session_histories_md_elems!(entry).set_vec(elems);
+
+        let urls = link_urls
+            .into_iter()
+            .map(|item| item.into())
+            .collect::<Vec<_>>();
+        store_current_chat_session_histories_link_urls!(entry).set_vec(urls);
+    }
 }
 
 fn get_md_entry(ui: &AppWindow, histories_entry_index: usize, index: usize) -> Option<UIMdElement> {

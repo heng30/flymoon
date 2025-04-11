@@ -104,7 +104,6 @@ export struct ChatEntry {
     bot: string,
 
     // Markdown
-    unfinished_bot: string,
     md-elems: [MdElement],
     link-urls: [MdUrl],
 }
@@ -158,6 +157,7 @@ export global Store {
     //////////////////////////////// Logic Start ////////////////////////////////
 
     in-out property <bool> is-chatting;
+    in-out property <bool> is-auto-scroll: true;
     in-out property <bool> is-toggle-bot-markdown;
     in-out property <bool> enabled-network;
     in-out property <string> current-model-name: "gpt-4o";

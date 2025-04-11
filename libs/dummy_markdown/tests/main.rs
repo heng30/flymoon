@@ -5,7 +5,7 @@ mod tests {
     const DOC: &'static str = r#"
 ### **Day 1: Understand Nix & NixOS Basics**
 - *Read the [Nix Pills](https://nixos.org/guides/nix-pills/)* (Chapters 1-4) to understand:
-                              //
+
 - The Nix language basics (functions, sets, lazy evaluation)
     - The Nix store (`/nix/store`)
     - Hello world
@@ -24,7 +24,11 @@ int main(void) {
 }
 ```
 
-As with cmark and cmark-gfm, Comrak will scrub raw HTML and potentially dangerous links. This change was introduced in Comrak 0.4.0 in support of a safe-by-default posture, and later adopted by our contemporaries. :)
+As with cmark and **cmark-gfm**, Comrak will scrub raw HTML and potentially dangerous links. This change was introduced in Comrak 0.4.0 in support of a safe-by-default posture, and later adopted by our contemporaries. :)
+
+---
+
+Would you like a deeper dive into any of these topics?
 "#;
 
     #[test]

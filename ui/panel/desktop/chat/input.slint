@@ -85,6 +85,7 @@ export component Input inherits Rectangle {
                                         return accept;
                                     } else if (event.text == "n") {
                                         Logic.new-chat-session();
+                                        Store.is-auto-scroll = true;
                                         return accept;
                                     } else if (event.text == "s") {
                                         Logic.stop-question();
@@ -163,6 +164,7 @@ export component Input inherits Rectangle {
 
                         clicked => {
                             Logic.new-chat-session();
+                            Store.is-auto-scroll = true;
                         }
                     }
 

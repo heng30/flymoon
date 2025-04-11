@@ -241,6 +241,7 @@ fn stream_text(id: u64, item: StreamTextItem) {
         }
 
         if item.finished {
+            md::parse_last_history_bot_text(&ui);
             update_db_entry(&ui);
             return;
         }
@@ -367,9 +368,12 @@ fn load_entry_db(ui: &AppWindow, uuid: SharedString) {
             Ok(item) => match serde_json::from_str::<ChatSession>(&item.data) {
                 Ok(session) => {
                     let _ = slint::invoke_from_event_loop(move || {
-                        ui.unwrap()
-                            .global::<Store>()
+                        let ui = ui.unwrap();
+
+                        ui.global::<Store>()
                             .set_current_chat_session(session.into());
+
+                        md::parse_histories_bot_text(&ui);
                     });
                 }
                 Err(e) => toast::async_toast_warn(

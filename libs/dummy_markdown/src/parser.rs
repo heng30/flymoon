@@ -30,6 +30,7 @@ pub fn run(doc: &str) -> (Vec<MdElement>, Vec<MdUrl>) {
 
     let mut elems = parse_events(&mut parser);
     log::trace!("{:#?}", elems);
+    // println!("{:#?}", elems);
 
     let mut ui_elems = vec![];
     let mut elems_iter = elems.iter_mut();
@@ -218,7 +219,31 @@ fn generate_ui_elements(
                     &mut elems_iter;
 
                 generate_ui_elements(&mut elems_iter_ref, &mut paragraph_elems, user_data);
-                ui_elems.extend(paragraph_elems);
+
+                let mut text = String::default();
+                for item in paragraph_elems.into_iter() {
+                    if item.ty == MdElementType::Text {
+                        text.push_str(&item.text);
+                    } else {
+                        if !text.is_empty() {
+                            ui_elems.push(MdElement {
+                                ty: MdElementType::Text,
+                                text: text.clone(),
+                                ..Default::default()
+                            });
+                            text.clear();
+                        }
+                        ui_elems.push(item);
+                    }
+                }
+
+                if !text.is_empty() {
+                    ui_elems.push(MdElement {
+                        ty: MdElementType::Text,
+                        text,
+                        ..Default::default()
+                    });
+                }
             }
             MarkdownElement::List(elems) => {
                 let mut list_elems = vec![];
@@ -244,20 +269,33 @@ fn generate_ui_elements(
                 for item in list_item_elems.iter() {
                     if item.ty == MdElementType::Text {
                         list_item_text.push_str(&item.text);
-                    }
-                    if item.ty == MdElementType::ListItem {
+                    } else if item.ty == MdElementType::ListItem {
+                        if !list_item_text.is_empty() {
+                            ui_elems.push(MdElement {
+                                ty: MdElementType::ListItem,
+                                list_item: MdListItem {
+                                    level: user_data.list_level,
+                                    text: list_item_text.clone(),
+                                },
+                                ..Default::default()
+                            });
+                            list_item_text.clear();
+                        }
+
                         ui_elems.push(item.clone());
                     }
                 }
 
-                ui_elems.push(MdElement {
-                    ty: MdElementType::ListItem,
-                    list_item: MdListItem {
-                        level: user_data.list_level,
-                        text: list_item_text,
-                    },
-                    ..Default::default()
-                });
+                if !list_item_text.is_empty() {
+                    ui_elems.push(MdElement {
+                        ty: MdElementType::ListItem,
+                        list_item: MdListItem {
+                            level: user_data.list_level,
+                            text: list_item_text,
+                        },
+                        ..Default::default()
+                    });
+                }
             }
             _ => (),
         }

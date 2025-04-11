@@ -13,6 +13,7 @@ component MdText inherits HorizontalLayout {
         color: Theme.primary-text-color;
         font-size: Theme.title4-font-size;
         single-line: false;
+        read-only: true;
     }
 }
 
@@ -20,7 +21,7 @@ component MdHeading inherits HorizontalLayout {
     in-out property <MdHeading> heading;
 
     padding-top: Theme.padding * 4;
-    padding-bottom: Theme.padding * 4;
+    padding-bottom: Theme.padding * 2;
 
     TextInput {
         wrap: word-wrap;
@@ -134,7 +135,6 @@ component MdLinks inherits VerticalLayout {
     }
 
     for entry in urls: Link {
-        is-show-icon: true;
         text: entry.text;
 
         clicked => {
