@@ -1,19 +1,26 @@
-import { Theme, Store, Logic, Icons } from "../../def.slint";
+import { Theme, Store, Logic, Icons, Util } from "../../def.slint";
 import { ChatEntry, MdElementType, MdImage, MdElement, MdUrl, MdHeading, MdUrl, MdListItem } from "../../../store.slint";
-import { IconBtn, Label } from "../../../base/widgets.slint";
+import { IconBtn, Label, Link } from "../../../base/widgets.slint";
 
-component MdText inherits TextInput {
-    wrap: word-wrap;
-    color: Theme.primary-text-color;
-    font-size: Theme.title4-font-size;
-    single-line: false;
+component MdText inherits HorizontalLayout {
+    in-out property text <=> txt.text;
+
+    padding-top: Theme.padding * 4;
+    padding-bottom: Theme.padding * 4;
+
+    txt := TextInput {
+        wrap: word-wrap;
+        color: Theme.primary-text-color;
+        font-size: Theme.title4-font-size;
+        single-line: false;
+    }
 }
 
 component MdHeading inherits HorizontalLayout {
     in-out property <MdHeading> heading;
 
-    padding-top: Theme.padding * 2;
-    padding-bottom: Theme.padding * 2;
+    padding-top: Theme.padding * 4;
+    padding-bottom: Theme.padding * 4;
 
     TextInput {
         wrap: word-wrap;
@@ -93,7 +100,7 @@ component MdCodeBlock inherits HorizontalLayout {
                     is-show-tip: true;
 
                     clicked => {
-                        Logic.new-chat-session();
+                        Logic.copy-to-clipboard(code);
                     }
                 }
             }
@@ -113,6 +120,29 @@ component MdImage inherits HorizontalLayout {
     }
 }
 
+component MdLinks inherits VerticalLayout {
+    in-out property <[MdUrl]> urls;
+
+    padding-top: Theme.padding * 4;
+    padding-bottom: Theme.padding * 4;
+    spacing: Theme.spacing * 2;
+
+    Label {
+        text: Logic.tr("References");
+        font-weight: Theme.bold-font-weight;
+        font-size: Theme.title2-font-size;
+    }
+
+    for entry in urls: Link {
+        is-show-icon: true;
+        text: entry.text;
+
+        clicked => {
+            Util.open-url("Default", entry.url);
+        }
+    }
+}
+
 export component MdDetail inherits Rectangle {
     in-out property <[MdElement]> entries;
     in-out property <[MdUrl]> urls;
@@ -122,7 +152,6 @@ export component MdDetail inherits Rectangle {
     height: vbox.preferred-height;
 
     vbox := VerticalLayout {
-        padding: Theme.padding * 2;
         padding-left: Theme.padding * 4;
         padding-right: Theme.padding * 4;
 
@@ -146,6 +175,10 @@ export component MdDetail inherits Rectangle {
             if entry.ty == MdElementType.Image && entry.img.is-loaded: MdImage {
                 img: entry.img;
             }
+        }
+
+        if urls.length > 0: MdLinks {
+            urls: urls;
         }
     }
 }

@@ -68,11 +68,17 @@ lto = true
 [features]
 default = []
 web = []
-desktop = ["database", "bot", "dummy_markdown", "download_image", "cutil/time"]
+desktop = [
+  "database",
+  "bot",
+  "dummy_markdown",
+  "dep:image",
+  "cutil/http",
+  "cutil/time",
+]
 android = ["cutil/native-tls-vendored", "slint/backend-android-activity-06"]
 full = ["desktop", "qrcode", "database", "bot", "dummy_markdown", "cutil/full"]
 qrcode = ["dep:image", "dep:qrcode"]
-download_image = ["dep:image", "cutil/http"]
 database = ["dep:sqldb"]
 bot = ["dep:bot"]
 dummy_markdown = ["dep:dummy_markdown"]

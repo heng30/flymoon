@@ -107,6 +107,9 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "k") {
                                         root.scroll-up();
                                         return accept;
+                                    } else if (event.text == "m") {
+                                        Store.is-toggle-bot-markdown = !Store.is-toggle-bot-markdown;
+                                        return accept;
                                     }
                                 }
                                 return reject;

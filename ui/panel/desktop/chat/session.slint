@@ -186,8 +186,13 @@ export component Session inherits Rectangle {
                     entry: entry;
                 }
 
-                if !entry.bot.is_empty: MdDetail {
+                if !Store.is-toggle-bot-markdown && !entry.bot.is_empty: MdDetail {
                     entries: entry.md-elems;
+                    urls: entry.link-urls;
+                }
+
+                if Store.is-toggle-bot-markdown && !entry.bot.is_empty: ChatDetail {
+                    text: entry.bot;
                 }
             }
         }
