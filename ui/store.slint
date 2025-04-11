@@ -67,6 +67,7 @@ export struct MdListItem {
 
 export struct MdImage {
     is-loaded: bool,
+    url: string,
     img: image,
 }
 
@@ -239,7 +240,8 @@ export global Store {
                     {
                         ty: MdElementType.Image,
                         img:  {
-                            is-loaded: true,
+                            is-loaded: false,
+                            url: "http://localhost:8282/1.png",
                             img: @image-url("../ui/images/landing-welcome.svg"),
                         }
                     },

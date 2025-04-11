@@ -72,9 +72,9 @@ desktop = [
   "database",
   "bot",
   "dummy_markdown",
-  "dep:image",
   "cutil/http",
   "cutil/time",
+  "cutil/crypto",
 ]
 android = ["cutil/native-tls-vendored", "slint/backend-android-activity-06"]
 full = ["desktop", "qrcode", "database", "bot", "dummy_markdown", "cutil/full"]

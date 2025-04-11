@@ -227,12 +227,6 @@ pub fn init(ui: &AppWindow) {
             init_qrcode(ui);
         }
     }
-
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "download_image")] {
-            init_download_image(ui);
-        }
-    }
 }
 
 #[cfg(feature = "qrcode")]

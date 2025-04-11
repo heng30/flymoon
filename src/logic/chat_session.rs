@@ -133,7 +133,7 @@ fn chat_session_init(ui: &AppWindow) {
 }
 
 pub fn init(ui: &AppWindow) {
-    chat_session_init(ui);
+    // chat_session_init(ui);
 
     let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_new_chat_session(move || {

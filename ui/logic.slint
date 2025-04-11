@@ -69,8 +69,7 @@ export global Logic {
     callback chat-histories-remove-selected();
     callback chat-histories-update-list(text: string);
 
-    callback is-image-downloaded(url: string) -> bool;
-    callback download-image(url: string) -> image;
+    callback download-image(histories-entry-index: int, index: int, url: string);
 
     //////////////////////////////// Logic End  ////////////////////////////////
 }

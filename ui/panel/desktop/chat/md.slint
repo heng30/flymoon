@@ -146,6 +146,7 @@ component MdLinks inherits VerticalLayout {
 export component MdDetail inherits Rectangle {
     in-out property <[MdElement]> entries;
     in-out property <[MdUrl]> urls;
+    in-out property <int> histories-entry-index;
 
     background: Theme.hover-background;
     border-radius: Theme.border-radius * 2;
@@ -156,6 +157,14 @@ export component MdDetail inherits Rectangle {
         padding-right: Theme.padding * 4;
 
         for entry[index] in entries: VerticalLayout {
+            init => {
+                if (entry.ty == MdElementType.Image) {
+                    if (!entry.img.is-loaded) {
+                        Logic.download-image(histories-entry-index, index, entry.img.url);
+                    }
+                }
+            }
+
             if entry.ty == MdElementType.Text: MdText {
                 text: entry.text;
             }
