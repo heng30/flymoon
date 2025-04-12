@@ -5,7 +5,7 @@ export global Logic {
     callback remove-all-cache();
 
     callback copy-to-clipboard(string);
-    callback copy-from-clipboard() -> string;
+    callback paste-from-clipboard() -> string;
 
     callback get-setting-preference() -> SettingPreference;
     callback set-setting-preference(SettingPreference);

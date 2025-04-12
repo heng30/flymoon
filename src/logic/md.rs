@@ -6,7 +6,17 @@ use crate::slint_generatedAppWindow::{
 use crate::{config::cache_dir, store_current_chat_session_histories};
 use cutil::{crypto, http};
 use dummy_markdown::{self, MdElement, MdElementType, MdHeading, MdListItem, MdUrl};
+use once_cell::sync::Lazy;
 use slint::{ComponentHandle, Image, Model, SharedString, VecModel, Weak};
+use std::{collections::HashMap, sync::Mutex};
+
+struct DownloadImageCache {
+    try_times: u32,
+    is_loading: bool,
+}
+
+static DOWNLOAD_IMAGE_CACHE: Lazy<Mutex<HashMap<String, DownloadImageCache>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[macro_export]
 macro_rules! store_current_chat_session_histories_md_elems {
@@ -106,9 +116,28 @@ pub fn init(ui: &AppWindow) {
                     // FIXME: If I set the image outside the `tokio::spawn`, would panic
                     async_load_image(ui, histories_entry_index, index, url, file_path);
                 } else {
+                    {
+                        let mut cache = DOWNLOAD_IMAGE_CACHE.lock().unwrap();
+                        if let Some(entry) = cache.get_mut(url.as_str()) {
+                            if entry.is_loading || entry.try_times >= 3 {
+                                return;
+                            }
+
+                            entry.try_times += 1;
+                            entry.is_loading = true;
+                        }
+                    }
+
                     if let Ok(data) = http::get_bytes(&url, None).await {
                         _ = std::fs::write(&file_path, data);
-                        async_load_image(ui, histories_entry_index, index, url, file_path);
+                        async_load_image(ui, histories_entry_index, index, url.clone(), file_path);
+                    }
+
+                    {
+                        let mut cache = DOWNLOAD_IMAGE_CACHE.lock().unwrap();
+                        if let Some(entry) = cache.get_mut(url.as_str()) {
+                            entry.is_loading = false;
+                        }
                     }
                 }
             });
