@@ -121,6 +121,7 @@ component User inherits Rectangle {
 export component Session inherits Rectangle {
     public function scroll-to-top() {
         lv.viewport-y = 0;
+        Store.is-auto-scroll = false;
     }
 
     public function scroll-to-bottom() {
@@ -130,6 +131,7 @@ export component Session inherits Rectangle {
 
     public function scroll-up() {
         lv.viewport-y = Math.min(0, lv.viewport-y + lv.visible-height / 4);
+        Store.is-auto-scroll = false;
     }
 
     public function scroll-down() {

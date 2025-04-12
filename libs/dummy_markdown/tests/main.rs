@@ -32,6 +32,14 @@ Would you like a deeper dive into any of these topics?
 
 | Query | Purpose ||--------|---------|| rust cargo build --release | How to build in release mode || rust serde json example | JSON parsing with Serde || rust tokio vs async-std | Comparing async runtimes || rust error E0507 | Fixing a specific compiler error |
 
+2. **Add dependencies to your `Cargo.toml`**:
+   ```toml
+   [dependencies]
+   reqwest = { version = "0.11", features = ["json"] }
+   serde = { version = "1.0", features = ["derive"] }
+   tokio = { version = "1.0", features = ["full"] }
+   ```
+
 "#;
 
     #[test]

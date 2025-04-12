@@ -179,7 +179,7 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
     let is_end_with_newline = last_entry.bot.ends_with('\n');
     let bot_text = last_entry.bot.trim();
 
-    let ((md_elems, link_urls), _unfinished_text) = {
+    let ((md_elems, _link_urls), _unfinished_text) = {
         if is_end_with_newline {
             (dummy_markdown::parser::run(bot_text), "")
         } else {
@@ -213,20 +213,20 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
     }
 
     // update link_urls
-    let rows = store_current_chat_session_histories_link_urls!(last_entry).row_count();
-    if rows == 0 || rows > link_urls.len() {
-        let urls = link_urls
-            .into_iter()
-            .map(|item| item.into())
-            .collect::<Vec<_>>();
-        store_current_chat_session_histories_link_urls!(last_entry).set_vec(urls);
-    } else {
-        let offset = link_urls.len() - rows;
-        for i in 0..offset {
-            store_current_chat_session_histories_link_urls!(last_entry)
-                .push(link_urls[rows + i].clone().into());
-        }
-    }
+    // let rows = store_current_chat_session_histories_link_urls!(last_entry).row_count();
+    // if rows == 0 || rows > link_urls.len() {
+    //     let urls = link_urls
+    //         .into_iter()
+    //         .map(|item| item.into())
+    //         .collect::<Vec<_>>();
+    //     store_current_chat_session_histories_link_urls!(last_entry).set_vec(urls);
+    // } else {
+    //     let offset = link_urls.len() - rows;
+    //     for i in 0..offset {
+    //         store_current_chat_session_histories_link_urls!(last_entry)
+    //             .push(link_urls[rows + i].clone().into());
+    //     }
+    // }
 }
 
 pub fn parse_last_history_bot_text(ui: &AppWindow) {

@@ -176,18 +176,22 @@ fn generate_ui_elements(
                 }
             }
             MarkdownElement::CodeBlock(elems) => {
+                let mut code = String::default();
+
                 for item in elems.iter() {
                     match item {
                         MarkdownElement::Text(text) => {
-                            ui_elems.push(MdElement {
-                                ty: MdElementType::CodeBlock,
-                                code_block: text.clone().into(),
-                                ..Default::default()
-                            });
+                            code.push_str(&text);
                         }
                         _ => (),
                     }
                 }
+
+                ui_elems.push(MdElement {
+                    ty: MdElementType::CodeBlock,
+                    code_block: code.into(),
+                    ..Default::default()
+                });
             }
             MarkdownElement::Heading { level, elems } => {
                 let mut heading_elems = vec![];
@@ -266,6 +270,8 @@ fn generate_ui_elements(
                 generate_ui_elements(&mut elems_iter_ref, &mut list_item_elems, user_data);
 
                 let mut list_item_text = String::default();
+                let mut code_block = String::default();
+
                 for item in list_item_elems.iter() {
                     if item.ty == MdElementType::Text {
                         list_item_text.push_str(&item.text);
@@ -283,6 +289,8 @@ fn generate_ui_elements(
                         }
 
                         ui_elems.push(item.clone());
+                    } else if item.ty == MdElementType::CodeBlock {
+                        code_block.push_str(&item.code_block);
                     }
                 }
 
@@ -293,6 +301,14 @@ fn generate_ui_elements(
                             level: user_data.list_level,
                             text: list_item_text,
                         },
+                        ..Default::default()
+                    });
+                }
+
+                if !code_block.is_empty() {
+                    ui_elems.push(MdElement {
+                        ty: MdElementType::CodeBlock,
+                        code_block: code_block,
                         ..Default::default()
                     });
                 }
