@@ -86,8 +86,15 @@ export struct SettingChatModel {
     api-key: string,
 }
 
+export struct SettingGoogleSearch {
+    cx: string,
+    api-key: string,
+    num: int,
+}
+
 export struct SettingModel {
     chat: SettingChatModel,
+    google-search: SettingGoogleSearch,
 }
 
 export struct PromptEntry {

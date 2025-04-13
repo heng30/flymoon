@@ -1,0 +1,129 @@
+{
+  "kind": "customsearch#search",
+  "url": {
+    "type": "application/json",
+    "template": "https://www.googleapis.com/customsearch/v1?q={searchTerms}&num={count?}&start={startIndex?}&lr={language?}&safe={safe?}&cx={cx?}&sort={sort?}&filter={filter?}&gl={gl?}&cr={cr?}&googlehost={googleHost?}&c2coff={disableCnTwTranslation?}&hq={hq?}&hl={hl?}&siteSearch={siteSearch?}&siteSearchFilter={siteSearchFilter?}&exactTerms={exactTerms?}&excludeTerms={excludeTerms?}&linkSite={linkSite?}&orTerms={orTerms?}&dateRestrict={dateRestrict?}&lowRange={lowRange?}&highRange={highRange?}&searchType={searchType}&fileType={fileType?}&rights={rights?}&imgSize={imgSize?}&imgType={imgType?}&imgColorType={imgColorType?}&imgDominantColor={imgDominantColor?}&alt=json"
+  },
+  "queries": {
+    "request": [
+      {
+        "title": "Google Custom Search - lectures",
+        "totalResults": "3",
+        "searchTerms": "lectures",
+        "count": 3,
+        "startIndex": 1,
+        "inputEncoding": "utf8",
+        "outputEncoding": "utf8",
+        "safe": "off",
+        "cx": "017576662512468239146:omuauf_lfve"
+      }
+    ]
+  },
+  "context": {
+    "title": "CS Curriculum",
+    "facets": [
+      [
+        {
+          "anchor": "Lectures",
+          "label": "lectures",
+          "label_with_op": "more:lectures"
+        }
+      ],
+      [
+        {
+          "anchor": "Assignments",
+          "label": "assignments",
+          "label_with_op": "more:assignments"
+        }
+      ],
+      [
+        {
+          "anchor": "Reference",
+          "label": "reference",
+          "label_with_op": "more:reference"
+        }
+      ]
+    ]
+  },
+  "searchInformation": {
+    "searchTime": 0.526244,
+    "formattedSearchTime": "0.53",
+    "totalResults": "3",
+    "formattedTotalResults": "3"
+  },
+  "items": [
+    {
+      "kind": "customsearch#result",
+      "title": "EE364b: Lecture Slides and Notes",
+      "htmlTitle": "EE364b: \u003cb\u003eLecture\u003c/b\u003e Slides and Notes",
+      "link": "http://stanford.edu/class/ee364b/lectures.html",
+      "displayLink": "stanford.edu",
+      "snippet": "EE364b: Lecture Slides and Notes · Proximal algorithms (paper and code) · Monotone operators · Monotone operator splitting methods (matlab files) · Alternating ...",
+      "htmlSnippet": "EE364b: \u003cb\u003eLecture\u003c/b\u003e Slides and Notes &middot; Proximal algorithms (paper and code) &middot; Monotone operators &middot; Monotone operator splitting methods (matlab files) &middot; Alternating&nbsp;...",
+      "formattedUrl": "http://stanford.edu/class/ee364b/lectures.html",
+      "htmlFormattedUrl": "http://stanford.edu/class/ee364b/\u003cb\u003electures\u003c/b\u003e.html",
+      "labels": [
+        {
+          "name": "lectures",
+          "displayName": "Lectures",
+          "label_with_op": "more:lectures"
+        }
+      ]
+    },
+    {
+      "kind": "customsearch#result",
+      "title": "EE363: Lecture Slides - Stanford",
+      "htmlTitle": "EE363: \u003cb\u003eLecture\u003c/b\u003e Slides - Stanford",
+      "link": "https://stanford.edu/class/ee363/lectures.html",
+      "displayLink": "stanford.edu",
+      "snippet": "EE363: Lecture Slides · Linear quadratic regulator: Discrete-time finite horizon · LQR via Lagrange multipliers · Infinite horizon LQR · Continuous-time LQR.",
+      "htmlSnippet": "EE363: \u003cb\u003eLecture\u003c/b\u003e Slides &middot; Linear quadratic regulator: Discrete-time finite horizon &middot; LQR via Lagrange multipliers &middot; Infinite horizon LQR &middot; Continuous-time LQR.",
+      "formattedUrl": "https://stanford.edu/class/ee363/lectures.html",
+      "htmlFormattedUrl": "https://stanford.edu/class/ee363/\u003cb\u003electures\u003c/b\u003e.html",
+      "labels": [
+        {
+          "name": "lectures",
+          "displayName": "Lectures",
+          "label_with_op": "more:lectures"
+        }
+      ]
+    },
+    {
+      "kind": "customsearch#result",
+      "title": "Stanford Engineering Everywhere | EE364A - Convex Optimization I",
+      "htmlTitle": "Stanford Engineering Everywhere | EE364A - Convex Optimization I",
+      "link": "https://see.stanford.edu/Course/EE364A",
+      "displayLink": "see.stanford.edu",
+      "snippet": "Lecture Notes. Introduction, Lecture 1. Convex Sets, Lecture2. Convex Functions, Lectures 3-4. Convex Optimization Problems, Lectures 5-7. Duality, Lectures 8-7.",
+      "htmlSnippet": "\u003cb\u003eLecture\u003c/b\u003e Notes. Introduction, \u003cb\u003eLecture\u003c/b\u003e 1. Convex Sets, Lecture2. Convex Functions, \u003cb\u003eLectures\u003c/b\u003e 3-4. Convex Optimization Problems, \u003cb\u003eLectures\u003c/b\u003e 5-7. Duality, \u003cb\u003eLectures\u003c/b\u003e 8-7.",
+      "formattedUrl": "https://see.stanford.edu/Course/EE364A",
+      "htmlFormattedUrl": "https://see.stanford.edu/Course/EE364A",
+      "pagemap": {
+        "cse_thumbnail": [
+          {
+            "src": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhNmbtzh8jlAdWiTjkDSgRU-MbBgMkqxyaIch4oGzJEucR_qiFudd4YGtA&s",
+            "width": "148",
+            "height": "208"
+          }
+        ],
+        "metatags": [
+          {
+            "viewport": "width=device-width, initial-scale=1"
+          }
+        ],
+        "cse_image": [
+          {
+            "src": "https://see.stanford.edu/Content/Images/Instructors/boyd.jpg"
+          }
+        ]
+      },
+      "labels": [
+        {
+          "name": "lectures",
+          "displayName": "Lectures",
+          "label_with_op": "more:lectures"
+        }
+      ]
+    }
+  ]
+}

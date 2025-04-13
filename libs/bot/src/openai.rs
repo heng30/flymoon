@@ -1,5 +1,9 @@
+use anyhow::Result;
+use cutil::reqwest::{
+    self,
+    header::{ACCEPT, AUTHORIZATION, CACHE_CONTROL, CONTENT_TYPE, HeaderMap},
+};
 use log::debug;
-use reqwest::header::{ACCEPT, AUTHORIZATION, CACHE_CONTROL, CONTENT_TYPE, HeaderMap};
 use std::sync::mpsc;
 use std::time::Duration;
 use tokio_stream::StreamExt;
@@ -130,11 +134,7 @@ impl Chat {
         headers
     }
 
-    pub async fn start(
-        self,
-        id: u64,
-        cb: impl Fn(response::StreamTextItem),
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn start(self, id: u64, cb: impl Fn(response::StreamTextItem)) -> Result<()> {
         let headers = self.headers();
         let client = reqwest::Client::new();
 

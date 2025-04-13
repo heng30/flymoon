@@ -61,9 +61,20 @@ pub struct ChatModel {
     pub api_key: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Derivative)]
+#[derivative(Default)]
+pub struct GoogleSearch {
+    pub cx: String,
+    pub api_key: String,
+
+    #[derivative(Default(value = "5"))]
+    pub num: i32,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Model {
     pub chat: ChatModel,
+    pub google_search: GoogleSearch,
 }
 
 pub fn appid_default() -> String {

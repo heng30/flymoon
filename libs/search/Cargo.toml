@@ -1,17 +1,23 @@
 [package]
-name = "bot"
+name = "search"
 version = "0.1.0"
 edition = "2021"
-descriptions = "A chat bot for OpenAI compatible API. "
+descriptions = "use search engine to fetch web useful infos"
 
 [dependencies]
 log = "0.4"
 anyhow = "1.0"
+scraper = "0.23"
 serde_json = "1.0"
-tokio-stream = "0.1"
+urlencoding = "2.1"
+tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["serde_derive"] }
 cutil = { version = "0.1", path = "../cutil", features = ["default", "http"] }
 
+
 [dev-dependencies]
 env_logger = "0.9"
-tokio = { version = "1", features = ["full"] }
+
+[[bin]]
+name = "google"
+path = "./bin/google.rs"

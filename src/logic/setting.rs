@@ -1,7 +1,9 @@
 use super::tr::tr;
 use crate::{
     config,
-    slint_generatedAppWindow::{AppWindow, Logic, SettingChatModel, SettingModel, Store, Theme},
+    slint_generatedAppWindow::{
+        AppWindow, Logic, SettingChatModel, SettingGoogleSearch, SettingModel, Store, Theme,
+    },
 };
 use slint::ComponentHandle;
 
@@ -58,6 +60,11 @@ pub fn init(ui: &AppWindow) {
                 model_name: config.chat.model_name.into(),
                 api_key: config.chat.api_key.into(),
             },
+            google_search: SettingGoogleSearch {
+                cx: config.google_search.cx.into(),
+                api_key: config.google_search.api_key.into(),
+                num: config.google_search.num,
+            },
         }
     });
 
@@ -69,6 +76,13 @@ pub fn init(ui: &AppWindow) {
             model_name: setting.chat.model_name.into(),
             api_key: setting.chat.api_key.into(),
         };
+
+        all.model.google_search = config::data::GoogleSearch {
+            cx: setting.google_search.cx.into(),
+            api_key: setting.google_search.api_key.into(),
+            num: setting.google_search.num,
+        };
+
         _ = config::save(all);
     });
 }

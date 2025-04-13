@@ -158,7 +158,7 @@ pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {
         .bot
         .chars()
         .last()
-        .map_or(false, |c| c.is_whitespace())
+        .map_or(false, |c| c == '\n')
 }
 
 pub fn parse_stream_bot_text(ui: &AppWindow) {

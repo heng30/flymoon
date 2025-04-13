@@ -17,6 +17,11 @@ export component Model inherits SettingDetail {
                 api-base-url: api-base-url-lineedit.text,
                 model-name: model-name-lineedit.text,
                 api-key: api-key-lineedit.text,
+            },
+            google-search : {
+                cx: google-search-cx-lineedit.text,
+                api-key : google-search-api-key-lineedit.text,
+                num: google-search-num-select.current-value.to-float(),
             }
         };
     }
@@ -25,24 +30,16 @@ export component Model inherits SettingDetail {
         api-base-url-lineedit.text = setting.chat.api-base-url;
         model-name-lineedit.text = setting.chat.model-name;
         api-key-lineedit.text = setting.chat.api-key;
-    }
 
-    if type-select.current-value == "Chat": HorizontalLayout {
-        padding: Theme.padding * 4;
-        alignment: LayoutAlignment.center;
-
-        Label {
-            color: Theme.warning-color;
-            text: Logic.tr("Only support OpenAI compatible API");
-            font-size: Theme.title4-font-size;
-            font-weight: Theme.bold-font-weight;
-        }
+        google-search-cx-lineedit.text = setting.google-search.cx;
+        google-search-api-key-lineedit.text = setting.google-search.api-key;
+        google-search-num-select.current-value = Math.clamp(setting.google-search.num, 1, 10);
     }
 
     SettingDetailInner {
         SettingDetailInnerVbox {
             type-select := Select {
-                values: ["Chat", "Search Engine"];
+                values: ["Chat", "Google Search"];
                 current-value: self.values[0];
             }
         }
@@ -90,6 +87,62 @@ export component Model inherits SettingDetail {
                                 self.input-type = InputType.password;
                             }
                         }
+                    }
+                }
+
+                Label {
+                    color: Theme.warning-color;
+                    text: Logic.tr("Only support OpenAI compatible API");
+                    font-size: Theme.title4-font-size;
+                    font-weight: Theme.bold-font-weight;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                }
+            }
+
+            VerticalLayout {
+                visible: type-select.current-value == "Google Search";
+                spacing: Theme.spacing * 4;
+                alignment: LayoutAlignment.start;
+
+                SettingDetailInnerVbox {
+                    SettingDetailLabel {
+                        text: Logic.tr("CX");
+                    }
+
+                    google-search-cx-lineedit := LineInput {
+                        placeholder-text: Logic.tr("cx");
+                    }
+                }
+
+                SettingDetailInnerVbox {
+                    SettingDetailLabel {
+                        text: Logic.tr("API key");
+                    }
+
+                    google-search-api-key-lineedit := LineInput {
+                        is-show-icon: true;
+                        icon: self.input-type == InputType.password ? Icons.close-eye : Icons.eye;
+                        input-type: InputType.password;
+                        placeholder-text: Logic.tr("api key");
+
+                        clicked => {
+                            if (self.input-type == InputType.password) {
+                                self.input-type = InputType.text;
+                            } else {
+                                self.input-type = InputType.password;
+                            }
+                        }
+                    }
+                }
+
+                SettingDetailInnerVbox {
+                    SettingDetailLabel {
+                        text: Logic.tr("Link number");
+                    }
+
+                    google-search-num-select := Select {
+                        values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                        current-value: self.values[4];
                     }
                 }
             }
