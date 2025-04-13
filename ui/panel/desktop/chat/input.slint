@@ -139,8 +139,8 @@ export component Input inherits Rectangle {
                     alignment: LayoutAlignment.start;
 
                     TextBtn {
-                        border-color: Store.enabled-network ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
-                        border-width: self.has-hover || Store.enabled-network ? 2px : 1px;
+                        border-color: Store.enabled-search-webpages ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
+                        border-width: self.has-hover || Store.enabled-search-webpages ? 2px : 1px;
                         border-radius: Theme.border-radius * 4;
                         bg-color: Theme.hover-background;
                         icon: Icons.network;
@@ -148,7 +148,8 @@ export component Input inherits Rectangle {
                         text: Logic.tr("Network");
 
                         clicked => {
-                            Store.enabled-network = !Store.enabled-network;
+                            Store.enabled-search-webpages = !Store.enabled-search-webpages;
+                            te.focus();
                         }
                     }
                 }
@@ -165,6 +166,7 @@ export component Input inherits Rectangle {
                         clicked => {
                             Logic.new-chat-session();
                             Store.is-auto-scroll = true;
+                            te.focus();
                         }
                     }
 
@@ -176,6 +178,7 @@ export component Input inherits Rectangle {
                         clicked => {
                             Logic.retry-question(Store.current-chat-session.histories.length - 1, "");
                             scroll-to-bottom();
+                            te.focus();
                         }
                     }
 
@@ -191,6 +194,7 @@ export component Input inherits Rectangle {
 
                             clicked => {
                                 root.send-question();
+                                te.focus();
                             }
                         }
 
@@ -201,6 +205,7 @@ export component Input inherits Rectangle {
                             clicked => {
                                 Store.is-chatting = false;
                                 Logic.stop-question();
+                                te.focus();
                             }
                         }
                     }

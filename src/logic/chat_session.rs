@@ -1,6 +1,6 @@
 use super::{md, toast, tr::tr};
 use crate::{
-    config::{data::Model as SettingModel, model as setting_chat_model},
+    config::{data::Model as SettingModel, model as setting_model},
     db::{
         self,
         def::{CHAT_SESSION_TABLE as DB_TABLE, ChatEntry, ChatSession},
@@ -11,12 +11,14 @@ use crate::{
     },
     store_prompt_entries, toast_warn,
 };
+use anyhow::Result;
 use bot::openai::{
     Chat,
     request::{APIConfig as ChatAPIConfig, HistoryChat},
     response::StreamTextItem,
 };
 use once_cell::sync::Lazy;
+use search::google as GoogleSearch;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::sync::{
     Arc, Mutex,
@@ -29,6 +31,7 @@ struct ChatCache {
     id: u64,
     ui: Weak<AppWindow>,
     stop_tx: Arc<mpsc::Sender<()>>,
+    summarized_question: String,
 }
 
 static INC_CHAT_ID: AtomicU64 = AtomicU64::new(0);
@@ -59,6 +62,16 @@ impl From<SettingModel> for ChatAPIConfig {
             api_base_url: setting.chat.api_base_url,
             api_model: setting.chat.model_name,
             api_key: setting.chat.api_key,
+        }
+    }
+}
+
+impl From<SettingModel> for GoogleSearch::Config {
+    fn from(setting: SettingModel) -> Self {
+        Self {
+            cx: setting.google_search.cx,
+            api_key: setting.google_search.api_key,
+            num: setting.google_search.num as u8,
         }
     }
 }
@@ -203,6 +216,32 @@ pub fn init(ui: &AppWindow) {
     });
 }
 
+fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, SharedString) {
+    let mut session = store_current_chat_session!(ui);
+
+    if question.is_empty() || !question.starts_with("/") {
+        return (session.prompt, question);
+    }
+
+    if let Some(shortcut) = question.split_whitespace().next() {
+        if let Some(entry) = store_prompt_entries!(ui)
+            .iter()
+            .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
+        {
+            let question = question
+                .trim_start_matches(&format!("/{}", entry.shortcut))
+                .trim_start()
+                .into();
+
+            session.prompt = entry.detail.clone();
+            ui.global::<Store>().set_current_chat_session(session);
+            return (entry.detail, question);
+        }
+    }
+
+    (session.prompt, question)
+}
+
 fn stream_text(id: u64, item: StreamTextItem) {
     // log::debug!("{item:?}");
 
@@ -267,37 +306,119 @@ fn stream_text(id: u64, item: StreamTextItem) {
     });
 }
 
-fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, SharedString) {
-    let mut session = store_current_chat_session!(ui);
-
-    if question.is_empty() || !question.starts_with("/") {
-        return (session.prompt, question);
+fn stream_summarize_question(id: u64, item: StreamTextItem) {
+    if id != item.id {
+        return;
     }
 
-    if let Some(shortcut) = question.split_whitespace().next() {
-        if let Some(entry) = store_prompt_entries!(ui)
-            .iter()
-            .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
-        {
-            let question = question
-                .trim_start_matches(&format!("/{}", entry.shortcut))
-                .trim_start()
-                .into();
+    let (cc_id, _ui) = {
+        let cc = CHAT_CACHE.lock().unwrap();
+        if cc.is_none() {
+            return;
+        }
 
-            session.prompt = entry.detail.clone();
-            ui.global::<Store>().set_current_chat_session(session);
-            return (entry.detail, question);
+        let cc = cc.as_ref().unwrap();
+        (cc.id, cc.ui.clone())
+    };
+
+    if id != cc_id || item.etext.is_some() || item.finished {
+        return;
+    }
+
+    if item.text.is_some() {
+        let mut cc = CHAT_CACHE.lock().unwrap();
+        if cc.is_none() {
+            return;
+        }
+
+        cc.as_mut()
+            .unwrap()
+            .summarized_question
+            .push_str(&item.text.unwrap());
+    }
+}
+
+async fn summarize_question(ui: Weak<AppWindow>, question: &str) -> Result<String> {
+    let prompt = "summarize the content less than 20 worlds";
+    let config = setting_model().into();
+
+    let (chat, stop_tx) = Chat::new(prompt, question, config, vec![]);
+
+    let id = INC_CHAT_ID.fetch_add(1, Ordering::Relaxed);
+
+    {
+        let mut cc = CHAT_CACHE.lock().unwrap();
+        *cc = Some(ChatCache {
+            id,
+            ui: ui.clone(),
+            stop_tx: Arc::new(stop_tx),
+            summarized_question: Default::default(),
+        });
+    }
+
+    chat.start(id, |item| {
+        stream_summarize_question(id, item);
+    })
+    .await?;
+
+    {
+        let cc = CHAT_CACHE.lock().unwrap();
+        if cc.is_some() {
+            let summary = &cc.as_ref().unwrap().summarized_question;
+
+            if summary.is_empty() {
+                anyhow::bail!("summarized question is empty")
+            } else {
+                Ok(summary.clone())
+            }
+        } else {
+            anyhow::bail!("summarized question is empty")
         }
     }
+}
 
-    (session.prompt, question)
+async fn search_webpages(
+    ui: Weak<AppWindow>,
+    question: &str,
+    histories: &mut Vec<HistoryChat>,
+) -> Result<()> {
+    let ui_handle = ui.clone();
+    let _ = slint::invoke_from_event_loop(move || {
+        ui_handle
+            .unwrap()
+            .global::<Store>()
+            .set_is_searching_webpages(true);
+    });
+
+    let config = setting_model().into();
+
+    let query = if question.chars().count() < 20 {
+        question.to_string()
+    } else {
+        summarize_question(ui, question).await?
+    };
+
+    log::debug!("search query: {}", query);
+
+    if let Some(text) = GoogleSearch::search(&query, config).await? {
+        let text = format!(
+            " The following web content is relevant to the user's question. Please consult these resources when preparing your answer. {text}"
+        );
+
+        histories.push(HistoryChat {
+            utext: text,
+            ..Default::default()
+        });
+    }
+
+    Ok(())
 }
 
 fn send_question(ui: &AppWindow, question: SharedString) {
     let (prompt, question) = parse_prompt(ui, question);
 
     let mut session = store_current_chat_session!(ui);
-    let (is_new_chat, histories) = if session.uuid.is_empty() {
+    let (is_new_chat, mut histories) = if session.uuid.is_empty() {
         session.uuid = Uuid::new_v4().to_string().into();
         session.time = cutil::time::local_now("%m-%d %H:%M").into();
         ui.global::<Store>().set_current_chat_session(session);
@@ -325,10 +446,30 @@ fn send_question(ui: &AppWindow, question: SharedString) {
     }
 
     ui.global::<Store>().set_is_chatting(true);
+    let enabled_search_webpages = ui.global::<Store>().get_enabled_search_webpages();
 
     let ui = ui.as_weak();
     tokio::spawn(async move {
-        let config = setting_chat_model().into();
+        // search webpages
+        if enabled_search_webpages {
+            if let Err(e) = search_webpages(ui.clone(), &question, &mut histories).await {
+                toast::async_toast_warn(
+                    ui.clone(),
+                    format!("{}. {}: {e:?}", tr("Search webpages failed"), tr("Reason")),
+                );
+            }
+
+            let ui_handle = ui.clone();
+            let _ = slint::invoke_from_event_loop(move || {
+                ui_handle
+                    .unwrap()
+                    .global::<Store>()
+                    .set_is_searching_webpages(false);
+            });
+        }
+
+        // send question
+        let config = setting_model().into();
         let (chat, stop_tx) = Chat::new(prompt, question, config, histories);
         let id = INC_CHAT_ID.fetch_add(1, Ordering::Relaxed);
 
@@ -338,20 +479,20 @@ fn send_question(ui: &AppWindow, question: SharedString) {
                 id,
                 ui: ui.clone(),
                 stop_tx: Arc::new(stop_tx),
+                summarized_question: Default::default(),
             });
         }
 
-        match chat
+        if let Err(e) = chat
             .start(id, |item| {
                 stream_text(id, item);
             })
             .await
         {
-            Err(e) => toast::async_toast_warn(
+            toast::async_toast_warn(
                 ui.clone(),
                 format!("{}. {}: {e:?}", tr("Chat failed"), tr("Reason")),
-            ),
-            _ => (),
+            );
         }
 
         let _ = slint::invoke_from_event_loop(move || {

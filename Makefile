@@ -11,7 +11,7 @@ desktop-build-env=SLINT_STYLE=fluent $(build-env)
 web-build-env=SLINT_STYLE=fluent $(build-env)
 # desktop-build-debug-env=SLINT_BACKEND=qt
 
-run-env=RUST_LOG=debug,sqlx=off,reqwest=off
+run-env=RUST_LOG=debug,sqlx=warn,reqwest=warn,scraper=warn
 
 all: desktop-build-release
 

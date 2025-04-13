@@ -6,8 +6,8 @@ async fn main() -> Result<()> {
     let query = "How to learn Rust programming language?";
 
     let config = google::Config {
-        cx: "Your-cx",
-        api_key: "Your-API-Key",
+        cx: "Your-CX".to_string(),
+        api_key: "Your-API-Key".to_string(),
         num: 10,
     };
 

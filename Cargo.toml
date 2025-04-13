@@ -30,6 +30,7 @@ serde = { version = "1.0", features = ["serde_derive"] }
 image = { version = "0.24", optional = true }
 qrcode = { version = "0.13", optional = true }
 bot = { version = "0.1", path = "./libs/bot", optional = true }
+search = { version = "0.1", path = "./libs/search", optional = true }
 sqldb = { version = "0.1", path = "./libs/sqldb", optional = true }
 dummy_markdown = { version = "0.1", path = "./libs/dummy_markdown", optional = true }
 cutil = { version = "0.1", path = "./libs/cutil", features = [
@@ -73,18 +74,16 @@ default = []
 web = []
 desktop = [
   "database",
-  "bot",
-  "dummy_markdown",
   "cutil/http",
   "cutil/time",
   "cutil/crypto",
+  "dep:bot",
+  "dep:search",
+  "dep:dummy_markdown",
 ]
 android = ["cutil/native-tls-vendored", "slint/backend-android-activity-06"]
-full = ["desktop", "qrcode", "database", "bot", "dummy_markdown", "cutil/full"]
 qrcode = ["dep:image", "dep:qrcode"]
 database = ["dep:sqldb"]
-bot = ["dep:bot"]
-dummy_markdown = ["dep:dummy_markdown"]
 
 [lib]
 path = "src/lib.rs"

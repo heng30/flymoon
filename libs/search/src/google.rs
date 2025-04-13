@@ -16,13 +16,13 @@ struct SearchResultItem {
 }
 
 #[derive(Debug)]
-pub struct Config<'a> {
-    pub cx: &'a str,
-    pub api_key: &'a str,
+pub struct Config {
+    pub cx: String,
+    pub api_key: String,
     pub num: u8,
 }
 
-pub async fn search<'a>(query: &str, config: Config<'a>) -> Result<Option<String>> {
+pub async fn search(query: &str, config: Config) -> Result<Option<String>> {
     let url = format!(
         "https://www.googleapis.com/customsearch/v1?key={}&cx={}&num={}&start=1&q={}",
         config.api_key,
