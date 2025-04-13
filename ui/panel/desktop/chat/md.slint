@@ -1,6 +1,7 @@
 import { Theme, Store, Logic, Icons, Util } from "../../def.slint";
 import { ChatEntry, MdElementType, MdImage, MdElement, MdUrl, MdHeading, MdUrl, MdListItem } from "../../../store.slint";
 import { IconBtn, Label, Link } from "../../../base/widgets.slint";
+import { SearchLink } from "../../../store.slint";
 
 component MdText inherits HorizontalLayout {
     in-out property text <=> txt.text;
@@ -124,7 +125,6 @@ component MdLinks inherits VerticalLayout {
     in-out property <[MdUrl]> urls;
 
     padding-top: Theme.padding * 4;
-    padding-bottom: Theme.padding * 4;
     spacing: Theme.spacing * 2;
 
     Label {
@@ -142,10 +142,33 @@ component MdLinks inherits VerticalLayout {
     }
 }
 
+component MdSearchLinks inherits VerticalLayout {
+    in-out property <[SearchLink]> links;
+
+    padding-top: Theme.padding * 4;
+    padding-bottom: Theme.padding * 4;
+    spacing: Theme.spacing * 2;
+
+    Label {
+        text: Logic.tr("Webs");
+        font-weight: Theme.bold-font-weight;
+        font-size: Theme.title2-font-size;
+    }
+
+    for entry in links: Link {
+        text: entry.title;
+
+        clicked => {
+            Util.open-url("Default", entry.link);
+        }
+    }
+}
+
 export component MdDetail inherits Rectangle {
     in-out property <[MdElement]> entries;
     in-out property <[MdUrl]> urls;
     in-out property <int> histories-entry-index;
+    in-out property <[SearchLink]> search_links;
 
     background: Theme.hover-background;
     border-radius: Theme.border-radius * 2;
@@ -187,6 +210,10 @@ export component MdDetail inherits Rectangle {
 
         if urls.length > 0: MdLinks {
             urls: urls;
+        }
+
+        if search_links.length > 0: MdSearchLinks {
+            links: search_links;
         }
     }
 }

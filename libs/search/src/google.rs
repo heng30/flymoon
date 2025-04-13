@@ -1,4 +1,4 @@
-use super::{SearchItem, req_link};
+use super::{SearchItem, SearchLink, req_link};
 use anyhow::Result;
 use cutil::reqwest;
 use serde::Deserialize;
@@ -22,7 +22,16 @@ pub struct Config {
     pub num: u8,
 }
 
-pub async fn search(query: &str, config: Config) -> Result<Option<String>> {
+impl From<&SearchResultItem> for SearchLink {
+    fn from(entry: &SearchResultItem) -> Self {
+        Self {
+            title: entry.title.clone(),
+            link: entry.link.clone(),
+        }
+    }
+}
+
+pub async fn search(query: &str, config: Config) -> Result<(Option<String>, Vec<SearchLink>)> {
     let url = format!(
         "https://www.googleapis.com/customsearch/v1?key={}&cx={}&num={}&start=1&q={}",
         config.api_key,
@@ -33,6 +42,12 @@ pub async fn search(query: &str, config: Config) -> Result<Option<String>> {
 
     let gs = reqwest::get(&url).await?.json::<SearchResult>().await?;
     log::info!("{:#?}", gs);
+
+    let search_links = gs
+        .items
+        .iter()
+        .map(|item| item.into())
+        .collect::<Vec<SearchLink>>();
 
     let (sender, mut receiver) = tokio::sync::mpsc::channel(10);
     let (sender, mut bris) = (Arc::new(sender), vec![]);
@@ -62,8 +77,8 @@ pub async fn search(query: &str, config: Config) -> Result<Option<String>> {
     }
 
     if bris.is_empty() {
-        return Ok(None);
+        return Ok((None, search_links));
     }
 
-    Ok(Some(serde_json::to_string(&bris).unwrap()))
+    Ok((Some(serde_json::to_string(&bris).unwrap()), search_links))
 }

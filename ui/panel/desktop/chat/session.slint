@@ -1,7 +1,7 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
 import { ChatEntry} from "../../../store.slint";
-import { ElevatedBtn, Label, CenterLayout, PopupActionSetting } from "../../../base/widgets.slint";
+import { ElevatedBtn, Label, CenterLayout, PopupActionSetting, Loading } from "../../../base/widgets.slint";
 
 import { MdDetail } from "md.slint";
 
@@ -118,6 +118,17 @@ component User inherits Rectangle {
     }
 }
 
+component SearchTip inherits VerticalLayout {
+    padding-top: Theme.padding * 4;
+    padding-bottom: Theme.padding * 4;
+    height: 100px;
+
+    ld := Loading {
+        loading-text: Logic.tr("Searching...");
+        colorize: Theme.thirdly-brand-color;
+    }
+}
+
 export component Session inherits Rectangle {
     public function scroll-to-top() {
         lv.viewport-y = 0;
@@ -155,7 +166,7 @@ export component Session inherits Rectangle {
     }
 
     public function scroll-auto() {
-        if (is-near-bottom()) {
+        if (Store.is-auto-scroll) {
             scroll-to-bottom();
         }
     }
@@ -205,10 +216,13 @@ export component Session inherits Rectangle {
                     entry: entry;
                 }
 
+                if index == Store.current-chat-session.histories.length - 1 && Store.is-searching-webpages: SearchTip { }
+
                 if !Store.is-toggle-bot-markdown && !entry.bot.is_empty: MdDetail {
                     entries: entry.md-elems;
                     urls: entry.link-urls;
                     histories-entry-index: index;
+                    search-links: entry.search-links;
                 }
 
                 if Store.is-toggle-bot-markdown && !entry.bot.is_empty: ChatDetail {

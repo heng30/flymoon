@@ -60,6 +60,7 @@ impl From<ChatEntry> for UIChatEntry {
             bot: entry.bot.into(),
             md_elems: ModelRc::new(VecModel::from(vec![])),
             link_urls: ModelRc::new(VecModel::from(vec![])),
+            search_links: ModelRc::new(VecModel::from(vec![])),
             ..Default::default()
         }
     }

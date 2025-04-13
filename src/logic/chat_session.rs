@@ -7,7 +7,7 @@ use crate::{
     },
     slint_generatedAppWindow::{
         AppWindow, ChatEntry as UIChatEntry, ChatSession as UIChatSession, Logic,
-        PromptEntry as UIPromptEntry, Store,
+        PromptEntry as UIPromptEntry, SearchLink as UISearchLink, Store,
     },
     store_prompt_entries, toast_warn,
 };
@@ -53,6 +53,17 @@ macro_rules! store_current_chat_session_histories {
             .histories
             .as_any()
             .downcast_ref::<VecModel<UIChatEntry>>()
+            .expect("We know we set a VecModel earlier")
+    };
+}
+
+#[macro_export]
+macro_rules! store_current_chat_session_histories_search_links {
+    ($entry:expr) => {
+        $entry
+            .search_links
+            .as_any()
+            .downcast_ref::<VecModel<UISearchLink>>()
             .expect("We know we set a VecModel earlier")
     };
 }
@@ -118,6 +129,15 @@ impl From<ChatSession> for UIChatSession {
             time: entry.time.into(),
             prompt: entry.prompt.into(),
             histories,
+        }
+    }
+}
+
+impl From<search::SearchLink> for UISearchLink {
+    fn from(entry: search::SearchLink) -> Self {
+        Self {
+            title: entry.title.into(),
+            link: entry.link.into(),
         }
     }
 }
@@ -387,7 +407,7 @@ async fn search_webpages(
     histories: &mut Vec<HistoryChat>,
 ) -> Result<()> {
     let ui_handle = ui.clone();
-    let _ = slint::invoke_from_event_loop(move || {
+    _ = slint::invoke_from_event_loop(move || {
         ui_handle
             .unwrap()
             .global::<Store>()
@@ -405,7 +425,7 @@ async fn search_webpages(
 
     // log::info!("search query: {}", query);
 
-    if let Some(text) = search::google::search(question, config).await? {
+    if let (Some(text), search_links) = search::google::search(question, config).await? {
         log::info!("webpages content length: {}", text.len());
         log::info!("finished searching webpages");
 
@@ -416,6 +436,25 @@ async fn search_webpages(
         histories.push(HistoryChat {
             utext: text,
             ..Default::default()
+        });
+
+        _ = slint::invoke_from_event_loop(move || {
+            let ui = ui.unwrap();
+
+            let rows = store_current_chat_session_histories!(ui).row_count();
+            if rows > 0 {
+                let last_entry = store_current_chat_session_histories!(ui)
+                    .row_data(rows - 1)
+                    .unwrap();
+
+                let search_links = search_links
+                    .into_iter()
+                    .map(|item| item.into())
+                    .collect::<Vec<UISearchLink>>();
+
+                store_current_chat_session_histories_search_links!(last_entry)
+                    .set_vec(search_links);
+            }
         });
     }
 
@@ -446,6 +485,7 @@ fn send_question(ui: &AppWindow, question: SharedString) {
         user: question.clone(),
         md_elems: ModelRc::new(VecModel::from(vec![])),
         link_urls: ModelRc::new(VecModel::from(vec![])),
+        search_links: ModelRc::new(VecModel::from(vec![])),
         ..Default::default()
     });
 

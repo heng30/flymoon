@@ -11,6 +11,12 @@ struct SearchItem {
     contents: String,
 }
 
+#[derive(Serialize, Debug, Clone)]
+pub struct SearchLink {
+    pub title: String,
+    pub link: String,
+}
+
 async fn req_link(link: &str) -> Result<Option<String>> {
     let client = reqwest::Client::new();
     let headers = http::headers();

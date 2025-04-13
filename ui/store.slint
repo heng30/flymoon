@@ -80,6 +80,11 @@ export struct MdElement {
     heading: MdHeading,
 }
 
+export struct SearchLink {
+    title: string,
+    link: string,
+}
+
 export struct SettingChatModel {
     model-name: string,
     api-base-url: string,
@@ -113,6 +118,8 @@ export struct ChatEntry {
     // Markdown
     md-elems: [MdElement],
     link-urls: [MdUrl],
+
+    search_links: [SearchLink],
 }
 
 export struct ChatSession {
@@ -299,6 +306,10 @@ export global Store {
                 link-urls: [
                     { text: "Nixos download page", url: "https://nixos.org" },
                     { text: "Google homepage", url: "https://google.com" },
+                ],
+                search-links: [
+                    { title: "Nixos download page", link: "https://nixos.org" },
+                    { title: "Google homepage", link: "https://google.com" },
                 ],
             },
         ]
