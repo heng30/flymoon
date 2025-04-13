@@ -108,6 +108,9 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "k") {
                                         root.scroll-up();
                                         return accept;
+                                    } else if (event.text == "y") {
+                                        Store.enabled-search-webpages = !Store.enabled-search-webpages;
+                                        return accept;
                                     } else if (event.text == "m") {
                                         Store.is-toggle-bot-markdown = !Store.is-toggle-bot-markdown;
                                         return accept;
@@ -146,10 +149,10 @@ export component Input inherits Rectangle {
                         icon: Icons.network;
                         colorize: self.border-color;
                         text: Logic.tr("Network");
+                        gain-focus-when-clicked: false;
 
                         clicked => {
                             Store.enabled-search-webpages = !Store.enabled-search-webpages;
-                            te.focus();
                         }
                     }
                 }
@@ -162,11 +165,11 @@ export component Input inherits Rectangle {
                         icon: Icons.new;
                         tip: Logic.tr("new");
                         is-show-tip: true;
+                        gain-focus-when-clicked: false;
 
                         clicked => {
                             Logic.new-chat-session();
                             Store.is-auto-scroll = true;
-                            te.focus();
                         }
                     }
 
@@ -174,11 +177,11 @@ export component Input inherits Rectangle {
                         icon: Icons.retry;
                         tip: Logic.tr("retry");
                         is-show-tip: true;
+                        gain-focus-when-clicked: false;
 
                         clicked => {
                             Logic.retry-question(Store.current-chat-session.histories.length - 1, "");
                             scroll-to-bottom();
-                            te.focus();
                         }
                     }
 
@@ -191,21 +194,21 @@ export component Input inherits Rectangle {
                             icon: Icons.send2;
                             colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
                             icon-rotation-angle: -90deg;
+                            gain-focus-when-clicked: false;
 
                             clicked => {
                                 root.send-question();
-                                te.focus();
                             }
                         }
 
                         if Store.is_chatting: ElevatedBtn {
                             icon: Icons.stop;
                             colorize: Theme.thirdly-brand-color;
+                            gain-focus-when-clicked: false;
 
                             clicked => {
                                 Store.is-chatting = false;
                                 Logic.stop-question();
-                                te.focus();
                             }
                         }
                     }

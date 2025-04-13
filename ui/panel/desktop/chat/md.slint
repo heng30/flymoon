@@ -97,6 +97,7 @@ component MdCodeBlock inherits HorizontalLayout {
                     icon: Icons.copy;
                     tip: Logic.tr("copy");
                     is-show-tip: true;
+                    gain-focus-when-clicked: false;
 
                     clicked => {
                         Logic.copy-to-clipboard(code);

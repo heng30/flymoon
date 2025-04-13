@@ -2,7 +2,7 @@ use super::{SearchItem, req_link};
 use anyhow::Result;
 use cutil::reqwest;
 use serde::Deserialize;
-use std::sync::{Arc, mpsc::channel};
+use std::sync::Arc;
 
 #[derive(Deserialize, Debug)]
 struct SearchResult {
@@ -32,9 +32,9 @@ pub async fn search(query: &str, config: Config) -> Result<Option<String>> {
     );
 
     let gs = reqwest::get(&url).await?.json::<SearchResult>().await?;
-    log::debug!("{:#?}", gs);
+    log::info!("{:#?}", gs);
 
-    let (sender, receiver) = channel();
+    let (sender, mut receiver) = tokio::sync::mpsc::channel(10);
     let (sender, mut bris) = (Arc::new(sender), vec![]);
 
     for item in gs.items.into_iter() {
@@ -45,17 +45,19 @@ pub async fn search(query: &str, config: Config) -> Result<Option<String>> {
         let sender = sender.clone();
         tokio::spawn(async move {
             if let Ok(Some(contents)) = req_link(&item.link).await {
-                _ = sender.send(SearchItem {
-                    title: item.title,
-                    contents,
-                });
+                _ = sender
+                    .send(SearchItem {
+                        title: item.title,
+                        contents,
+                    })
+                    .await;
             }
         });
     }
 
     drop(sender);
 
-    for item in receiver {
+    if let Some(item) = receiver.recv().await {
         bris.push(item);
     }
 

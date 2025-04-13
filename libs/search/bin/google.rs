@@ -3,11 +3,11 @@ use search::google;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let query = "How to learn Rust programming language?";
+    let query = "How to learn Rust?";
 
     let config = google::Config {
-        cx: "Your-CX".to_string(),
-        api_key: "Your-API-Key".to_string(),
+        cx: "a0e7eb672d5134b97".to_string(),
+        api_key: "AIzaSyA7-Nzj5OPo6hpirlTepFRBXuWKTj42aio".to_string(),
         num: 10,
     };
 

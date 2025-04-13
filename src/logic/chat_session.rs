@@ -18,7 +18,6 @@ use bot::openai::{
     response::StreamTextItem,
 };
 use once_cell::sync::Lazy;
-use search::google as GoogleSearch;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::sync::{
     Arc, Mutex,
@@ -31,6 +30,8 @@ struct ChatCache {
     id: u64,
     ui: Weak<AppWindow>,
     stop_tx: Arc<mpsc::Sender<()>>,
+
+    #[allow(unused)]
     summarized_question: String,
 }
 
@@ -66,7 +67,7 @@ impl From<SettingModel> for ChatAPIConfig {
     }
 }
 
-impl From<SettingModel> for GoogleSearch::Config {
+impl From<SettingModel> for search::google::Config {
     fn from(setting: SettingModel) -> Self {
         Self {
             cx: setting.google_search.cx,
@@ -306,6 +307,7 @@ fn stream_text(id: u64, item: StreamTextItem) {
     });
 }
 
+#[allow(unused)]
 fn stream_summarize_question(id: u64, item: StreamTextItem) {
     if id != item.id {
         return;
@@ -338,10 +340,12 @@ fn stream_summarize_question(id: u64, item: StreamTextItem) {
     }
 }
 
+#[allow(unused)]
 async fn summarize_question(ui: Weak<AppWindow>, question: &str) -> Result<String> {
-    let prompt = "summarize the content less than 20 worlds";
+    let prompt = "You are an expert at summarizing.";
     let config = setting_model().into();
 
+    let question = format!("To summarize in one sentence: \n\n```{}```", question);
     let (chat, stop_tx) = Chat::new(prompt, question, config, vec![]);
 
     let id = INC_CHAT_ID.fetch_add(1, Ordering::Relaxed);
@@ -392,17 +396,21 @@ async fn search_webpages(
 
     let config = setting_model().into();
 
-    let query = if question.chars().count() < 20 {
-        question.to_string()
-    } else {
-        summarize_question(ui, question).await?
-    };
+    // let query = if question.chars().count() < 20 {
+    //     question.to_string()
+    // } else {
+    //     log::info!("start summarize question");
+    //     summarize_question(ui, question).await?
+    // };
 
-    log::debug!("search query: {}", query);
+    // log::info!("search query: {}", query);
 
-    if let Some(text) = GoogleSearch::search(&query, config).await? {
+    if let Some(text) = search::google::search(question, config).await? {
+        log::info!("webpages content length: {}", text.len());
+        log::info!("finished searching webpages");
+
         let text = format!(
-            " The following web content is relevant to the user's question. Please consult these resources when preparing your answer. {text}"
+            "The following web content is relevant to the user's question. Please consult these resources when preparing your answer. {text}"
         );
 
         histories.push(HistoryChat {
@@ -452,6 +460,8 @@ fn send_question(ui: &AppWindow, question: SharedString) {
     tokio::spawn(async move {
         // search webpages
         if enabled_search_webpages {
+            log::info!("start searching wabpages...");
+
             if let Err(e) = search_webpages(ui.clone(), &question, &mut histories).await {
                 toast::async_toast_warn(
                     ui.clone(),
@@ -467,6 +477,8 @@ fn send_question(ui: &AppWindow, question: SharedString) {
                     .set_is_searching_webpages(false);
             });
         }
+
+        log::info!("start sending question to model...");
 
         // send question
         let config = setting_model().into();
