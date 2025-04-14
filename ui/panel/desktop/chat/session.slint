@@ -118,15 +118,15 @@ component User inherits Rectangle {
     }
 }
 
-component SearchTip inherits VerticalLayout {
+component LoadingTip inherits VerticalLayout {
+    in-out property loading-text <=> ld.loading-text;
+    in-out property colorize <=> ld.colorize;
+
     padding-top: Theme.padding * 4;
     padding-bottom: Theme.padding * 4;
     height: 100px;
 
-    ld := Loading {
-        loading-text: Logic.tr("Searching...");
-        colorize: Theme.thirdly-brand-color;
-    }
+    ld := Loading { }
 }
 
 export component Session inherits Rectangle {
@@ -205,6 +205,9 @@ export component Session inherits Rectangle {
                 padding-bottom: Theme.padding * 4;
                 spacing: Theme.spacing * 3;
 
+                private property <bool> is-show-search-tip: index == Store.current-chat-session.histories.length - 1 && Store.is-searching-webpages;
+                private property <bool> is-show-thinking-tip: index == Store.current-chat-session.histories.length - 1 && entry.md_elems.length == 0 && Store.is-chatting && !is-show-search-tip;
+
                 if index == 0 && !Store.current-model-name.is-empty: Label {
                     horizontal-alignment: TextHorizontalAlignment.center;
                     text: Store.current-model-name;
@@ -216,7 +219,15 @@ export component Session inherits Rectangle {
                     entry: entry;
                 }
 
-                if index == Store.current-chat-session.histories.length - 1 && Store.is-searching-webpages: SearchTip { }
+                if is-show-search-tip: LoadingTip {
+                    loading-text: Logic.tr("Searching...");
+                    colorize: Theme.warning-color;
+                }
+
+                if is-show-thinking-tip: LoadingTip {
+                    loading-text: Logic.tr("Thinking...");
+                    colorize: Theme.thirdly-brand-color;
+                }
 
                 if !Store.is-toggle-bot-markdown && !entry.bot.is_empty: MdDetail {
                     entries: entry.md-elems;

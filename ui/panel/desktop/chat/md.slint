@@ -6,7 +6,6 @@ import { SearchLink } from "../../../store.slint";
 component MdText inherits HorizontalLayout {
     in-out property text <=> txt.text;
 
-    padding-top: Theme.padding * 4;
     padding-bottom: Theme.padding * 4;
 
     txt := TextInput {
@@ -21,7 +20,6 @@ component MdText inherits HorizontalLayout {
 component MdHeading inherits HorizontalLayout {
     in-out property <MdHeading> heading;
 
-    padding-top: Theme.padding * 4;
     padding-bottom: Theme.padding * 2;
 
     TextInput {
@@ -37,9 +35,10 @@ component MdHeading inherits HorizontalLayout {
 
 component MdListItem inherits HorizontalLayout {
     in-out property <MdListItem> entry;
+    in-out property <bool> next-elem-is-list-item: true;
 
     spacing: Theme.spacing * 2;
-    padding: Theme.padding;
+    padding-bottom: next-elem-is-list-item ? Theme.padding * 2 : Theme.padding * 4;
 
     VerticalLayout {
         alignment: LayoutAlignment.start;
@@ -67,7 +66,6 @@ component MdListItem inherits HorizontalLayout {
 component MdCodeBlock inherits HorizontalLayout {
     in-out property <string> code;
 
-    padding-top: Theme.padding * 4;
     padding-bottom: Theme.padding * 4;
 
     Rectangle {
@@ -112,7 +110,6 @@ component MdCodeBlock inherits HorizontalLayout {
 component MdImage inherits HorizontalLayout {
     in-out property <MdImage> img;
 
-    padding-top: Theme.padding * 4;
     padding-bottom: Theme.padding * 4;
     alignment: LayoutAlignment.center;
 
@@ -123,9 +120,10 @@ component MdImage inherits HorizontalLayout {
 
 component MdLinks inherits VerticalLayout {
     in-out property <[MdUrl]> urls;
+    in-out property <bool> is-show-search-links;
 
-    padding-top: Theme.padding * 4;
     spacing: Theme.spacing * 2;
+    padding-bottom: is-show-search-links ? Theme.padding * 4 : 0;
 
     Label {
         text: Logic.tr("References");
@@ -145,8 +143,6 @@ component MdLinks inherits VerticalLayout {
 component MdSearchLinks inherits VerticalLayout {
     in-out property <[SearchLink]> links;
 
-    padding-top: Theme.padding * 4;
-    padding-bottom: Theme.padding * 4;
     spacing: Theme.spacing * 2;
 
     Label {
@@ -174,9 +170,18 @@ export component MdDetail inherits Rectangle {
     border-radius: Theme.border-radius * 2;
     height: vbox.preferred-height;
 
+    pure function next-is-list-item(index: int) -> bool {
+        if (index >= entries.length - 1) {
+            return false;
+        }
+        if (entries[index + 1].ty == MdElementType.ListItem) {
+            return true;
+        }
+        return false;
+    }
+
     vbox := VerticalLayout {
-        padding-left: Theme.padding * 4;
-        padding-right: Theme.padding * 4;
+        padding: Theme.padding * 4;
 
         for entry[index] in entries: VerticalLayout {
             init => {
@@ -197,6 +202,7 @@ export component MdDetail inherits Rectangle {
 
             if entry.ty == MdElementType.ListItem: MdListItem {
                 entry: entry.list-item;
+                next-elem-is-list-item: next-is-list-item(index);
             }
 
             if entry.ty == MdElementType.CodeBlock: MdCodeBlock {
@@ -210,9 +216,10 @@ export component MdDetail inherits Rectangle {
 
         if urls.length > 0: MdLinks {
             urls: urls;
+            is-show-search-links: search_links.length > 0 && entries.length > 0;
         }
 
-        if search_links.length > 0: MdSearchLinks {
+        if search_links.length > 0 && entries.length > 0: MdSearchLinks {
             links: search_links;
         }
     }
