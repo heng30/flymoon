@@ -35,6 +35,7 @@ component HistoryList inherits VerticalLayout {
                     if is-edit: CheckBtn {
                         checked: entry.checked;
                         not-allow-breaking-checked-binding: true;
+                        gain-focus-when-clicked: false;
 
                         toggled => {
                             entry.checked = !entry.checked;
@@ -46,7 +47,7 @@ component HistoryList inherits VerticalLayout {
                         text: index + 1;
                     }
 
-                    Label {
+                    time-ll := Label {
                         width: self.preferred-width + Theme.padding * 8;
                         text: entry.time;
                     }
@@ -54,6 +55,7 @@ component HistoryList inherits VerticalLayout {
                     Label {
                         overflow: elide;
                         text: entry.summary;
+                        height: time-ll.preferred-height;
                     }
                 }
             }
@@ -67,18 +69,20 @@ component HistoryList inherits VerticalLayout {
         if !is-edit && Store.chat-histories.length > 0: ConfirmBtn {
             text: Logic.tr("Edit");
             icon: Icons.edit;
+            gain-focus-when-clicked: false;
 
             clicked => {
                 is-edit = true;
             }
         }
 
-        if is-edit:  VerticalLayout {
+        if is-edit: VerticalLayout {
             alignment: LayoutAlignment.center;
 
             CheckBtn {
                 text: Logic.tr(is-selected-all ? "Cancel select all" : "Select all");
                 checked: is-selected-all;
+                gain-focus-when-clicked: false;
 
                 toggled => {
                     is-selected-all = !is-selected-all;
@@ -95,6 +99,8 @@ component HistoryList inherits VerticalLayout {
             spacing: Theme.spacing * 4;
 
             CancelBtn {
+                gain-focus-when-clicked: false;
+
                 clicked => {
                     is-edit = false;
                 }
@@ -104,6 +110,7 @@ component HistoryList inherits VerticalLayout {
                 text: Logic.tr("Delete");
                 icon: Icons.delete;
                 bg-color: Theme.danger-color;
+                gain-focus-when-clicked: false;
 
                 clicked => {
                     ConfirmDialogSetting.set(true, Logic.tr("Warning"), Logic.tr("Delete or not?"), "chat-histories-remove-selected", "");
@@ -123,12 +130,12 @@ export component History inherits VerticalLayout {
     }
 
     search := Search {
+        gain-focus-when-clicked: false;
+
         search(text) => {
             if (Store.chat-histories.length == 1) {
                 Logic.switch-tab(TabIndex.Home);
                 Logic.chat-history-load(Store.chat-histories[0].uuid);
-            } else {
-                self.focus();
             }
         }
 

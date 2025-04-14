@@ -1,7 +1,8 @@
 use crate::slint_generatedAppWindow::{
     ChatEntry as UIChatEntry, ChatHistory, ChatSession as UIChatSession,
-    PromptEntry as UIPromptEntry,
+    PromptEntry as UIPromptEntry, SearchLink as UISearchLink,
 };
+use search::SearchLink;
 use serde::{Deserialize, Serialize};
 use slint::{Model, ModelRc, VecModel};
 
@@ -42,25 +43,41 @@ impl From<PromptEntry> for UIPromptEntry {
 pub struct ChatEntry {
     user: String,
     bot: String,
+    search_links: Vec<SearchLink>,
 }
 
 impl From<UIChatEntry> for ChatEntry {
     fn from(entry: UIChatEntry) -> Self {
+        let search_links = entry
+            .search_links
+            .iter()
+            .map(|item| item.into())
+            .collect::<Vec<SearchLink>>();
+
         ChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
+            search_links,
         }
     }
 }
 
 impl From<ChatEntry> for UIChatEntry {
     fn from(entry: ChatEntry) -> Self {
+        let search_links = ModelRc::new(
+            entry
+                .search_links
+                .into_iter()
+                .map(|item| item.into())
+                .collect::<VecModel<UISearchLink>>(),
+        );
+
         UIChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
+            search_links,
             md_elems: ModelRc::new(VecModel::from(vec![])),
             link_urls: ModelRc::new(VecModel::from(vec![])),
-            search_links: ModelRc::new(VecModel::from(vec![])),
             ..Default::default()
         }
     }

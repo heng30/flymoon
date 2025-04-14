@@ -9,6 +9,7 @@ export component CheckBtn inherits Rectangle {
     in-out property <bool> checked;
     in-out property <bool> not-allow-breaking-checked-binding;
     in-out property <color> text-color: Theme.primary-text-color;
+    in-out property <bool> gain-focus-when-clicked: true;
 
     width: hbox.preferred-width;
     height: hbox.preferred-height;
@@ -60,7 +61,10 @@ export component CheckBtn inherits Rectangle {
         mouse-cursor: MouseCursor.pointer;
 
         clicked => {
-            fs.focus();
+            if (gain-focus-when-clicked) {
+                fs.focus();
+            }
+
             if (!not-allow-breaking-checked-binding) {
                 root.checked = !root.checked;
             }

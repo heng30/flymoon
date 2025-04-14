@@ -5,6 +5,7 @@ import { Preference } from "components/preference.slint";
 import { Donate } from "components/donate.slint";
 import { Prompt } from "components/prompt.slint";
 import { Model } from "components/model.slint";
+import { HelpDetail } from "components/help-detail.slint";
 
 component RightPanel inherits Rectangle {
     background: Theme.base-background;
@@ -128,7 +129,8 @@ export component HelpDialog inherits Dialog {
     Help {
         height: root.inner-height;
         is-show-header: false;
-        entries: Store.helps;
+
+        HelpDetail {}
     }
 
     cancel-clicked => {
@@ -182,7 +184,7 @@ export component SettingIconsBar inherits Rectangle {
             }
         }
 
-        if false: IconBtn {
+        IconBtn {
             icon: Icons.help;
             icon-size: root.icon-size;
             show-icon-hover-background: root.show-icon-hover-background;

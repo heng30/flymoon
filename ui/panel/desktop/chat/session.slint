@@ -66,15 +66,35 @@ component User inherits Rectangle {
         }
     }
 
-    if !uta.enabled: ElevatedBtn {
+    if !uta.enabled: VerticalLayout {
+        alignment: LayoutAlignment.center;
         x: parent.width - user.preferred-width - self.width - Theme.padding * 4;
-        width: Theme.icon-size + Theme.padding * 2;
-        icon: Icons.checked;
-        colorize: Theme.success-color;
 
-        clicked => {
-            entry.is-user-edit = false;
-            Logic.retry-question(index, user.text);
+        HorizontalLayout {
+            alignment: LayoutAlignment.end;
+            spacing: Theme.spacing * 4;
+
+            ElevatedBtn {
+                width: Theme.icon-size + Theme.padding * 2;
+                icon: Icons.checked;
+                colorize: Theme.success-color;
+
+                clicked => {
+                    entry.is-user-edit = false;
+                    Logic.retry-question(index, user.text);
+                }
+            }
+
+            ElevatedBtn {
+                width: Theme.icon-size + Theme.padding * 2;
+                icon: Icons.close-light;
+                colorize: Theme.info-color;
+
+                clicked => {
+                    user.text = entry.user;
+                    entry.is-user-edit = false;
+                }
+            }
         }
     }
 

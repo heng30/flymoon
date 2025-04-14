@@ -142,6 +142,15 @@ impl From<search::SearchLink> for UISearchLink {
     }
 }
 
+impl From<UISearchLink> for search::SearchLink {
+    fn from(entry: UISearchLink) -> Self {
+        Self {
+            title: entry.title.into(),
+            link: entry.link.into(),
+        }
+    }
+}
+
 pub async fn get_from_db() -> Vec<UIChatSession> {
     let entries = match db::entry::select_all(DB_TABLE).await {
         Ok(items) => items

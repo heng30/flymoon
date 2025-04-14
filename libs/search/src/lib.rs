@@ -1,7 +1,7 @@
 use anyhow::Result;
 use cutil::{http, reqwest};
 use scraper::{Html, Selector};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub mod google;
 
@@ -11,7 +11,7 @@ struct SearchItem {
     contents: String,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SearchLink {
     pub title: String,
     pub link: String,

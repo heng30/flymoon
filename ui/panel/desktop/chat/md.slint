@@ -144,6 +144,7 @@ component MdSearchLinks inherits VerticalLayout {
     in-out property <[SearchLink]> links;
 
     spacing: Theme.spacing * 2;
+    padding-bottom: Theme.padding * 4;
 
     Label {
         text: Logic.tr("Webs");
@@ -182,6 +183,7 @@ export component MdDetail inherits Rectangle {
 
     vbox := VerticalLayout {
         padding: Theme.padding * 4;
+        padding-bottom: 0;
 
         for entry[index] in entries: VerticalLayout {
             init => {

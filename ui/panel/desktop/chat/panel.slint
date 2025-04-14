@@ -3,7 +3,6 @@ import { Divider, CenterLayout } from "../../../base/widgets.slint";
 
 import { Input } from "input.slint";
 import { Session } from "session.slint";
-import { ShortcutsHelp } from "shortcuts-help.slint";
 import { InputPromptList } from "input-prompt-list.slint";
 
 export component Chat inherits VerticalLayout {
@@ -15,13 +14,6 @@ export component Chat inherits VerticalLayout {
 
     Rectangle {
         session := Session { }
-
-        if Store.current-chat-session.histories.length == 0: CenterLayout {
-            ShortcutsHelp {
-                width: Math.min(root.width * 0.9, 600px);
-                height: Math.min((root.height - input.height) * 0.8, self.preferred-height);
-            }
-        }
 
         if Store.input-prompt-list-entries.length > 0: InputPromptList {
             x: 0;

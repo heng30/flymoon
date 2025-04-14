@@ -1,0 +1,104 @@
+import { Theme, Logic } from "../../def.slint";
+import { Label } from "../../../base/widgets.slint";
+
+component ShortcutsHelp inherits VerticalLayout {
+    private property <[{shortcut: string, detail: string}]> shortcuts: [
+        {
+            shortcut: "Ctrl + N",
+            detail: Logic.tr("New chat"),
+        },
+        {
+            shortcut: "Ctrl + M",
+            detail: Logic.tr("Toggle Markdown format of Bot"),
+        },
+        {
+            shortcut: "Ctrl + S",
+            detail: Logic.tr("Stop chatting"),
+        },
+        {
+            shortcut: "Ctrl + R",
+            detail: Logic.tr("Retry Last question"),
+        },
+        {
+            shortcut: "Ctrl + K",
+            detail: Logic.tr("Scroll up"),
+        },
+        {
+            shortcut: "Ctrl + J",
+            detail: Logic.tr("Scroll dowm"),
+        },
+        {
+            shortcut: "Ctrl + T",
+            detail: Logic.tr("Scroll to top"),
+        },
+        {
+            shortcut: "Ctrl + B",
+            detail: Logic.tr("Scroll to bottom"),
+        },
+        {
+            shortcut: "Ctrl + Y",
+            detail: Logic.tr("Toggle network searching"),
+        },
+        {
+            shortcut: "Ctrl + Q",
+            detail: Logic.tr("Close window"),
+        },
+        {
+            shortcut: "Ctrl + H",
+            detail: Logic.tr("Switch to Home or History Tab"),
+        },
+        {
+            shortcut: "Ctrl + E",
+            detail: Logic.tr("[History Tab]: Enter editing model"),
+        },
+        {
+            shortcut: "Ctrl + T",
+            detail: Logic.tr("[History Tab]: Toggle select all"),
+        },
+        {
+            shortcut: "Ctrl + Enter",
+            detail: Logic.tr("Send question"),
+        },
+    ];
+
+    spacing: Theme.spacing * 2;
+
+    Label {
+        text: Logic.tr("SHORTCUTS");
+        font-size: Theme.title2-font-size;
+        font-weight: Theme.bold-font-weight;
+        horizontal-alignment: TextHorizontalAlignment.center;
+    }
+
+    VerticalLayout {
+        alignment: LayoutAlignment.start;
+
+        for entry[index] in shortcuts: Rectangle {
+            background: Math.mod(index, 2) == 0 ? Theme.hover-background : Colors.transparent;
+
+            HorizontalLayout {
+                padding: Theme.padding * 2;
+
+                Label {
+                    width: 30%;
+                    text: entry.shortcut;
+                    overflow: elide;
+                }
+
+                Label {
+                    text: entry.detail;
+                    font-size: Theme.title4-font-size;
+                    overflow: elide;
+                }
+            }
+        }
+    }
+}
+
+export component HelpDetail inherits Flickable {
+    VerticalLayout {
+        spacing: Theme.spacing * 4;
+
+        ShortcutsHelp { }
+    }
+}

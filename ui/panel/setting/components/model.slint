@@ -158,6 +158,8 @@ export component Model inherits SettingDetail {
             alignment: LayoutAlignment.end;
 
             confirm-btn := ConfirmBtn {
+                text: Logic.tr("Apply");
+
                 clicked => {
                     root.confirmed();
                 }
