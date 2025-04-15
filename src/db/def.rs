@@ -15,6 +15,7 @@ pub struct PromptEntry {
     pub name: String,
     pub shortcut: String,
     pub detail: String,
+    pub temperature: f32,
 }
 
 impl From<UIPromptEntry> for PromptEntry {
@@ -24,6 +25,7 @@ impl From<UIPromptEntry> for PromptEntry {
             name: entry.name.into(),
             shortcut: entry.shortcut.into(),
             detail: entry.detail.into(),
+            temperature: entry.temperature,
         }
     }
 }
@@ -35,6 +37,7 @@ impl From<PromptEntry> for UIPromptEntry {
             name: entry.name.into(),
             shortcut: entry.shortcut.into(),
             detail: entry.detail.into(),
+            temperature: entry.temperature,
         }
     }
 }

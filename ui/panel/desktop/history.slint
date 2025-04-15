@@ -80,7 +80,7 @@ component HistoryList inherits VerticalLayout {
             alignment: LayoutAlignment.center;
 
             CheckBtn {
-                text: Logic.tr(is-selected-all ? "Cancel select all" : "Select all");
+                text: Logic.tr(is-selected-all ? Logic.tr("Cancel select all") : Logic.tr("Select all"));
                 checked: is-selected-all;
                 gain-focus-when-clicked: false;
 

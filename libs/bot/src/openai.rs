@@ -22,6 +22,7 @@ pub mod request {
         pub api_base_url: String,
         pub api_model: String,
         pub api_key: String,
+        pub temperature: f32,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -29,6 +30,7 @@ pub mod request {
         pub messages: Vec<Message>,
         pub model: String,
         pub stream: bool,
+        pub temperature: f32,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -142,6 +144,7 @@ impl Chat {
         let request_body = request::ChatCompletion {
             messages: self.messages,
             model: self.config.api_model,
+            temperature: self.config.temperature,
             stream: true,
         };
 

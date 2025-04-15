@@ -62,6 +62,7 @@ export component DesktopPanel inherits Rectangle {
             icon: Icons.brand;
             title: AboutSetting.app-name;
             is-show-tip: true;
+            disable-maximal: true;
 
             init => {
                 root.home-height = root.height - self.preferred-height;

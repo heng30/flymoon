@@ -74,6 +74,7 @@ impl From<SettingModel> for ChatAPIConfig {
             api_base_url: setting.chat.api_base_url,
             api_model: setting.chat.model_name,
             api_key: setting.chat.api_key,
+            temperature: 1.0,
         }
     }
 }
@@ -246,11 +247,12 @@ pub fn init(ui: &AppWindow) {
     });
 }
 
-fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, SharedString) {
+fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, SharedString, f32) {
+    let mut temperature = 1.0;
     let mut session = store_current_chat_session!(ui);
 
     if question.is_empty() || !question.starts_with("/") {
-        return (session.prompt, question);
+        return (session.prompt, question, temperature);
     }
 
     if let Some(shortcut) = question.split_whitespace().next() {
@@ -263,13 +265,14 @@ fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, Shared
                 .trim_start()
                 .into();
 
+            temperature = entry.temperature;
             session.prompt = entry.detail.clone();
             ui.global::<Store>().set_current_chat_session(session);
-            return (entry.detail, question);
+            return (entry.detail, question, temperature);
         }
     }
 
-    (session.prompt, question)
+    (session.prompt, question, temperature)
 }
 
 fn stream_text(id: u64, item: StreamTextItem) {
@@ -471,7 +474,7 @@ async fn search_webpages(
 }
 
 fn send_question(ui: &AppWindow, question: SharedString) {
-    let (prompt, question) = parse_prompt(ui, question);
+    let (prompt, question, temperature) = parse_prompt(ui, question);
 
     let mut session = store_current_chat_session!(ui);
     let (is_new_chat, mut histories) = if session.uuid.is_empty() {
@@ -530,7 +533,9 @@ fn send_question(ui: &AppWindow, question: SharedString) {
         log::info!("start sending question to model...");
 
         // send question
-        let config = setting_model().into();
+        let mut config: ChatAPIConfig = setting_model().into();
+        config.temperature = temperature;
+
         let (chat, stop_tx) = Chat::new(prompt, question, config, histories);
         let id = INC_CHAT_ID.fetch_add(1, Ordering::Relaxed);
 
@@ -556,7 +561,7 @@ fn send_question(ui: &AppWindow, question: SharedString) {
             );
         }
 
-        let _ = slint::invoke_from_event_loop(move || {
+        _ = slint::invoke_from_event_loop(move || {
             ui.unwrap().global::<Store>().set_is_chatting(false);
         });
     });

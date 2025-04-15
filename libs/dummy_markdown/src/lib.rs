@@ -8,6 +8,11 @@ pub enum MdElementType {
     ListItem,
     Heading,
     CodeBlock,
+
+    Table,
+    TableHead,
+    TableRow,
+    TableCell,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -29,6 +34,12 @@ pub struct MdListItem {
 }
 
 #[derive(Debug, Clone, Default)]
+pub struct MdTable {
+    pub head: Vec<String>,
+    pub rows: Vec<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct MdElement {
     pub ty: MdElementType,
     pub text: String,
@@ -36,4 +47,9 @@ pub struct MdElement {
     pub code_block: String,
     pub list_item: MdListItem,
     pub heading: MdHeading,
+
+    pub table: MdTable,
+    pub table_cell: String,
+    pub table_head: Vec<String>,
+    pub table_row: Vec<String>,
 }

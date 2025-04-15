@@ -21,6 +21,7 @@ mod tests {
             api_base_url: "https://api.deepseek.com/v1".to_string(),
             api_model: "deepseek-chat".to_string(),
             api_key: "Your-API-Key".to_string(),
+            temperature: 1.0_f32,
         };
 
         let histories = vec![HistoryChat {

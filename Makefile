@@ -42,7 +42,6 @@ desktop-debug:
 desktop-debug-nixos-wayland:
 	nix-shell wayland-shell.nix --run "$(desktop-build-debug-env) $(desktop-build-env) cargo run --features=desktop"
 
-
 web-build-debug:
 	$(web-build-env) wasm-pack build --target web --out-dir ./web/pkg --features=web
 

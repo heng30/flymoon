@@ -15,24 +15,9 @@
 
 ### 如何构建?
 - 安装 `Rust` 和 `Cargo`
-- 安装 Android `sdk`, `ndk`, `jdk17`, 和设置对应的环境变量
-- 例子:
-```
-    export JAVA_HOME=$LIBRARY_PATH/openjdk
-    export ANDROID_HOME=$HOME/Android/Sdk
-    export ANDROID_NDK=$HOME/Android/Sdk/ndk/27.0.12077973
-    export ANDROID_NDK_ROOT=$HOME/Android/Sdk/ndk/27.0.12077973
-```
-
-- 运行 `make android-build-release` 编译安卓平台程序
 - 运行 `make desktop-debug` 调试桌面平台程序
 - 运行 `make desktop-build-release` 编译桌面平台程序
-- 运行 `make web-build-dist` 编译Web平台。构建输出目录`web/dist`
 - 参考 [Makefile](./Makefile) 了解更多信息
-
-### 安卓平台编译信息
-- `min-sdk-version = 23`
-- `target-sdk-version = 32`
 
 ### 参考
 - [Slint Language Documentation](https://slint-ui.com/releases/1.0.0/docs/slint/)

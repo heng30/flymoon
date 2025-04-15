@@ -120,10 +120,9 @@ component MdImage inherits HorizontalLayout {
 
 component MdLinks inherits VerticalLayout {
     in-out property <[MdUrl]> urls;
-    in-out property <bool> is-show-search-links;
 
     spacing: Theme.spacing * 2;
-    padding-bottom: is-show-search-links ? Theme.padding * 4 : 0;
+    padding-bottom: Theme.padding * 4;
 
     Label {
         text: Logic.tr("References");
@@ -218,7 +217,6 @@ export component MdDetail inherits Rectangle {
 
         if urls.length > 0: MdLinks {
             urls: urls;
-            is-show-search-links: search_links.length > 0 && entries.length > 0;
         }
 
         if search_links.length > 0 && entries.length > 0: MdSearchLinks {

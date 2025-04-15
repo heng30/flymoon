@@ -30,8 +30,6 @@ As with cmark and **cmark-gfm**, Comrak will scrub raw HTML and potentially dang
 
 Would you like a deeper dive into any of these topics?
 
-| Query | Purpose ||--------|---------|| rust cargo build --release | How to build in release mode || rust serde json example | JSON parsing with Serde || rust tokio vs async-std | Comparing async runtimes || rust error E0507 | Fixing a specific compiler error |
-
 2. **Add dependencies to your `Cargo.toml`**:
    ```toml
    [dependencies]
@@ -39,6 +37,11 @@ Would you like a deeper dive into any of these topics?
    serde = { version = "1.0", features = ["derive"] }
    tokio = { version = "1.0", features = ["full"] }
    ```
+
+| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 5   |
+| Cell 3   | Cell 4   | Cell 6   |
 
 "#;
 

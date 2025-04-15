@@ -15,25 +15,9 @@ It's a dead simple chatbot based on Rust and Slint-ui.
 
 ### How to build?
 - Install `Rust`, `Cargo`, `cargo-apk` and `wasm-pack`
-- Install Android `sdk`, `ndk`, `jdk17`, and set environment variables.
-- Example:
-```
-    export JAVA_HOME=$LIBRARY_PATH/openjdk
-    export ANDROID_HOME=$HOME/Android/Sdk
-    export ANDROID_NDK=$HOME/Android/Sdk/ndk/27.0.12077973
-    export ANDROID_NDK_ROOT=$HOME/Android/Sdk/ndk/27.0.12077973
-```
-
-- Run `make android-build-release` to build a release version android APK
 - Run `make desktop-debug` to run it on desktop platform
 - Run `make desktop-build-release` to build a release version desktop application
-- Run `make web-build-dist` to build a release version website. And the output directory is `web/dist`
-- Run `make web-server-dist` to run a website server
 - Refer to [Makefile](./Makefile) for more information
-
-### Android platform build information
-- `min-sdk-version = 23`
-- `target-sdk-version = 32`
 
 ### Reference
 - [Slint Language Documentation](https://slint-ui.com/releases/1.0.0/docs/slint/)

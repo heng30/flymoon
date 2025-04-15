@@ -12,6 +12,11 @@ enum MarkdownElement {
     CodeBlock(Vec<MarkdownElement>),
     Paragraph(Vec<MarkdownElement>),
 
+    TableHead(Vec<MarkdownElement>),
+    TableRow(Vec<MarkdownElement>),
+    TableCell(Vec<MarkdownElement>),
+    Table(Vec<MarkdownElement>),
+
     Heading {
         level: HeadingLevel,
         elems: Vec<MarkdownElement>,
@@ -25,9 +30,11 @@ struct GenerateMdElemUserData {
 }
 
 pub fn run(doc: &str) -> (Vec<MdElement>, Vec<MdUrl>) {
-    let options = Options::empty();
-    let mut parser = Parser::new_ext(doc, options);
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_TABLES);
+    // options.insert(Options::MATH);
 
+    let mut parser = Parser::new_ext(doc, options);
     let mut elems = parse_events(&mut parser);
     log::trace!("{:#?}", elems);
     // println!("{:#?}", elems);
@@ -57,6 +64,8 @@ fn parse_events(parser: &mut Parser<'_>) -> Vec<MarkdownElement> {
 
     while let Some(event) = parser.next() {
         let items = &mut elems;
+
+        // println!("{event:?}");
 
         match event {
             Event::Start(Tag::Paragraph) => {
@@ -112,6 +121,30 @@ fn parse_events(parser: &mut Parser<'_>) -> Vec<MarkdownElement> {
                 items.push(MarkdownElement::ListItem(parse_events(parser)));
             }
             Event::End(TagEnd::Item) => {
+                return elems;
+            }
+            Event::Start(Tag::Table(_)) => {
+                items.push(MarkdownElement::Table(parse_events(parser)));
+            }
+            Event::End(TagEnd::Table) => {
+                return elems;
+            }
+            Event::Start(Tag::TableHead) => {
+                items.push(MarkdownElement::TableHead(parse_events(parser)));
+            }
+            Event::End(TagEnd::TableHead) => {
+                return elems;
+            }
+            Event::Start(Tag::TableRow) => {
+                items.push(MarkdownElement::TableRow(parse_events(parser)));
+            }
+            Event::End(TagEnd::TableRow) => {
+                return elems;
+            }
+            Event::Start(Tag::TableCell) => {
+                items.push(MarkdownElement::TableCell(parse_events(parser)));
+            }
+            Event::End(TagEnd::TableCell) => {
                 return elems;
             }
             _ => {}
@@ -312,6 +345,91 @@ fn generate_ui_elements(
                         ..Default::default()
                     });
                 }
+            }
+            MarkdownElement::Table(elems) => {
+                let mut table_item_elems = vec![];
+                let mut elems_iter = elems.iter_mut();
+                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
+                    &mut elems_iter;
+
+                generate_ui_elements(&mut elems_iter_ref, &mut table_item_elems, user_data);
+
+                let (mut head, mut rows) = (vec![], vec![]);
+
+                for item in table_item_elems.into_iter() {
+                    if item.ty == MdElementType::TableHead {
+                        head.extend(item.table_head);
+                    } else if item.ty == MdElementType::TableRow {
+                        rows.push(item.table_row);
+                    }
+                }
+
+                ui_elems.push(MdElement {
+                    ty: MdElementType::Table,
+                    table: MdTable { head, rows },
+                    ..Default::default()
+                });
+            }
+            MarkdownElement::TableHead(elems) => {
+                let mut table_head_item_elems = vec![];
+                let mut elems_iter = elems.iter_mut();
+                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
+                    &mut elems_iter;
+
+                generate_ui_elements(&mut elems_iter_ref, &mut table_head_item_elems, user_data);
+
+                let table_head = table_head_item_elems
+                    .into_iter()
+                    .filter(|item| item.ty == MdElementType::TableCell)
+                    .map(|item| item.table_cell)
+                    .collect::<Vec<String>>();
+
+                ui_elems.push(MdElement {
+                    ty: MdElementType::TableHead,
+                    table_head,
+                    ..Default::default()
+                });
+            }
+            MarkdownElement::TableRow(elems) => {
+                let mut table_row_item_elems = vec![];
+                let mut elems_iter = elems.iter_mut();
+                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
+                    &mut elems_iter;
+
+                generate_ui_elements(&mut elems_iter_ref, &mut table_row_item_elems, user_data);
+
+                let table_row = table_row_item_elems
+                    .into_iter()
+                    .filter(|item| item.ty == MdElementType::TableCell)
+                    .map(|item| item.table_cell)
+                    .collect::<Vec<String>>();
+
+                ui_elems.push(MdElement {
+                    ty: MdElementType::TableRow,
+                    table_row,
+                    ..Default::default()
+                });
+            }
+            MarkdownElement::TableCell(elems) => {
+                let mut table_cell_item_elems = vec![];
+                let mut elems_iter = elems.iter_mut();
+                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
+                    &mut elems_iter;
+
+                generate_ui_elements(&mut elems_iter_ref, &mut table_cell_item_elems, user_data);
+
+                let mut text = String::default();
+                for item in table_cell_item_elems.into_iter() {
+                    if item.ty == MdElementType::Text {
+                        text.push_str(&item.text);
+                    }
+                }
+
+                ui_elems.push(MdElement {
+                    ty: MdElementType::TableCell,
+                    table_cell: text,
+                    ..Default::default()
+                });
             }
             _ => (),
         }
