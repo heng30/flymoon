@@ -1,6 +1,6 @@
 import { Theme, Store, Logic, Icons, Util } from "../../def.slint";
-import { ChatEntry, MdElementType, MdImage, MdElement, MdUrl, MdHeading, MdUrl, MdListItem } from "../../../store.slint";
-import { IconBtn, Label, Link } from "../../../base/widgets.slint";
+import { ChatEntry, MdElementType, MdImage, MdElement, MdUrl, MdHeading, MdUrl, MdListItem, MdTable } from "../../../store.slint";
+import { IconBtn, Label, Link, ToolTipSetting, ComponentPosition } from "../../../base/widgets.slint";
 import { SearchLink } from "../../../store.slint";
 
 component MdText inherits HorizontalLayout {
@@ -118,6 +118,76 @@ component MdImage inherits HorizontalLayout {
     }
 }
 
+component MdTableCell inherits Label {
+    font-weight: Theme.bold-font-weight;
+    overflow: elide;
+
+    TouchArea {
+        enabled: root.preferred-width > root.width;
+        mouse-cursor: MouseCursor.pointer;
+
+        changed has-hover => {
+            if (self.has-hover) {
+                ToolTipSetting.show(
+                    self.absolute-position.x,
+                    self.absolute-position.y,
+                    parent.width,
+                    parent.height,
+                    ComponentPosition.Top,
+                    root.text);
+            } else {
+                ToolTipSetting.hide();
+            }
+        }
+    }
+}
+
+component MdTable inherits VerticalLayout {
+    in-out property <MdTable> table;
+
+    padding-bottom: Theme.padding * 4;
+
+    Rectangle {
+        border-color: Theme.regular-text-color;
+        border-width: Theme.default-border-width;
+
+        VerticalLayout {
+            padding: parent.border-width;
+
+            Rectangle {
+                background: Theme.thirdly-background.darker(50%);
+
+                head-hbox := HorizontalLayout {
+                    padding: Theme.padding * 2;
+                    spacing: Theme.spacing * 2;
+
+                    property <length> cell-width: (parent.width - self.padding * 2 - (table.head.length - 1) * self.spacing) / table.head.length;
+
+                    for htext in table.head: MdTableCell {
+                        font-size: Theme.title4-font-size;
+                        width: parent.cell-width;
+                        text: htext;
+                    }
+                }
+            }
+
+            for row[index] in table.rows: Rectangle {
+                background: Math.mod(index, 2) == 0 ? Colors.transparent : Theme.hover-background.darker(20%);
+
+                HorizontalLayout {
+                    padding: Theme.padding * 2;
+                    spacing: Theme.spacing * 2;
+
+                    for ctext in row: MdTableCell {
+                        width: head-hbox.cell-width;
+                        text: ctext;
+                    }
+                }
+            }
+        }
+    }
+}
+
 component MdLinks inherits VerticalLayout {
     in-out property <[MdUrl]> urls;
 
@@ -204,6 +274,10 @@ export component MdDetail inherits Rectangle {
             if entry.ty == MdElementType.ListItem: MdListItem {
                 entry: entry.list-item;
                 next-elem-is-list-item: next-is-list-item(index);
+            }
+
+            if entry.ty == MdElementType.Table: MdTable {
+                table: entry.table;
             }
 
             if entry.ty == MdElementType.CodeBlock: MdCodeBlock {

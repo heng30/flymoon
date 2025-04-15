@@ -1,13 +1,13 @@
 use crate::slint_generatedAppWindow::{
     AppWindow, ChatEntry as UIChatEntry, Logic, MdElement as UIMdElement,
     MdElementType as UIMdElementType, MdHeading as UIMdHeading, MdImage as UIMdImage,
-    MdListItem as UIMdListItem, MdUrl as UIMdUrl, Store,
+    MdListItem as UIMdListItem, MdTable as UIMdTable, MdUrl as UIMdUrl, Store,
 };
 use crate::{config::cache_dir, store_current_chat_session_histories};
 use cutil::{crypto, http};
-use dummy_markdown::{self, MdElement, MdElementType, MdHeading, MdListItem, MdUrl};
+use dummy_markdown::{self, MdElement, MdElementType, MdHeading, MdListItem, MdTable, MdUrl};
 use once_cell::sync::Lazy;
-use slint::{ComponentHandle, Image, Model, SharedString, VecModel, Weak};
+use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, VecModel, Weak};
 use std::{collections::HashMap, sync::Mutex};
 
 struct DownloadImageCache {
@@ -48,6 +48,8 @@ impl From<MdElementType> for UIMdElementType {
             MdElementType::ListItem => UIMdElementType::ListItem,
             MdElementType::Heading => UIMdElementType::Heading,
             MdElementType::CodeBlock => UIMdElementType::CodeBlock,
+            MdElementType::Table => UIMdElementType::Table,
+            _ => unreachable!(),
         }
     }
 }
@@ -88,6 +90,34 @@ impl From<String> for UIMdImage {
     }
 }
 
+impl From<MdTable> for UIMdTable {
+    fn from(table: MdTable) -> Self {
+        UIMdTable {
+            head: ModelRc::new(
+                table
+                    .head
+                    .into_iter()
+                    .map(Into::into)
+                    .collect::<VecModel<SharedString>>(),
+            ),
+
+            rows: ModelRc::new(
+                table
+                    .rows
+                    .into_iter()
+                    .map(|row| {
+                        ModelRc::new(
+                            row.into_iter()
+                                .map(Into::into)
+                                .collect::<VecModel<SharedString>>(),
+                        )
+                    })
+                    .collect::<VecModel<_>>(),
+            ),
+        }
+    }
+}
+
 impl From<MdElement> for UIMdElement {
     fn from(entry: MdElement) -> Self {
         UIMdElement {
@@ -97,6 +127,7 @@ impl From<MdElement> for UIMdElement {
             list_item: entry.list_item.into(),
             img: entry.image_url.into(),
             heading: entry.heading.into(),
+            table: entry.table.into(),
         }
     }
 }
@@ -154,11 +185,7 @@ pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {
         .row_data(rows - 1)
         .unwrap();
 
-    last_entry
-        .bot
-        .chars()
-        .last()
-        .map_or(false, |c| c == '\n')
+    last_entry.bot.chars().last().map_or(false, |c| c == '\n')
 }
 
 pub fn parse_stream_bot_text(ui: &AppWindow) {

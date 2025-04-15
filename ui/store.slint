@@ -48,6 +48,7 @@ export enum MdElementType {
     ListItem,
     Heading,
     CodeBlock,
+    Table,
 }
 
 export struct MdUrl {
@@ -71,6 +72,11 @@ export struct MdImage {
     img: image,
 }
 
+export struct MdTable {
+    head: [string],
+    rows: [[string]]
+}
+
 export struct MdElement {
     ty: MdElementType,
     text: string,
@@ -78,6 +84,7 @@ export struct MdElement {
     list-item: MdListItem,
     img: MdImage,
     heading: MdHeading,
+    table: MdTable,
 }
 
 export struct SearchLink {
@@ -257,6 +264,17 @@ export global Store {
                     {
                         ty: MdElementType.Text,
                         text: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
+                    },
+                    {
+                        ty: MdElementType.Table,
+                        table: {
+                            head: ["title 1", "title 2"],
+                            rows: [
+                                ["cell 1,1", "cell 1,2"],
+                                ["cell 2,1", "cell 2,2"],
+                                ["cell 2,1 helo fjiwf jfifjw ijfiwjfi jfij if", "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf"],
+                            ],
+                        },
                     },
                     {
                         ty: MdElementType.Image,
