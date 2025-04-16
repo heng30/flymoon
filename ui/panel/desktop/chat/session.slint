@@ -149,6 +149,34 @@ component LoadingTip inherits VerticalLayout {
     ld := Loading { }
 }
 
+component BlankWelcome inherits HorizontalLayout {
+    padding: Theme.padding * 2;
+    padding-top: Theme.padding * 8;
+    opacity: Theme.golden-ratio;
+
+    VerticalLayout {
+        alignment: LayoutAlignment.center;
+
+        Label {
+            text: Logic.tr("Welcome to the Flymoon!");
+            font-size: Theme.title1-font-size + 10px;
+            font-weight: Theme.bold-font-weight;
+            horizontal-alignment: TextHorizontalAlignment.center;
+        }
+
+        Label {
+            text: Logic.tr("You can ask me any questions");
+            font-size: Theme.title3-font-size;
+            font-weight: Theme.bold-font-weight;
+            horizontal-alignment: TextHorizontalAlignment.center;
+        }
+
+        Image {
+            source: Icons.brand;
+        }
+    }
+}
+
 export component Session inherits Rectangle {
     public function scroll-to-top() {
         lv.viewport-y = 0;
@@ -199,66 +227,60 @@ export component Session inherits Rectangle {
         }
     }
 
-    VerticalLayout {
-        if Store.current-chat-session.histories.length == 0 && !Store.current-model-name.is-empty: Label {
-            horizontal-alignment: TextHorizontalAlignment.center;
-            text: Store.current-model-name;
-            color: Theme.disabled-color;
+    if Store.current-chat-session.histories.length == 0: BlankWelcome { }
+
+    lv := ListView {
+        width: root.width;
+        height: root.height;
+        vertical-scrollbar-policy: always-off;
+
+        scrolled => {
+            if (is-on-bottom()) {
+                Store.is-auto-scroll = true;
+            } else {
+                Store.is-auto-scroll = false;
+            }
         }
 
-        lv := ListView {
-            width: root.width;
-            height: root.height;
-            vertical-scrollbar-policy: always-off;
+        for entry[index] in Store.current-chat-session.histories: VerticalLayout {
+            padding: Theme.padding * 2;
+            padding-top: 0;
+            padding-bottom: Theme.padding * 4;
+            spacing: Theme.spacing * 3;
 
-            scrolled => {
-                if (is-on-bottom()) {
-                    Store.is-auto-scroll = true;
-                } else {
-                    Store.is-auto-scroll = false;
-                }
+            private property <bool> is-show-search-tip: index == Store.current-chat-session.histories.length - 1 && Store.is-searching-webpages;
+            private property <bool> is-show-thinking-tip: index == Store.current-chat-session.histories.length - 1 && entry.md_elems.length == 0 && Store.is-chatting && !is-show-search-tip;
+
+            if index == 0 && !Store.current-model-name.is-empty: Label {
+                horizontal-alignment: TextHorizontalAlignment.center;
+                text: Store.current-model-name;
+                color: Theme.disabled-color;
             }
 
-            for entry[index] in Store.current-chat-session.histories: VerticalLayout {
-                padding: Theme.padding * 2;
-                padding-top: 0;
-                padding-bottom: Theme.padding * 4;
-                spacing: Theme.spacing * 3;
+            user := User {
+                index: index;
+                entry: entry;
+            }
 
-                private property <bool> is-show-search-tip: index == Store.current-chat-session.histories.length - 1 && Store.is-searching-webpages;
-                private property <bool> is-show-thinking-tip: index == Store.current-chat-session.histories.length - 1 && entry.md_elems.length == 0 && Store.is-chatting && !is-show-search-tip;
+            if is-show-search-tip: LoadingTip {
+                loading-text: Logic.tr("Searching...");
+                colorize: Theme.warning-color;
+            }
 
-                if index == 0 && !Store.current-model-name.is-empty: Label {
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: Store.current-model-name;
-                    color: Theme.disabled-color;
-                }
+            if is-show-thinking-tip: LoadingTip {
+                loading-text: Logic.tr("Thinking...");
+                colorize: Theme.thirdly-brand-color;
+            }
 
-                user := User {
-                    index: index;
-                    entry: entry;
-                }
+            if !Store.is-toggle-bot-markdown && !entry.bot.is_empty: MdDetail {
+                entries: entry.md-elems;
+                urls: entry.link-urls;
+                histories-entry-index: index;
+                search-links: entry.search-links;
+            }
 
-                if is-show-search-tip: LoadingTip {
-                    loading-text: Logic.tr("Searching...");
-                    colorize: Theme.warning-color;
-                }
-
-                if is-show-thinking-tip: LoadingTip {
-                    loading-text: Logic.tr("Thinking...");
-                    colorize: Theme.thirdly-brand-color;
-                }
-
-                if !Store.is-toggle-bot-markdown && !entry.bot.is_empty: MdDetail {
-                    entries: entry.md-elems;
-                    urls: entry.link-urls;
-                    histories-entry-index: index;
-                    search-links: entry.search-links;
-                }
-
-                if Store.is-toggle-bot-markdown && !entry.bot.is_empty: ChatDetail {
-                    text: entry.bot;
-                }
+            if Store.is-toggle-bot-markdown && !entry.bot.is_empty: ChatDetail {
+                text: entry.bot;
             }
         }
     }

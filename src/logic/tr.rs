@@ -184,6 +184,8 @@ pub fn tr(text: &str) -> String {
         ("width", "宽度"),
         ("Window size", "窗口大小"),
         ("Temperature", "温度"),
+        ("Welcome to the Flymoon!", "欢迎来到Flymoon!"),
+        ("You can ask me any questions", "你可以问我任何问题哦"),
     ]);
 
     if let Some(txt) = items.get(text) {

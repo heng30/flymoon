@@ -43,12 +43,17 @@ Would you like a deeper dive into any of these topics?
 | Cell 1   | Cell 2   | Cell 5   |
 | Cell 3   |          | Cell 6   |
 
+$$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
+
+$$
+P_n(x) = f(a) + f'(a)(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \cdots + \frac{f^{(n)}(a)}{n!}(x-a)^n
+$$
 "#;
 
     #[test]
     fn main() {
         let (ui_elems, link_urls) = parser::run(DOC);
-        println!("{:#?}", ui_elems);
-        println!("{:#?}", link_urls);
+        // println!("{:#?}", ui_elems);
+        // println!("{:#?}", link_urls);
     }
 }

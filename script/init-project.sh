@@ -9,10 +9,10 @@ fi
 LOC=$(readlink -f "$0")
 DIR=$(dirname "$LOC")
 
-old_project_name="slint-template"
-old_android_project_name="slint_template"
+old_project_name="flybot"
+old_android_project_name="flybot"
 old_desktop_project_name=$old_android_project_name
-old_web_project_name="Slint Template"
+old_web_project_name="flybot"
 old_web_js_file_name=$old_android_project_name
 
 project_name=$1

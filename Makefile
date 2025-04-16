@@ -2,7 +2,7 @@
 
 pwd=${shell pwd}
 
-app-name=flybot
+app-name=flymoon
 version=`git describe --tags --abbrev=0`
 
 build-env=

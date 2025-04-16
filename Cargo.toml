@@ -1,5 +1,5 @@
 [package]
-name = "flybot"
+name = "flymoon"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
@@ -7,8 +7,8 @@ readme = "README.md"
 build = "build.rs"
 keywords = ["Rust"]
 authors = ["Heng30 <rongheng30@gmail.com>"]
-homepage = "https://github.com/Heng30/flybot"
-repository = "https://github.com/Heng30/flybot"
+homepage = "https://github.com/Heng30/flymoon"
+repository = "https://github.com/Heng30/flymoon"
 description = "It's a Rust Slint GUI framework project for quick start."
 
 [dependencies]
@@ -91,11 +91,11 @@ crate-type = ["cdylib", "lib"]
 
 [[bin]]
 path = "src/desktop.rs"
-name = "flybot"
+name = "flymoon"
 required-features = ["desktop"]
 
 [package.metadata.android]
-package = "xyz.heng30.flybot"
+package = "xyz.heng30.flymoon"
 build_targets = ["aarch64-linux-android"]
 resources = "./android/res"
 strip = "strip"

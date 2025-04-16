@@ -32,7 +32,7 @@ struct GenerateMdElemUserData {
 pub fn run(doc: &str) -> (Vec<MdElement>, Vec<MdUrl>) {
     let mut options = Options::empty();
     options.insert(Options::ENABLE_TABLES);
-    // options.insert(Options::MATH);
+    // options.insert(Options::ENABLE_MATH);
 
     let mut parser = Parser::new_ext(doc, options);
     let mut elems = parse_events(&mut parser);

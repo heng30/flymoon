@@ -95,6 +95,14 @@ component ShortcutsHelp inherits VerticalLayout {
     }
 }
 
+// in-out property <[string]> helps: is-cn ? [
+//     "配置文件保存目录: ~/.config/flybot",
+//     "数据库保存目录: ~/.local/share/flybot",
+// ] : [
+//     "Config directory: ~/.config/flybot",
+//     "Data directory: ~/.local/share/flybot",
+// ];
+
 export component HelpDetail inherits Flickable {
     VerticalLayout {
         spacing: Theme.spacing * 4;

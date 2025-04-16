@@ -77,7 +77,7 @@ export component Preference inherits SettingDetail {
 
             font-size-lineedit := LineInput {
                 input-type: number;
-                placeholder-text: Logic.tr("10 ~ 50");
+                placeholder-text: "10 ~ 50";
                 text: Store.setting-preference.font-size;
             }
         }
@@ -90,6 +90,20 @@ export component Preference inherits SettingDetail {
             fonts-select := Select {
                 values: ["Default", "Source Han Serif CN", "Source Han Sans CN"];
                 current-value: Store.setting-preference.font-family;
+            }
+        }
+
+        if Store.device-type == DeviceType.Desktop: SettingDetailInnerVbox {
+            SettingDetailSwitch {
+                icon: Icons.status;
+                text: Logic.tr("Frameless window");
+                checked: root.no-frame;
+
+                toggled => {
+                    root.no-frame = self.checked;
+                    Logic.set-setting-preference(root.get());
+                    ConfirmDialogSetting.set(true, Logic.tr("Info"), Logic.tr("Reboot to take setting effect"), "close-window", "");
+                }
             }
         }
 

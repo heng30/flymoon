@@ -124,7 +124,6 @@ component MdTableCell inherits Label {
 
     TouchArea {
         enabled: root.preferred-width > root.width;
-        mouse-cursor: MouseCursor.pointer;
 
         changed has-hover => {
             if (self.has-hover) {

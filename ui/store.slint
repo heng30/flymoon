@@ -168,14 +168,6 @@ export global Store {
         is-dark: false,
     };
 
-    in-out property <[string]> helps: is-cn ? [
-        "配置文件保存目录: ~/.config/flybot",
-        "数据库保存目录: ~/.local/share/flybot",
-    ] : [
-        "Config directory: ~/.config/flybot",
-        "Data directory: ~/.local/share/flybot",
-    ];
-
     //////////////////////////////// Logic Start ////////////////////////////////
 
     in-out property <bool> is-chatting;

@@ -1940,7 +1940,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "flybot"
+name = "flymoon"
 version = "0.1.0"
 dependencies = [
  "android_logger",

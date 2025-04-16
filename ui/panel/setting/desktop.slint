@@ -139,7 +139,7 @@ export component HelpDialog inherits Dialog {
 }
 
 export component DonateDialog inherits Dialog {
-    title: Logic.tr("Help");
+    title: Logic.tr("Donate");
     is-hide-bottom-btns: true;
     is-prevent-event-forward: true;
 
@@ -163,12 +163,14 @@ export component SettingIconsBar inherits Rectangle {
     in-out property <bool> show-icon-hover-background: false;
     in-out property <length> icon-size: Theme.icon-size;
     in-out property <bool> is-show-tip: false;
+    in-out property <bool> disable-padding-right;
     in-out property <ComponentPosition> tip-position;
     in-out property h-padding <=> hbox.padding;
     in-out property h-spacing <=> hbox.spacing;
 
     hbox := HorizontalLayout {
         padding: Theme.padding * 2;
+        padding-right: disable-padding-right ? 0 : self.padding;
         spacing: Theme.spacing * 4;
 
         IconBtn {
@@ -232,7 +234,7 @@ export component SettingIconsBar inherits Rectangle {
             tip: Logic.tr("github");
 
             clicked => {
-                Util.open-url("Default","https://github.com/Heng30/flybot");
+                Util.open-url("Default","https://github.com/Heng30/flymoon");
             }
         }
     }
