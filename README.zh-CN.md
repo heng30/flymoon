@@ -1,17 +1,22 @@
-<!-- <div style="display: flex, margin: 8px"> -->
-<!--     <img src="./screenshot/1-cn.png" width="100"/> -->
-<!--     <img src="./screenshot/2-cn.png" width="100"/> -->
-<!--     <img src="./screenshot/3-cn.png" width="100"/> -->
-<!--     <img src="./screenshot/4-cn.png" width="100"/> -->
-<!--     <img src="./screenshot/5-cn.png" width="100"/> -->
-<!--     <img src="./screenshot/6-cn.png" width="100"/> -->
-<!--     <img src="./screenshot/7-cn.png" width="100"/> -->
-<!-- </div> -->
+<div style="display: flex, margin: 8px">
+    <img src="./screenshot/0-cn.png" width="100"/>
+    <img src="./screenshot/1-cn.png" width="100"/>
+    <img src="./screenshot/2-cn.png" width="100"/>
+    <img src="./screenshot/3-cn.png" width="100"/>
+    <img src="./screenshot/4-cn.png" width="100"/>
+    <img src="./screenshot/5-cn.png" width="100"/>
+</div>
 
 [English Documentation](./README.md)
 
 ### 简介
-这是一个基于Rust和Slint-ui的极简聊天程序。
+这是一个基于Rust和Slint GUI构建的大语言模型聊天客户端，兼容OpenAI的API。,
+
+- [x] 支持聊天和深度思考两种聊天模式,
+- [x] 支持联网谷歌搜索,
+- [x] 自动保存历史聊天记录,
+- [x] 自定义系统提示词
+- [ ] 支持MCP
 
 ### 如何构建?
 - 安装 `Rust` 和 `Cargo`

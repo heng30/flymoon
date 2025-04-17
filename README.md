@@ -1,17 +1,22 @@
-<!-- <div style="display: flex, margin: 8px"> -->
-    <!-- <img src="./screenshot/1-en.png" width="100"/> -->
-    <!-- <img src="./screenshot/2-en.png" width="100"/> -->
-    <!-- <img src="./screenshot/3-en.png" width="100"/> -->
-    <!-- <img src="./screenshot/4-en.png" width="100"/> -->
-    <!-- <img src="./screenshot/5-en.png" width="100"/> -->
-    <!-- <img src="./screenshot/6-en.png" width="100"/> -->
-    <!-- <img src="./screenshot/7-en.png" width="100"/> -->
-<!-- </div> -->
+<div style="display: flex, margin: 8px">
+    <img src="./screenshot/0-en.png" width="100"/>
+    <img src="./screenshot/1-en.png" width="100"/>
+    <img src="./screenshot/2-en.png" width="100"/>
+    <img src="./screenshot/3-en.png" width="100"/>
+    <img src="./screenshot/4-en.png" width="100"/>
+    <img src="./screenshot/5-en.png" width="100"/>
+</div>
 
 [中文文档](./README.zh-CN.md)
 
 ### Introduction
-It's a dead simple chatbot based on Rust and Slint-ui.
+This is a large language model chat client built with Rust and Slint GUI, compatible with OpenAI's API.
+
+- [x] Supports both chat and deep thinking modes
+- [x] Supports online Google search
+- [x] Automatically saves chat history
+- [x] Customizable system prompts
+- [ ] Supports MCP
 
 ### How to build?
 - Install `Rust`, `Cargo`, `cargo-apk` and `wasm-pack`

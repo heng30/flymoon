@@ -16,16 +16,27 @@ export component InputPromptList inherits Rectangle {
             padding-left: Theme.padding * 4;
             padding-right: Theme.padding * 4;
 
+            private property <length> max-shortcut-label-width;
+
             for entry[index] in Store.input-prompt-list-entries: HorizontalLayout {
                 spacing: Theme.spacing * 5;
                 alignment: LayoutAlignment.start;
 
-                Label {
+                shortcut-label := Label {
+                    width: max-shortcut-label-width;
+
+                    init => {
+                        if (self.preferred-width > max-shortcut-label-width) {
+                            max-shortcut-label-width = self.preferred-width;
+                        }
+                    }
+
                     font-size: Theme.title4-font-size;
                     text: entry.shortcut;
                 }
 
-                Label {
+                name-label := Label {
+
                     font-size: Theme.title4-font-size;
                     text: entry.name;
                 }

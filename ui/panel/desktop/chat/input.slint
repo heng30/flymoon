@@ -36,6 +36,16 @@ export component Input inherits Rectangle {
         scroll-to-bottom-flag = true;
     }
 
+    function toggle-current-model-name() {
+        Store.enabled-reasoner-model = !Store.enabled-reasoner-model;
+
+        if (Store.enabled-reasoner-model) {
+            Store.current-model-name = Logic.get-setting-model().chat.reasoner-model-name;
+        } else {
+            Store.current-model-name = Logic.get-setting-model().chat.model-name;
+        }
+    }
+
     Timer {
         interval: 200ms;
         running: scroll-to-bottom-flag;
@@ -112,7 +122,7 @@ export component Input inherits Rectangle {
                                         root.scroll-up();
                                         return accept;
                                     } else if (event.text == "d") {
-                                        Store.enabled-reasoner-model = !Store.enabled-reasoner-model;
+                                        toggle-current-model-name();
                                         return accept;
                                     } else if (event.text == "y") {
                                         Store.enabled-search-webpages = !Store.enabled-search-webpages;
@@ -159,13 +169,7 @@ export component Input inherits Rectangle {
                         gain-focus-when-clicked: false;
 
                         clicked => {
-                            Store.enabled-reasoner-model = !Store.enabled-reasoner-model;
-
-                            if (Store.enabled-reasoner-model) {
-                                Store.current-model-name = Logic.get-setting-model().chat.reasoner-model-name;
-                            } else {
-                                Store.current-model-name = Logic.get-setting-model().chat.model-name;
-                            }
+                            toggle-current-model-name();
                         }
                     }
 

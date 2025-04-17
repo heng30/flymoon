@@ -48,14 +48,22 @@ export component Paragraph inherits Rectangle {
             alignment: LayoutAlignment.center;
             padding: Theme.padding * 4;
 
-            Image {
-                width: root.picture-size;
-                source: entry.picture;
+            Rectangle {
+                border-radius: Theme.border-radius * 2;
+                width: img.width;
+                height: img.height;
+                clip: true;
+
+                img := Image {
+                    width: Math.min(root.picture-size, entry.picture.width * 1px);
+                    height: self.width * entry.picture.height / entry.picture.width;
+                    source: entry.picture;
+                }
             }
         }
 
         for item[index] in entry.contents: VerticalLayout {
-            padding-bottom: index == entry.contents.length - 1 ? 0 : Theme.padding * 4;
+            padding-bottom: index == entry.contents.length - 1 ? 0 : Theme.padding * 2;
 
             TextInput {
                 text: item;
@@ -72,9 +80,17 @@ export component Paragraph inherits Rectangle {
             alignment: LayoutAlignment.center;
             padding: Theme.padding * 4;
 
-            Image {
-                width: root.picture-size;
-                source: entry.picture;
+            Rectangle {
+                border-radius: Theme.border-radius * 2;
+                width: img2.width;
+                height: img2.height;
+                clip: true;
+
+                img2 := Image {
+                    width: Math.min(root.picture-size, entry.picture.width * 1px);
+                    height: self.width * entry.picture.height / entry.picture.width;
+                    source: entry.picture;
+                }
             }
         }
 

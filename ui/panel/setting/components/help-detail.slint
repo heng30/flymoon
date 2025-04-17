@@ -1,5 +1,118 @@
-import { Theme, Logic } from "../../def.slint";
-import { Label } from "../../../base/widgets.slint";
+import { Theme, Logic, Store } from "../../def.slint";
+import { Label, Paragraph, ParagraphEntry } from "../../../base/widgets.slint";
+
+component SettingHelp inherits VerticalLayout {
+    spacing: Theme.spacing * 4;
+
+    private property <[ParagraphEntry]> entries-cn:
+    [
+        {
+            title: "简介",
+            title-link: "https://github.com/heng30/flymoon",
+            contents: [
+                "这是一个基于Rust和Slint GUI构建的大语言模型聊天客户端，兼容OpenAI的API。",
+                "1. 支持聊天和深度思考两种聊天模式",
+                "2. 支持联网谷歌搜索",
+                "3. 自动保存历史聊天记录",
+                "4. 自定义系统提示词"
+            ],
+        },
+        {
+            title: "如何配置大语言模型？",
+            title-link: "https://api-docs.deepseek.com/zh-cn/",
+            picture: @image-url("../../../images-help/chat-model-light-cn.png"),
+            contents: [
+                "1. 「API基础URL」是和OpenAI兼容的API基地址",
+                "2. 「思考模型」是可选的",
+            ],
+        },
+        {
+            title: "如何配置谷歌搜索？",
+            title-link: "https://developers.google.com/custom-search/v1/overview",
+            picture: @image-url("../../../images-help/google-search-light-cn.png"),
+            contents: [
+                "1. 「CX」是谷歌搜索ID，需要自己创建",
+                "2. 「链接数量」是每次进行搜索的网页数量，最高支持10个网页",
+                "启用网络搜索后，会先使用谷歌搜索引擎进行搜索。然后下载网页，并对网页进行分析，获取所有<p>标签的内容。从而避免发送大量Html标签给大语言模型，也能减少Token消耗。"
+            ],
+        },
+        {
+            title: "如何配置系统提示词？",
+            picture: @image-url("../../../images-help/prompt-light-cn.png"),
+            contents: [
+                "1. 「快捷键」会在聊天输入框中输入'/快捷键'触发，提问后会将指定的「详情」内容设置为系统提示词",
+                "2. 「详情」是对话的系统提示词",
+            ],
+        },
+        {
+            title: "如何使用系统提示词？",
+            picture: @image-url("../../../images-help/input-prompt-light-cn.png"),
+            contents: [
+                "1. 在对话输入框中输入'/'后会弹出提示词面板",
+                "2. 提问格式：'/' + 提示词快捷键 + 空格 + 问题",
+            ],
+        },
+    ];
+
+    private property <[ParagraphEntry]> entries-en:
+    [
+        {
+            title: "Introduction",
+            title-link: "https://github.com/heng30/flymoon",
+            contents: [
+                "This is a large language model chat client built with Rust and Slint GUI, compatible with OpenAI's API.",
+                "1. Supports both chat and deep thinking modes",
+                "2. Supports online Google search",
+                "3. Automatically saves chat history",
+                "4. Customizable system prompts"
+            ],
+        },
+        {
+            title: "How to Configure the LLM?",
+            title-link: "https://api-docs.deepseek.com/en/",
+            picture: @image-url("../../../images-help/chat-model-light-en.png"),
+            contents: [
+                "1. 「API base URL」 is the OpenAI-compatible API base address",
+                "2. 「Reasoner model」 is optional",
+            ],
+        },
+        {
+            title: "How to Configure Google Search?",
+            title-link: "https://developers.google.com/custom-search/v1/overview",
+            picture: @image-url("../../../images-help/google-search-light-en.png"),
+            contents: [
+                "1. 「CX」 is the Google Search ID, which you need to create yourself",
+                "2. 「Link number」 is the number of web pages searched per query, with a maximum of 10 pages",
+                "When web search is enabled, the Google search engine will be used first. The web pages will then be downloaded and analyzed to extract all <p> tag content. This avoids sending excessive HTML tags to the large language model and reduces token consumption."
+            ],
+        },
+        {
+            title: "How to Configure System Prompts?",
+            picture: @image-url("../../../images-help/prompt-light-en.png"),
+            contents: [
+                "1. 「Shortcut」 will trigger when entering '/shortcut' in the chat input box. After asking a question, the specified 「Details」 content will be set as the system prompt",
+                "2. 「Detail」 is the system prompt for the conversation",
+            ],
+        },
+        {
+            title: "How to Use System Prompts?",
+            picture: @image-url("../../../images-help/input-prompt-light-en.png"),
+            contents: [
+                "1. Entering '/' in the chat input box will open the prompt panel",
+                "2. Question format: '/' + prompt shortcut key + space + question",
+            ],
+        },
+    ];
+
+    private property <[ParagraphEntry]> entries: Store.is-cn ? entries-cn : entries-en;
+
+    for entry in root.entries: Paragraph {
+        entry: entry;
+        is-picture-before-contents: true;
+        content-font-size: Theme.title4-font-size;
+        picture-size: 400px;
+    }
+}
 
 component ShortcutsHelp inherits VerticalLayout {
     private property <[{shortcut: string, detail: string}]> shortcuts: [
@@ -69,13 +182,13 @@ component ShortcutsHelp inherits VerticalLayout {
         },
     ];
 
-    spacing: Theme.spacing * 2;
-
-    Label {
-        text: Logic.tr("SHORTCUTS");
-        font-size: Theme.title2-font-size;
-        font-weight: Theme.bold-font-weight;
-        horizontal-alignment: TextHorizontalAlignment.center;
+    HorizontalLayout {
+        padding-bottom: Theme.padding * 4;
+        Label {
+            text: Logic.tr("Shortcuts");
+            font-size: Theme.title1-font-size;
+            font-weight: Theme.bold-font-weight;
+        }
     }
 
     VerticalLayout {
@@ -114,6 +227,9 @@ component ShortcutsHelp inherits VerticalLayout {
 export component HelpDetail inherits Flickable {
     VerticalLayout {
         spacing: Theme.spacing * 4;
+        padding: Theme.padding * 2;
+
+        SettingHelp { }
 
         ShortcutsHelp { }
     }

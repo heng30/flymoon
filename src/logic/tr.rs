@@ -161,7 +161,7 @@ pub fn tr(text: &str) -> String {
         ("Setting", "设置"),
         ("shortcut", "快捷键"),
         ("Shortcut", "快捷键"),
-        ("SHORTCUTS", "快捷键"),
+        ("Shortcuts", "快捷键"),
         ("Sign in", "登录"),
         ("Skip", "跳过"),
         ("Slow", "慢速"),
@@ -188,6 +188,9 @@ pub fn tr(text: &str) -> String {
         ("Temperature", "温度"),
         ("Welcome to the Flymoon!", "欢迎来到Flymoon!"),
         ("You can ask me any questions", "你可以问我任何问题哦"),
+        ("Info", "提醒"),
+        ("Reboot to take setting effect", "重启使配置生效"),
+        ("Frameless window", "无边框窗口"),
     ]);
 
     if let Some(txt) = items.get(text) {
