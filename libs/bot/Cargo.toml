@@ -12,6 +12,14 @@ tokio-stream = "0.1"
 serde = { version = "1", features = ["serde_derive"] }
 cutil = { version = "0.1", path = "../cutil", features = ["default", "http"] }
 
-[dev-dependencies]
-env_logger = "0.9"
-tokio = { version = "1", features = ["full"] }
+env_logger = { version = "0.9", optional = true }
+tokio = { version = "1", features = ["full"], optional = true }
+
+[features]
+default = []
+test-bot = ["dep:env_logger", "dep:tokio"]
+
+[[bin]]
+name = "bot"
+path = "./bin/main.rs"
+required-features = ["test-bot"]

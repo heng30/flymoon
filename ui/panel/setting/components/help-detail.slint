@@ -36,6 +36,10 @@ component ShortcutsHelp inherits VerticalLayout {
             detail: Logic.tr("Scroll to bottom"),
         },
         {
+            shortcut: "Ctrl + D",
+            detail: Logic.tr("Toggle reasoner model"),
+        },
+        {
             shortcut: "Ctrl + Y",
             detail: Logic.tr("Toggle network searching"),
         },
@@ -46,6 +50,10 @@ component ShortcutsHelp inherits VerticalLayout {
         {
             shortcut: "Ctrl + H",
             detail: Logic.tr("Switch to Home or History Tab"),
+        },
+        {
+            shortcut: "Ctrl + ,",
+            detail: Logic.tr("Switch to Setting Tab"),
         },
         {
             shortcut: "Ctrl + E",
@@ -96,11 +104,11 @@ component ShortcutsHelp inherits VerticalLayout {
 }
 
 // in-out property <[string]> helps: is-cn ? [
-//     "配置文件保存目录: ~/.config/flybot",
-//     "数据库保存目录: ~/.local/share/flybot",
+//     "配置文件保存目录: ~/.config/flymoon",
+//     "数据库保存目录: ~/.local/share/flymoon",
 // ] : [
-//     "Config directory: ~/.config/flybot",
-//     "Data directory: ~/.local/share/flybot",
+//     "Config directory: ~/.config/flymoon",
+//     "Data directory: ~/.local/share/flymoon",
 // ];
 
 export component HelpDetail inherits Flickable {

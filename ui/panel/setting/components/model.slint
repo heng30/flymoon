@@ -16,6 +16,7 @@ export component Model inherits SettingDetail {
             chat: {
                 api-base-url: api-base-url-lineedit.text,
                 model-name: model-name-lineedit.text,
+                reasoner-model-name: reasoner-model-name-lineedit.text,
                 api-key: api-key-lineedit.text,
             },
             google-search : {
@@ -29,6 +30,7 @@ export component Model inherits SettingDetail {
     public function set(setting: SettingModel) {
         api-base-url-lineedit.text = setting.chat.api-base-url;
         model-name-lineedit.text = setting.chat.model-name;
+        reasoner-model-name-lineedit.text = setting.chat.reasoner-model-name;
         api-key-lineedit.text = setting.chat.api-key;
 
         google-search-cx-lineedit.text = setting.google-search.cx;
@@ -55,17 +57,28 @@ export component Model inherits SettingDetail {
                     }
 
                     api-base-url-lineedit := LineInput {
-                        placeholder-text: Logic.tr("api base url");
+                        placeholder-text: Logic.tr("https://api.deepseek.com/v1");
                     }
                 }
 
                 SettingDetailInnerVbox {
                     SettingDetailLabel {
-                        text: Logic.tr("Model name");
+                        text: Logic.tr("Chat model");
                     }
 
                     model-name-lineedit := LineInput {
-                        placeholder-text: Logic.tr("model name");
+                        placeholder-text: Logic.tr("deepseek-chat");
+                    }
+                }
+
+
+                SettingDetailInnerVbox {
+                    SettingDetailLabel {
+                        text: Logic.tr("Reasoner model (Optional)");
+                    }
+
+                    reasoner-model-name-lineedit := LineInput {
+                        placeholder-text: Logic.tr("deepseek-reasoner");
                     }
                 }
 
@@ -78,7 +91,7 @@ export component Model inherits SettingDetail {
                         is-show-icon: true;
                         icon: self.input-type == InputType.password ? Icons.close-eye : Icons.eye;
                         input-type: InputType.password;
-                        placeholder-text: Logic.tr("api key");
+                        placeholder-text: Logic.tr("sk-95c4f3d2b*******583179047f2");
 
                         clicked => {
                             if (self.input-type == InputType.password) {

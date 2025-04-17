@@ -1,6 +1,5 @@
 use super::data::{self, Config};
 use anyhow::{Context, Result};
-use log::debug;
 use once_cell::sync::Lazy;
 use std::{fs, path::PathBuf, sync::Mutex};
 
@@ -128,7 +127,7 @@ impl Config {
         let app_dirs = AppDirs::new(Some(&pkg_name), true).unwrap();
         self.init_config(&app_dirs)?;
         self.load().with_context(|| "load config file failed")?;
-        debug!("{:?}", self);
+        log::info!("{:?}", self);
         Ok(())
     }
 

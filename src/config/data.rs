@@ -58,6 +58,7 @@ pub struct Preference {
 pub struct ChatModel {
     pub api_base_url: String,
     pub model_name: String,
+    pub reasoner_model_name: String,
     pub api_key: String,
 }
 

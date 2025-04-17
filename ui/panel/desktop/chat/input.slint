@@ -12,7 +12,7 @@ export component Input inherits Rectangle {
     callback scroll-to-top;
     callback scroll-to-bottom;
 
-    height: 120px;
+    height: 130px;
     forward-focus: te;
 
     function ensure-show-cursor() {
@@ -93,6 +93,9 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "h") {
                                         Logic.switch-tab(TabIndex.History);
                                         return accept;
+                                    } else if (event.text == ",") {
+                                        Logic.switch-tab(TabIndex.Setting);
+                                        return accept;
                                     } else if (event.text == "q") {
                                         Util.close-window();
                                         return accept;
@@ -107,6 +110,9 @@ export component Input inherits Rectangle {
                                         return accept;
                                     } else if (event.text == "k") {
                                         root.scroll-up();
+                                        return accept;
+                                    } else if (event.text == "d") {
+                                        Store.enabled-reasoner-model = !Store.enabled-reasoner-model;
                                         return accept;
                                     } else if (event.text == "y") {
                                         Store.enabled-search-webpages = !Store.enabled-search-webpages;
@@ -139,7 +145,29 @@ export component Input inherits Rectangle {
                 HorizontalLayout {
                     padding: Theme.padding;
                     padding-left: Theme.padding * 2;
+                    spacing: Theme.spacing * 2;
                     alignment: LayoutAlignment.start;
+
+                    if Store.reasoner-model-available: TextBtn {
+                        border-color: Store.enabled-reasoner-model ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
+                        border-width: self.has-hover || Store.enabled-reasoner-model ? 2px : 1px;
+                        border-radius: Theme.border-radius * 4;
+                        bg-color: Theme.hover-background;
+                        icon: Icons.reasoner;
+                        colorize: self.border-color;
+                        text: Logic.tr("Reasoner");
+                        gain-focus-when-clicked: false;
+
+                        clicked => {
+                            Store.enabled-reasoner-model = !Store.enabled-reasoner-model;
+
+                            if (Store.enabled-reasoner-model) {
+                                Store.current-model-name = Logic.get-setting-model().chat.reasoner-model-name;
+                            } else {
+                                Store.current-model-name = Logic.get-setting-model().chat.model-name;
+                            }
+                        }
+                    }
 
                     TextBtn {
                         border-color: Store.enabled-search-webpages ? Theme.thirdly-brand-color : Theme.placeholder-text-color;

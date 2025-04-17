@@ -58,6 +58,7 @@ pub fn init(ui: &AppWindow) {
             chat: SettingChatModel {
                 api_base_url: config.chat.api_base_url.into(),
                 model_name: config.chat.model_name.into(),
+                reasoner_model_name: config.chat.reasoner_model_name.into(),
                 api_key: config.chat.api_key.into(),
             },
             google_search: SettingGoogleSearch {
@@ -68,12 +69,19 @@ pub fn init(ui: &AppWindow) {
         }
     });
 
+    let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_set_setting_model(move |setting| {
+        ui_handle
+            .unwrap()
+            .global::<Store>()
+            .set_reasoner_model_available(!setting.chat.reasoner_model_name.trim().is_empty());
+
         let mut all = config::all();
 
         all.model.chat = config::data::ChatModel {
             api_base_url: setting.chat.api_base_url.into(),
             model_name: setting.chat.model_name.into(),
+            reasoner_model_name: setting.chat.reasoner_model_name.into(),
             api_key: setting.chat.api_key.into(),
         };
 
@@ -105,4 +113,6 @@ fn init_setting(ui: &AppWindow) {
     ui.global::<Store>().set_setting_preference(setting);
     ui.global::<Store>()
         .set_current_model_name(config::model().chat.model_name.into());
+    ui.global::<Store>()
+        .set_reasoner_model_available(!config::model().chat.reasoner_model_name.trim().is_empty());
 }

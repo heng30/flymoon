@@ -94,6 +94,7 @@ export struct SearchLink {
 
 export struct SettingChatModel {
     model-name: string,
+    reasoner-model-name: string,
     api-base-url: string,
     api-key: string,
 }
@@ -122,6 +123,11 @@ export struct ChatEntry {
     is-user-edit: bool,
 
     bot: string,
+
+    // reasoner
+    bot-reasoner: string,
+    reasoner-spending-seconds: int,
+    is-hide-bot-reasoner: bool,
 
     // Markdown
     md-elems: [MdElement],
@@ -175,7 +181,9 @@ export global Store {
     in-out property <bool> is-toggle-bot-markdown;
     in-out property <bool> is-searching-webpages;
     in-out property <bool> enabled-search-webpages;
-    in-out property <string> current-model-name: "gpt-4o";
+    in-out property <bool> reasoner-model-available: true;
+    in-out property <bool> enabled-reasoner-model;
+    in-out property <string> current-model-name: "deepseek-chat";
 
     in-out property <[PromptEntry]> input-prompt-list-entries: [
         // {
@@ -242,6 +250,7 @@ export global Store {
             {
                 user: "hi",
                 bot: "how are you?",
+                bot-reasoner: " 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： ",
                 md-elems : [
                     {
                         ty: MdElementType.Text,
@@ -264,7 +273,10 @@ export global Store {
                             rows: [
                                 ["cell 1,1", "cell 1,2"],
                                 ["cell 2,1", "cell 2,2"],
-                                ["cell 2,1 helo fjiwf jfifjw ijfiwjfi jfij if", "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf"],
+                                [
+                                    "cell 2,1 helo fjiwf jfifjw ijfiwjfi jfij if",
+                                    "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf"
+                                ],
                             ],
                         },
                     },

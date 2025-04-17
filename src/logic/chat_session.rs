@@ -17,6 +17,7 @@ use bot::openai::{
     request::{APIConfig as ChatAPIConfig, HistoryChat},
     response::StreamTextItem,
 };
+use cutil::time::chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::sync::{
@@ -30,9 +31,7 @@ struct ChatCache {
     id: u64,
     ui: Weak<AppWindow>,
     stop_tx: Arc<mpsc::Sender<()>>,
-
-    #[allow(unused)]
-    summarized_question: String,
+    reasoner_start: Option<DateTime<Utc>>,
 }
 
 static INC_CHAT_ID: AtomicU64 = AtomicU64::new(0);
@@ -245,6 +244,19 @@ pub fn init(ui: &AppWindow) {
         entry.is_user_edit = !entry.is_user_edit;
         store_current_chat_session_histories!(ui).set_row_data(index, entry);
     });
+
+    let ui_handle = ui.as_weak();
+    ui.global::<Logic>()
+        .on_toggle_hide_bot_reasoner(move |index| {
+            let ui = ui_handle.unwrap();
+            let index = index as usize;
+
+            let mut entry = store_current_chat_session_histories!(ui)
+                .row_data(index)
+                .unwrap();
+            entry.is_hide_bot_reasoner = !entry.is_hide_bot_reasoner;
+            store_current_chat_session_histories!(ui).set_row_data(index, entry);
+        });
 }
 
 fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, SharedString, f32) {
@@ -282,14 +294,14 @@ fn stream_text(id: u64, item: StreamTextItem) {
         return;
     }
 
-    let (cc_id, ui) = {
+    let (cc_id, ui, reasoner_start) = {
         let cc = CHAT_CACHE.lock().unwrap();
         if cc.is_none() {
             return;
         }
 
         let cc = cc.as_ref().unwrap();
-        (cc.id, cc.ui.clone())
+        (cc.id, cc.ui.clone(), cc.reasoner_start.clone())
     };
 
     if id != cc_id {
@@ -318,6 +330,26 @@ fn stream_text(id: u64, item: StreamTextItem) {
             return;
         }
 
+        if item.reasoning_text.is_some() {
+            let rows = store_current_chat_session_histories!(ui).row_count();
+            if rows <= 0 {
+                return;
+            }
+
+            let last_index = rows - 1;
+            let mut entry = store_current_chat_session_histories!(ui)
+                .row_data(last_index)
+                .unwrap();
+
+            if reasoner_start.is_some() {
+                entry.reasoner_spending_seconds =
+                    (Utc::now() - reasoner_start.unwrap()).num_seconds() as i32;
+            }
+
+            entry.bot_reasoner.push_str(&item.reasoning_text.unwrap());
+            store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
+        }
+
         if item.text.is_some() {
             let rows = store_current_chat_session_histories!(ui).row_count();
             if rows <= 0 {
@@ -339,80 +371,6 @@ fn stream_text(id: u64, item: StreamTextItem) {
     });
 }
 
-#[allow(unused)]
-fn stream_summarize_question(id: u64, item: StreamTextItem) {
-    if id != item.id {
-        return;
-    }
-
-    let (cc_id, _ui) = {
-        let cc = CHAT_CACHE.lock().unwrap();
-        if cc.is_none() {
-            return;
-        }
-
-        let cc = cc.as_ref().unwrap();
-        (cc.id, cc.ui.clone())
-    };
-
-    if id != cc_id || item.etext.is_some() || item.finished {
-        return;
-    }
-
-    if item.text.is_some() {
-        let mut cc = CHAT_CACHE.lock().unwrap();
-        if cc.is_none() {
-            return;
-        }
-
-        cc.as_mut()
-            .unwrap()
-            .summarized_question
-            .push_str(&item.text.unwrap());
-    }
-}
-
-#[allow(unused)]
-async fn summarize_question(ui: Weak<AppWindow>, question: &str) -> Result<String> {
-    let prompt = "You are an expert at summarizing.";
-    let config = setting_model().into();
-
-    let question = format!("To summarize in one sentence: \n\n```{}```", question);
-    let (chat, stop_tx) = Chat::new(prompt, question, config, vec![]);
-
-    let id = INC_CHAT_ID.fetch_add(1, Ordering::Relaxed);
-
-    {
-        let mut cc = CHAT_CACHE.lock().unwrap();
-        *cc = Some(ChatCache {
-            id,
-            ui: ui.clone(),
-            stop_tx: Arc::new(stop_tx),
-            summarized_question: Default::default(),
-        });
-    }
-
-    chat.start(id, |item| {
-        stream_summarize_question(id, item);
-    })
-    .await?;
-
-    {
-        let cc = CHAT_CACHE.lock().unwrap();
-        if cc.is_some() {
-            let summary = &cc.as_ref().unwrap().summarized_question;
-
-            if summary.is_empty() {
-                anyhow::bail!("summarized question is empty")
-            } else {
-                Ok(summary.clone())
-            }
-        } else {
-            anyhow::bail!("summarized question is empty")
-        }
-    }
-}
-
 async fn search_webpages(
     ui: Weak<AppWindow>,
     question: &str,
@@ -427,15 +385,6 @@ async fn search_webpages(
     });
 
     let config = setting_model().into();
-
-    // let query = if question.chars().count() < 20 {
-    //     question.to_string()
-    // } else {
-    //     log::info!("start summarize question");
-    //     summarize_question(ui, question).await?
-    // };
-
-    // log::info!("search query: {}", query);
 
     if let (Some(text), search_links) = search::google::search(question, config).await? {
         log::info!("webpages content length: {}", text.len());
@@ -507,6 +456,7 @@ fn send_question(ui: &AppWindow, question: SharedString) {
 
     ui.global::<Store>().set_is_chatting(true);
     let enabled_search_webpages = ui.global::<Store>().get_enabled_search_webpages();
+    let enabled_reasoner_model = ui.global::<Store>().get_enabled_reasoner_model();
 
     let ui = ui.as_weak();
     tokio::spawn(async move {
@@ -535,6 +485,11 @@ fn send_question(ui: &AppWindow, question: SharedString) {
         // send question
         let mut config: ChatAPIConfig = setting_model().into();
         config.temperature = temperature;
+        if enabled_reasoner_model {
+            config.api_model = setting_model().chat.reasoner_model_name.into();
+        }
+
+        // log::info!("{config:?}");
 
         let (chat, stop_tx) = Chat::new(prompt, question, config, histories);
         let id = INC_CHAT_ID.fetch_add(1, Ordering::Relaxed);
@@ -545,7 +500,11 @@ fn send_question(ui: &AppWindow, question: SharedString) {
                 id,
                 ui: ui.clone(),
                 stop_tx: Arc::new(stop_tx),
-                summarized_question: Default::default(),
+                reasoner_start: if enabled_reasoner_model {
+                    Some(Utc::now())
+                } else {
+                    None
+                },
             });
         }
 

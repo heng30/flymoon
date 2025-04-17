@@ -121,18 +121,30 @@ export component DesktopPanel inherits Rectangle {
 
     if is-show-setting-dialog: SettingDialog {
         width: Math.min(1300px, root.width * 0.95);
+        escape => {
+            Logic.switch-tab(TabIndex.Back);
+        }
     }
 
     if is-show-about-dialog: AboutDialog {
         width: Math.min(1300px, root.width * 0.95);
+        escape => {
+            Logic.switch-tab(TabIndex.Back);
+        }
     }
 
     if is-show-help-dialog: HelpDialog {
         width: Math.min(1300px, root.width * 0.95);
+        escape => {
+            Logic.switch-tab(TabIndex.Back);
+        }
     }
 
     if is-show-donate-dialog: DonateDialog {
         width: Math.min(1300px, root.width * 0.95);
+        escape => {
+            Logic.switch-tab(TabIndex.Back);
+        }
     }
 
     if PopupActionSetting.is-show: PopupAction {

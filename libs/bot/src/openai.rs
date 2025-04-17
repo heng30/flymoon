@@ -48,14 +48,15 @@ pub mod response {
     pub struct StreamTextItem {
         pub id: u64,
         pub text: Option<String>,
+        pub reasoning_text: Option<String>,
         pub etext: Option<String>,
         pub finished: bool,
     }
 
     #[derive(Serialize, Deserialize)]
     pub(crate) struct ChunkChoice {
-        pub delta: HashMap<String, String>,
         pub index: usize,
+        pub delta: HashMap<String, Option<String>>,
         pub finish_reason: Option<String>,
     }
 
@@ -167,6 +168,8 @@ impl Chat {
                 Some(Ok(chunk)) => {
                     let body = String::from_utf8_lossy(&chunk);
 
+                    // debug!("{body:?}");
+
                     if let Ok(err) = serde_json::from_str::<response::Error>(&body) {
                         if let Some(estr) = err.error.get("message") {
                             cb(response::StreamTextItem {
@@ -200,7 +203,6 @@ impl Chat {
                                         ..Default::default()
                                     });
 
-                                    // println!();
                                     debug!(
                                         "finish_reason: {}",
                                         choice.finish_reason.as_ref().unwrap()
@@ -208,15 +210,27 @@ impl Chat {
                                     break;
                                 }
 
-                                if choice.delta.contains_key("content") {
+                                if choice.delta.contains_key("content")
+                                    && choice.delta["content"].is_some()
+                                {
                                     cb(response::StreamTextItem {
-                                        text: Some(choice.delta["content"].clone()),
+                                        text: choice.delta["content"].clone(),
                                         id,
                                         ..Default::default()
                                     });
-                                    // print!("{}", choice.delta["content"]);
+                                    // debug!("{:?}", choice.delta["content"]);
+                                } else if choice.delta.contains_key("reasoning_content")
+                                    && choice.delta["reasoning_content"].is_some()
+                                {
+                                    cb(response::StreamTextItem {
+                                        reasoning_text: choice.delta["reasoning_content"].clone(),
+
+                                        id,
+                                        ..Default::default()
+                                    });
+                                    // debug!("{:?}", choice.delta["reasoning_content"]);
                                 } else if choice.delta.contains_key("role") {
-                                    debug!("role: {}", choice.delta["role"]);
+                                    debug!("role: {:?}", choice.delta["role"]);
                                     continue;
                                 }
                             }
@@ -229,7 +243,6 @@ impl Chat {
                 }
                 Some(Err(_)) => (),
                 None => {
-                    // println!();
                     break;
                 }
             }
