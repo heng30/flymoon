@@ -24,6 +24,9 @@ This is a large language model chat client built with Rust and Slint GUI, compat
 - Run `make desktop-build-release` to build a release version desktop application
 - Refer to [Makefile](./Makefile) for more information
 
+### Troubleshooting
+- Using the `Qt backend` can resolve the issue of fuzzy fonts on the Windows platform. It is also recommended to prioritize the `Qt backend` to maintain a consistent build environment with the developers.
+
 ### Reference
 - [Slint Language Documentation](https://slint-ui.com/releases/1.0.0/docs/slint/)
 - [slint::android](https://snapshots.slint.dev/master/docs/rust/slint/android/#building-and-deploying)
