@@ -52,7 +52,23 @@ component SettingHelp inherits VerticalLayout {
                 "2. 提问格式：'/' + 提示词快捷键 + 空格 + 问题",
             ],
         },
+        {
+            title: "配置文件",
+            title-link: "https://crates.io/crates/platform-dirs",
+            contents: [
+                "1. Linux: ~/.config/flymoon 和  ~/.local/share/flymoon",
+                "2. Windows: C:\\Users\\Your-User-Name\\AppData\\Roaming\\flymoon 和 C:\\Users\\Your-User-Name\\AppData\\Local\\flymoon",
+                "3. MacOS: /Users/Your-User-Name/Library/Application/flymoon 和 /Users/Your-User-Name/Library/Application Support/flymoon"
+            ],
+        },
+        {
+            title: "注意事项",
+            contents: [
+                "1. 在Linux Wayland环境中，「设置 -> 无边框」会使用程序自定义的顶部状态栏。因为在Wayland环境中，程序本身无法设置在屏幕中的位置。所以无法通过拖动顶部状态栏移动程序。需要关闭「无边框」选项，使用系统状态栏。",
+            ],
+        },
     ];
+
 
     private property <[ParagraphEntry]> entries-en:
     [
@@ -100,6 +116,22 @@ component SettingHelp inherits VerticalLayout {
             contents: [
                 "1. Entering '/' in the chat input box will open the prompt panel",
                 "2. Question format: '/' + prompt shortcut key + space + question",
+            ],
+        },
+        {
+            title: "Configuration File",
+            title-link: "https://crates.io/crates/platform-dirs",
+            contents: [
+                "1. Linux: ~/.config/flymoon and  ~/.local/share/flymoon",
+                "2. Windows: C:\\Users\\Your-User-Name\\AppData\\Roaming",
+                "3. MacOS: /Users/Your-User-Name/Library/Application and /Users/Your-User-Name/Library/Application Support"
+            ],
+        },
+
+        {
+            title: "Note",
+            contents: [
+                "1. In a Linux Wayland environment, enabling 「Settings -> Frameless window」 will use the application's custom top status bar. This is because in the Wayland environment, the application itself cannot set its position on the screen. As a result, you cannot move the application by dragging the top status bar. To resolve this, you need to disable the 「Frameless window」 option and use the system status bar instead"
             ],
         },
     ];
@@ -215,14 +247,6 @@ component ShortcutsHelp inherits VerticalLayout {
         }
     }
 }
-
-// in-out property <[string]> helps: is-cn ? [
-//     "配置文件保存目录: ~/.config/flymoon",
-//     "数据库保存目录: ~/.local/share/flymoon",
-// ] : [
-//     "Config directory: ~/.config/flymoon",
-//     "Data directory: ~/.local/share/flymoon",
-// ];
 
 export component HelpDetail inherits Flickable {
     VerticalLayout {

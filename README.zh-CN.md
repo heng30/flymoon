@@ -10,7 +10,7 @@
 [English Documentation](./README.md)
 
 ### 简介
-这是一个基于Rust和Slint GUI构建的大语言模型聊天客户端，兼容OpenAI的API。,
+这是一个基于Rust和Slint GUI构建的大语言模型聊天客户端，兼容OpenAI的API。
 
 - [x] 支持聊天和深度思考两种聊天模式,
 - [x] 支持联网谷歌搜索,

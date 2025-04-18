@@ -27,20 +27,17 @@ export component Paragraph inherits Rectangle {
     preferred-height: vbox.preferred-height;
 
     vbox := VerticalLayout {
-        HorizontalLayout {
+        lb-title := Link {
             padding-bottom: Theme.padding * 4;
+            enabled: entry.title-link != "";
+            text: entry.title;
+            font-size: root.title-font-size;
+            font-weight: Theme.bold-font-weight;
+            color: Theme.primary-text-color;
+            is-show-icon: entry.title-link != "";
 
-            lb-title := Link {
-                enabled: entry.title-link != "";
-                text: entry.title;
-                font-size: root.title-font-size;
-                font-weight: Theme.bold-font-weight;
-                color: Theme.primary-text-color;
-                is-show-icon: entry.title-link != "";
-
-                clicked => {
-                    Util.open-url("Default", entry.title-link);
-                }
+            clicked => {
+                Util.open-url("Default", entry.title-link);
             }
         }
 

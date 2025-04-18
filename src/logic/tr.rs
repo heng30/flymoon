@@ -167,6 +167,7 @@ pub fn tr(text: &str) -> String {
         ("Slow", "慢速"),
         ("Stop chatting", "停止聊天"),
         ("Switch to Home or History Tab", "切换到首页或历史标签页"),
+        ("Switch to Setting Tab", "切换到设置"),
         ("Select all", "全选"),
         ("Thinking...", "思考中..."),
         ("Toggle Markdown format of Bot", "切换Bot的Markdown格式"),
