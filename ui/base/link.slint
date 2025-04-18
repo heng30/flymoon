@@ -22,7 +22,7 @@ export component Link inherits HorizontalLayout {
     alignment: LayoutAlignment.start;
 
     tx := Text {
-        wrap: is-show-icon ? TextWrap.no-wrap : TextWrap.word-wrap;
+        wrap: TextWrap.no-wrap;
         font-size: Theme.title5-font-size;
         color: root.is-read ? Theme.have-read-text-color : Theme.link-text-color;
 
