@@ -41,14 +41,14 @@ export component Model inherits SettingDetail {
     SettingDetailInner {
         SettingDetailInnerVbox {
             type-select := Select {
-                values: ["Chat", "Google Search"];
+                values: [Logic.tr("Chat"), Logic.tr("Google Search")];
                 current-value: self.values[0];
             }
         }
 
         Rectangle {
             VerticalLayout {
-                visible: type-select.current-value == "Chat";
+                visible: type-select.current-index == 0;
                 spacing: Theme.spacing * 4;
 
                 SettingDetailInnerVbox {
@@ -113,7 +113,7 @@ export component Model inherits SettingDetail {
             }
 
             VerticalLayout {
-                visible: type-select.current-value == "Google Search";
+                visible: type-select.current-index == 1;
                 spacing: Theme.spacing * 4;
                 alignment: LayoutAlignment.start;
 

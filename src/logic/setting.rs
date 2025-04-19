@@ -71,10 +71,12 @@ pub fn init(ui: &AppWindow) {
 
     let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_set_setting_model(move |setting| {
-        ui_handle
-            .unwrap()
-            .global::<Store>()
+        let ui = ui_handle.unwrap();
+        ui.global::<Store>()
             .set_reasoner_model_available(!setting.chat.reasoner_model_name.trim().is_empty());
+
+        ui.global::<Store>()
+            .set_search_webpages_available(!setting.google_search.api_key.trim().is_empty());
 
         let mut all = config::all();
 
@@ -96,6 +98,7 @@ pub fn init(ui: &AppWindow) {
 }
 
 fn init_setting(ui: &AppWindow) {
+    let model = config::model();
     let config = config::preference();
     let mut setting = ui.global::<Store>().get_setting_preference();
 
@@ -111,8 +114,11 @@ fn init_setting(ui: &AppWindow) {
 
     ui.global::<Theme>().invoke_set_dark(config.is_dark);
     ui.global::<Store>().set_setting_preference(setting);
+
     ui.global::<Store>()
-        .set_current_model_name(config::model().chat.model_name.into());
+        .set_current_model_name(model.chat.model_name.into());
     ui.global::<Store>()
-        .set_reasoner_model_available(!config::model().chat.reasoner_model_name.trim().is_empty());
+        .set_reasoner_model_available(!model.chat.reasoner_model_name.trim().is_empty());
+    ui.global::<Store>()
+        .set_search_webpages_available(!model.google_search.api_key.trim().is_empty());
 }

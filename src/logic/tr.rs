@@ -45,6 +45,8 @@ pub fn tr(text: &str) -> String {
         ("Blockchain network", "区块链网络"),
         ("Cancel", "取消"),
         ("chat", "聊天"),
+        ("Chat", "聊天"),
+        ("Google Search", "谷歌搜索"),
         ("Chat failed", "聊天失败"),
         ("Choose language", "选择语言"),
         ("Choose Theme", "选择主题"),
@@ -192,6 +194,7 @@ pub fn tr(text: &str) -> String {
         ("Info", "提醒"),
         ("Reboot to take setting effect", "重启使配置生效"),
         ("Frameless window", "无边框窗口"),
+        ("Please go to the 'Settings' page and configure the 'Google Search' related settings", "请到「设置」页面并设置「谷歌搜索」相关配置"),
     ]);
 
     if let Some(txt) = items.get(text) {

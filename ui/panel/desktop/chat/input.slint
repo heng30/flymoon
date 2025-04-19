@@ -1,5 +1,5 @@
 import { Theme, Logic, Store, Icons, Util, TabIndex } from "../../def.slint";
-import { Divider, ElevatedBtn, IconBtn, TextBtn } from "../../../base/widgets.slint";
+import { Divider, ElevatedBtn, IconBtn, TextBtn, ToastStatus} from "../../../base/widgets.slint";
 
 export component Input inherits Rectangle {
     in-out property question <=> te.text;
@@ -44,6 +44,15 @@ export component Input inherits Rectangle {
         } else {
             Store.current-model-name = Logic.get-setting-model().chat.model-name;
         }
+    }
+
+    function toggle-search-webpages(){
+        if (!Store.search-webpages-available) {
+            Util.show-toast(Logic.tr("Please go to the 'Settings' page and configure the 'Google Search' related settings"), ToastStatus.Info);
+            return;
+        }
+
+        Store.enabled-search-webpages = !Store.enabled-search-webpages;
     }
 
     Timer {
@@ -125,7 +134,7 @@ export component Input inherits Rectangle {
                                         toggle-current-model-name();
                                         return accept;
                                     } else if (event.text == "y") {
-                                        Store.enabled-search-webpages = !Store.enabled-search-webpages;
+                                        toggle-search-webpages();
                                         return accept;
                                     } else if (event.text == "m") {
                                         Store.is-toggle-bot-markdown = !Store.is-toggle-bot-markdown;
@@ -184,7 +193,7 @@ export component Input inherits Rectangle {
                         gain-focus-when-clicked: false;
 
                         clicked => {
-                            Store.enabled-search-webpages = !Store.enabled-search-webpages;
+                            toggle-search-webpages();
                         }
                     }
                 }
