@@ -118,27 +118,12 @@ component MdImage inherits HorizontalLayout {
     }
 }
 
-component MdTableCell inherits Label {
-    font-weight: Theme.bold-font-weight;
-    overflow: elide;
-
-    TouchArea {
-        enabled: root.preferred-width > root.width;
-
-        changed has-hover => {
-            if (self.has-hover) {
-                ToolTipSetting.show(
-                    self.absolute-position.x,
-                    self.absolute-position.y,
-                    parent.width,
-                    parent.height,
-                    ComponentPosition.Top,
-                    root.text);
-            } else {
-                ToolTipSetting.hide();
-            }
-        }
-    }
+component MdTableCell inherits TextInput {
+    wrap: word-wrap;
+    color: Theme.primary-text-color;
+    font-size: Theme.title4-font-size;
+    single-line: false;
+    read-only: true;
 }
 
 component MdTable inherits VerticalLayout {
@@ -150,7 +135,7 @@ component MdTable inherits VerticalLayout {
         border-color: Theme.regular-text-color;
         border-width: Theme.default-border-width;
 
-        VerticalLayout {
+        vbox := VerticalLayout {
             padding: parent.border-width;
 
             Rectangle {
@@ -160,11 +145,13 @@ component MdTable inherits VerticalLayout {
                     padding: Theme.padding * 2;
                     spacing: Theme.spacing * 2;
 
-                    property <length> cell-width: (parent.width - self.padding * 2 - (table.head.length - 1) * self.spacing) / table.head.length;
+                    property <length> first-column-width: (self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing) * 0.25;
+                    property <length> other-column-width: (self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing - first-column-width) / Math.max(1, table.head.length - 1);
 
-                    for htext in table.head: MdTableCell {
+                    for htext[index] in table.head: MdTableCell {
                         font-size: Theme.title4-font-size;
-                        width: parent.cell-width;
+                        font-weight: Theme.bold-font-weight;
+                        width: index == 0 ? first-column-width : other-column-width;
                         text: htext;
                     }
                 }
@@ -177,8 +164,8 @@ component MdTable inherits VerticalLayout {
                     padding: Theme.padding * 2;
                     spacing: Theme.spacing * 2;
 
-                    for ctext in row: MdTableCell {
-                        width: head-hbox.cell-width;
+                    for ctext[cindex] in row: MdTableCell {
+                        width: cindex == 0 ? head-hbox.first-column-width : head-hbox.other-column-width;
                         text: ctext;
                     }
                 }

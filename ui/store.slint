@@ -74,7 +74,7 @@ export struct MdImage {
 
 export struct MdTable {
     head: [string],
-    rows: [[string]]
+    rows: [[string]],
 }
 
 export struct MdElement {
@@ -273,13 +273,34 @@ export global Store {
                     {
                         ty: MdElementType.Table,
                         table: {
-                            head: ["title 1", "title 2"],
+                            head: ["title 1", "title 2", "title3"],
                             rows: [
-                                ["cell 1,1", "cell 1,2"],
-                                ["cell 2,1", "cell 2,2"],
+                                ["cell 1,1", "cell 1,2", "fejif"],
+                                ["cell 2,1", "cell 2,2", "wejfiw fjwifj wifjwei jfwejfi"],
                                 [
-                                    "cell 2,1 helo fjiwf jfifjw ijfiwjfi jfij if",
-                                    "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf"
+                                    "cell 2,1",
+                                    "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfejifewjif fjwejf ijffwiejf",
+                                    "fewji fewjif",
+                                ],
+                                [
+                                    "cell 2,1",
+                                    "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf",
+                                    "fewji fewjifw ji jiwjfiw jfiwj ifjwefijwefi ",
+                                ],
+                                [
+                                    "cell 2,1fwji wefiwjefi jwi",
+                                    "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf",
+                                    "wjfiw wfjwei jweifjweij iweffewji fewjif",
+                                ],
+                                [
+                                    "cell 2,1",
+                                    "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf",
+                                    "fewji fewjif",
+                                ],
+                                [
+                                    "cell 2,1 jifwefjwie ",
+                                    "cell 2,2 fjiwjf iwjfiw jwij iwfjwi jfwiejf",
+                                    "fewji fewjif fwejf ifjiwef",
                                 ],
                             ],
                         },
@@ -349,7 +370,7 @@ export global Store {
                     { text: "Google homepage", url: "https://google.com" },
                 ],
                 search-links: [
-                    { title: "Nixos download page", link: "https://nixos.org" },
+                    { title: "Nixos download page fjwifjwei weifjweifj wifjwe ifjweifjweifj", link: "https://nixos.org" },
                     { title: "Google homepage", link: "https://google.com" },
                 ],
             },
