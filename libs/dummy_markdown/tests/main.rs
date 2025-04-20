@@ -24,36 +24,38 @@ int main(void) {
 }
 ```
 
-As with cmark and **cmark-gfm**, Comrak will scrub raw HTML and potentially dangerous links. This change was introduced in Comrak 0.4.0 in support of a safe-by-default posture, and later adopted by our contemporaries. :)
+As with cmark and **cmark-gfm**, Comrak **will scrub** raw HTML and potentially dangerous links. This change was introduced in Comrak 0.4.0 in support of a safe-by-default posture, and later adopted by our contemporaries. :)
+
+**隔离见证（Segregated Witness，简称SegWit）** 是比特币于2017年通过软分叉（BIP 141）引入的一项核心协议升级，旨在解决比特币网络的**交易延展性（Transaction Malleability）xx**问题，同时提升区块容量和脚本功能的灵活性。以下是其核心要点
 
 ---
-
-Would you like a deeper dive into any of these topics?
-
-2. **Add dependencies to your `Cargo.toml`**:
-   ```toml
-   [dependencies]
-   reqwest = { version = "0.11", features = ["json"] }
-   serde = { version = "1.0", features = ["derive"] }
-   tokio = { version = "1.0", features = ["full"] }
-   ```
-
-| Header 1 | Header 2 | Header 3 |
-|----------|----------|----------|
-| Cell 1   | Cell 2   | Cell 5   |
-| Cell 3   |          | Cell 6   |
-
-$$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
-
-$$
-P_n(x) = f(a) + f'(a)(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \cdots + \frac{f^{(n)}(a)}{n!}(x-a)^n
-$$
 "#;
+
+// Would you like a deeper dive into any of these topics?
+
+// 2. **Add dependencies to your `Cargo.toml`**:
+//    ```toml
+//    [dependencies]
+//    reqwest = { version = "0.11", features = ["json"] }
+//    serde = { version = "1.0", features = ["derive"] }
+//    tokio = { version = "1.0", features = ["full"] }
+//    ```
+
+// | Header 1 | Header 2 | Header 3 |
+// |----------|----------|----------|
+// | Cell 1   | Cell 2   | Cell 5   |
+// | Cell 3   |          | Cell 6   |
+
+// $$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
+
+// $$
+// P_n(x) = f(a) + f'(a)(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \cdots + \frac{f^{(n)}(a)}{n!}(x-a)^n
+// $$
 
     #[test]
     fn main() {
         let (ui_elems, link_urls) = parser::run(DOC);
-        // println!("{:#?}", ui_elems);
-        // println!("{:#?}", link_urls);
+        println!("{:#?}", ui_elems);
+        println!("{:#?}", link_urls);
     }
 }

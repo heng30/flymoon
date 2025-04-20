@@ -145,10 +145,17 @@ component MdTable inherits VerticalLayout {
                     padding: Theme.padding * 2;
                     spacing: Theme.spacing * 2;
 
-                    property <length> first-column-width: (self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing) * 0.25;
+                    property <length> mean-column-width: (self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing) / Math.max(1, table.head.length);
+                    property <length> first-column-width: Math.min((self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing) * 0.2, mean-column-width);
                     property <length> other-column-width: (self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing - first-column-width) / Math.max(1, table.head.length - 1);
 
                     for htext[index] in table.head: MdTableCell {
+                        init => {
+                            if (index == 0) {
+                                first-column-width = Math.min(self.preferred-width, mean-column-width);
+                            }
+                        }
+
                         font-size: Theme.title4-font-size;
                         font-weight: Theme.bold-font-weight;
                         width: index == 0 ? first-column-width : other-column-width;
@@ -165,6 +172,12 @@ component MdTable inherits VerticalLayout {
                     spacing: Theme.spacing * 2;
 
                     for ctext[cindex] in row: MdTableCell {
+                        init => {
+                            if (cindex == 0) {
+                                head-hbox.first-column-width = Math.clamp(self.preferred-width, head-hbox.first-column-width, head-hbox.mean-column-width);
+                            }
+                        }
+
                         width: cindex == 0 ? head-hbox.first-column-width : head-hbox.other-column-width;
                         text: ctext;
                     }
