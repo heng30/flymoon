@@ -46,12 +46,11 @@ export component Input inherits Rectangle {
         }
     }
 
-    function toggle-search-webpages(){
+    function toggle-search-webpages() {
         if (!Store.search-webpages-available) {
             Util.show-toast(Logic.tr("Please go to the 'Settings' page and configure the 'Google Search' related settings"), ToastStatus.Info);
             return;
         }
-
         Store.enabled-search-webpages = !Store.enabled-search-webpages;
     }
 
@@ -139,6 +138,12 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "m") {
                                         Store.is-toggle-bot-markdown = !Store.is-toggle-bot-markdown;
                                         return accept;
+                                    } else if (event.text == "p") {
+                                        Store.is-show-current-prompt-dialog = !Store.is-show-current-prompt-dialog;
+                                        return accept;
+                                    } else if (event.text == "/") {
+                                        Logic.clear-current-chat-session-prompt();
+                                        return accept;
                                     }
                                 }
                                 return reject;
@@ -203,6 +208,18 @@ export component Input inherits Rectangle {
                     spacing: Theme.spacing * 4;
 
                     IconBtn {
+                        icon: Icons.prompt;
+                        tip: Logic.tr("prompt");
+                        is-show-tip: true;
+                        gain-focus-when-clicked: false;
+                        colorize: Store.current-chat-session.prompt.is-empty ? Theme.icon-color : Theme.warning-color;
+
+                        clicked => {
+                            Store.is-show-current-prompt-dialog = true;
+                        }
+                    }
+
+                    IconBtn {
                         icon: Icons.new;
                         tip: Logic.tr("new");
                         is-show-tip: true;
@@ -227,7 +244,7 @@ export component Input inherits Rectangle {
                     }
 
                     HorizontalLayout {
-                        padding-left: Theme.padding * 4;
+                        padding-left: Theme.padding * 2;
                         padding-right: Theme.padding * 2;
 
                         if !Store.is_chatting: ElevatedBtn {

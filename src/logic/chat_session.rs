@@ -1,5 +1,6 @@
 use super::{md, toast, tr::tr};
 use crate::{
+    toast_success,
     config::{data::Model as SettingModel, model as setting_model},
     db::{
         self,
@@ -256,6 +257,17 @@ pub fn init(ui: &AppWindow) {
                 .unwrap();
             entry.is_hide_bot_reasoner = !entry.is_hide_bot_reasoner;
             store_current_chat_session_histories!(ui).set_row_data(index, entry);
+        });
+
+    let ui_handle = ui.as_weak();
+    ui.global::<Logic>()
+        .on_clear_current_chat_session_prompt(move || {
+            let ui = ui_handle.unwrap();
+            let mut session = store_current_chat_session!(ui);
+            session.prompt = Default::default();
+            ui.global::<Store>().set_current_chat_session(session);
+
+            toast_success!(ui, tr("Clear current session prompt successfully"));
         });
 }
 

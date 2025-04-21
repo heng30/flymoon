@@ -2,6 +2,7 @@ import { Theme, Store, TabIndex, SettingDetailIndex, Logic, Icons } from "../def
 import { SettingDialog, AboutDialog, HelpDialog, DonateDialog, SettingIconsBar } from "../setting/desktop.slint";
 import { Blanket, StatusBar, Divider, AboutSetting, ToolTip, ToolTipSetting, PopupAction, PopupActionSetting, ComponentPosition, IconBtn } from "../../base/widgets.slint";
 import { Home } from "home.slint";
+import { CurrentPromptDialog } from "chat/current-prompt-dialog.slint";
 
 component HomeIconsBar inherits Rectangle {
     width: hbox.preferred-width;
@@ -113,10 +114,18 @@ export component DesktopPanel inherits Rectangle {
         }
     }
 
-    if is-show-setting-dialog || is-show-about-dialog || is-show-help-dialog || is-show-donate-dialog: Blanket {
+    if is-show-setting-dialog || is-show-about-dialog || is-show-help-dialog || is-show-donate-dialog || Store.is-show-current-prompt-dialog: Blanket {
         clicked => {
-            Logic.switch-tab(TabIndex.Back);
+            if (Store.is-show-current-prompt-dialog) {
+                Store.is-show-current-prompt-dialog = false;
+            } else {
+                Logic.switch-tab(TabIndex.Back);
+            }
         }
+    }
+
+    if Store.is-show-current-prompt-dialog: CurrentPromptDialog {
+        width: Math.min(1300px, root.width * 0.95);
     }
 
     if is-show-setting-dialog: SettingDialog {

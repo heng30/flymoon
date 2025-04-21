@@ -1,0 +1,64 @@
+import { Logic, Theme, Store, Icons } from "../../def.slint";
+import { CancelBtn, Label, Dialog, NoDataImg} from "../../../base/widgets.slint";
+
+export component CurrentPromptDialog inherits Dialog {
+    title: Logic.tr("Prompt");
+    is-hide-bottom-btns: true;
+    is-prevent-event-forward: true;
+    gain-focus-when-init: false;
+    gain-focus-when-clicked: false;
+
+    in-out property <length> inner-height: 300px;
+    private property <string> prompt: Store.current-chat-session.prompt;
+
+    cancel-clicked => {
+        Store.is-show-current-prompt-dialog = false;
+    }
+
+    if prompt.is-empty: Rectangle {
+        height: inner-height;
+
+        NoDataImg {
+            width: inner-height;
+            text: Logic.tr("No Prompt");
+        }
+    }
+
+    if !prompt.is-empty: VerticalLayout {
+        alignment: LayoutAlignment.space-between;
+        padding: Theme.padding * 4;
+        spacing: Theme.spacing * 4;
+        height: inner-height;
+
+        Flickable {
+            height: parent.height - parent.padding * 2 - parent.spacing - hbox.preferred-height;
+            VerticalLayout {
+                alignment: LayoutAlignment.start;
+
+                Label {
+                    text: prompt;
+                    font-size: Theme.title4-font-size;
+                    color: Theme.regular-text-color;
+                    wrap: word-wrap;
+                }
+            }
+        }
+
+        hbox := HorizontalLayout {
+            alignment: LayoutAlignment.end;
+
+            CancelBtn {
+                text: Logic.tr("Clear");
+                colorize: Theme.light-text-color;
+                bg-color: Theme.warning-color;
+                icon: Icons.cache-light;
+                gain-focus-when-clicked: false;
+
+                clicked => {
+                    Logic.clear-current-chat-session-prompt();
+                    root.cancel-clicked();
+                }
+            }
+        }
+    }
+}

@@ -87,6 +87,15 @@ pub fn tr(text: &str) -> String {
             "[历史标签页]: 进入编辑模式",
         ),
         ("[History Tab]: Toggle select all", "[历史标签页]: 切换全选"),
+        ("[History Tab]: Select next row", "[历史标签页]: 选择下一行"),
+        (
+            "[History Tab]: Select previous row",
+            "[历史标签页]: 选择上一行",
+        ),
+        (
+            "[History Tab]: Load selected historial chat",
+            "[历史标签页]: 加载历史对话",
+        ),
         ("Home", "首页"),
         ("Icons", "图标"),
         ("Input can not be empty", "输入不能为空"),
@@ -134,7 +143,8 @@ pub fn tr(text: &str) -> String {
         ("Preference", "偏好设置"),
         ("Prev", "上一个"),
         ("Prioritization fee", "优先费用"),
-        ("Prompt", "提示"),
+        ("Prompt", "提示词"),
+        ("prompt", "提示词"),
         ("Proxy", "代理"),
         ("Proxy address", "代理地址"),
         ("Proxy port", "代理端口"),
@@ -194,7 +204,21 @@ pub fn tr(text: &str) -> String {
         ("Info", "提醒"),
         ("Reboot to take setting effect", "重启使配置生效"),
         ("Frameless window", "无边框窗口"),
-        ("Please go to the 'Settings' page and configure the 'Google Search' related settings", "请到「设置」页面并设置「谷歌搜索」相关配置"),
+        (
+            "Please go to the 'Settings' page and configure the 'Google Search' related settings",
+            "请到「设置」页面并设置「谷歌搜索」相关配置",
+        ),
+        ("Clear", "清空"),
+        (
+            "Toggle current session prompt dialog",
+            "切换当前会话提示词对话框",
+        ),
+        ("Clear current session prompt", "清空当前会话提示词"),
+        (
+            "Clear current session prompt successfully",
+            "清空当前会话提示词成功",
+        ),
+        ("No Prompt", "没有提示词"),
     ]);
 
     if let Some(txt) = items.get(text) {
