@@ -99,7 +99,13 @@ impl From<UIChatSession> for ChatHistory {
         ChatHistory {
             uuid: entry.uuid,
             time: entry.time,
-            summary: entry.histories.row_data(0).unwrap_or_default().user,
+            summary: entry
+                .histories
+                .row_data(0)
+                .unwrap_or_default()
+                .user
+                .replace(['\r', '\n'], "")
+                .into(),
             ..Default::default()
         }
     }

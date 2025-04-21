@@ -11,16 +11,40 @@ component HistoryList inherits VerticalLayout {
     in-out property <bool> is-edit;
     in-out property <bool> is-selected-all;
 
+    in-out property <int> selected-index: -1;
+
+    public function move-to-next-index() {
+        if (Store.chat-histories.length > 0) {
+            selected-index = Math.clamp(selected-index + 1, 0, Store.chat-histories.length - 1);
+        }
+    }
+
+    public function move-to-prev-index() {
+        if (Store.chat-histories.length > 0) {
+            selected-index = Math.clamp(selected-index - 1, 0, Store.chat-histories.length - 1);
+        }
+    }
+
+    public function reset-selected-index() {
+        selected-index = -1;
+    }
+
+    public function load-chat-history(index: int) {
+        if (index >= 0 && index < Store.chat-histories.length) {
+            Logic.switch-tab(TabIndex.Home);
+            Logic.chat-history-load(Store.chat-histories[index].uuid);
+        }
+    }
+
     ListView {
         for entry[index] in Store.chat-histories: Rectangle {
-            background: ta.has-hover ? Theme.checked-background : Math.mod(index, 2) == 0 ? Theme.hover-background : Colors.transparent;
+            background: (ta.has-hover || (selected-index == index && !is-edit)) ? Theme.checked-background : (Math.mod(index, 2) == 0 ? Theme.hover-background : Colors.transparent);
 
             ta := TouchArea {
                 mouse-cursor: self.has-hover && !is-edit ? MouseCursor.pointer : MouseCursor.default;
                 clicked => {
                     if (!is-edit) {
-                        Logic.switch-tab(TabIndex.Home);
-                        Logic.chat-history-load(entry.uuid);
+                        load-chat-history(index);
                     }
                 }
             }
@@ -103,6 +127,7 @@ component HistoryList inherits VerticalLayout {
 
                 clicked => {
                     is-edit = false;
+                    reset-selected-index();
                 }
             }
 
@@ -133,14 +158,20 @@ export component History inherits VerticalLayout {
         gain-focus-when-clicked: false;
 
         search(text) => {
+            if (history-list.is-edit) {
+                return;
+            }
+
             if (Store.chat-histories.length == 1) {
-                Logic.switch-tab(TabIndex.Home);
-                Logic.chat-history-load(Store.chat-histories[0].uuid);
+                history-list.load-chat-history(0);
+            } else {
+                history-list.load-chat-history(history-list.selected-index);
             }
         }
 
         edited(text) => {
             Logic.chat-histories-update-list(text);
+            history-list.reset-selected-index();
         }
 
         key-pressed(event) => {
@@ -160,6 +191,10 @@ export component History inherits VerticalLayout {
                         Logic.chat-histories-cancel-select-all();
                     }
                 }
+            } else if (event.modifiers.control && event.text == "j") {
+                history-list.move-to-next-index();
+            } else if (event.modifiers.control && event.text == "k") {
+                history-list.move-to-prev-index();
             }
         }
     }
