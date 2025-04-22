@@ -252,6 +252,9 @@ pub fn init(ui: &AppWindow) {
     });
 
     ui.global::<Util>()
+        .on_start_with(move |text, sep| text.starts_with(&*sep));
+
+    ui.global::<Util>()
         .on_rand_int(move |low, up| rand::thread_rng().gen_range(low..up) as i32);
 
     ui.global::<Util>()

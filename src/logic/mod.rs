@@ -43,6 +43,9 @@ mod tr;
 mod prompt;
 
 #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
+mod mcp;
+
+#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
 mod chat_history;
 
 #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
@@ -72,6 +75,7 @@ pub fn init(ui: &AppWindow) {
     #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
     {
         prompt::init(ui);
+        mcp::init(ui);
         chat_history::init(ui);
         chat_session::init(ui);
         md::init(ui);

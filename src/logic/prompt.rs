@@ -103,6 +103,15 @@ pub fn init(ui: &AppWindow) {
 
         store_input_prompt_list_entries!(ui).set_vec(shortcuts);
     });
+
+    let ui_handle = ui.as_weak();
+    ui.global::<Logic>().on_prompt_popup_clear(move |text| {
+        let ui = ui_handle.unwrap();
+
+        if text.is_empty() || text.contains(' ') {
+            store_input_prompt_list_entries!(ui).set_vec(vec![]);
+        }
+    });
 }
 
 fn add_entry(ui: &AppWindow, entry_ui: UIPromptEntry) {

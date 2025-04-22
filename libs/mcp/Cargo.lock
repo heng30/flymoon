@@ -795,6 +795,7 @@ dependencies = [
  "cutil",
  "env_logger",
  "log",
+ "once_cell",
  "rmcp",
  "serde",
  "serde_json",

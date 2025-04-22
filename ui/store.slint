@@ -19,6 +19,7 @@ export enum SettingDetailIndex {
     Proxy,
     Model,
     Prompt,
+    MCP,
 }
 
 export struct SettingPreference {
@@ -118,6 +119,20 @@ export struct PromptEntry {
     temperature: float,
 }
 
+export enum MCPServerStatus {
+    None,
+    Running,
+    Failed,
+}
+
+export struct MCPEntry {
+    uuid: string,
+    name: string,
+    shortcut: string,
+    config: string,
+    status: MCPServerStatus,
+}
+
 export struct ChatEntry {
     user: string,
     is-user-edit: bool,
@@ -215,8 +230,22 @@ export global Store {
             name: "text-2",
             shortcut: "en",
             detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            is-open: false,
             temperature: 1.0,
+        },
+    ];
+
+    in-out property <[MCPEntry]> mcp-entries: [
+        {
+            uuid: "uuid-1",
+            name: "text-1",
+            shortcut: "cn",
+            config: "{\n  \"mcpServers\": {\n    \"your-mcp-server\": {\n      \"url\": \"http://localhost:4000/sse\"\n    }\n  }\n}",
+        },
+        {
+            uuid: "uuid-2",
+            name: "text-2",
+            shortcut: "en",
+            config: "{\n  \"mcpServers\": {\n    \"your-mcp-server\": {\n      \"url\": \"http://localhost:4000/sse\"\n    }\n  }\n}",
         },
     ];
 
@@ -357,7 +386,10 @@ export global Store {
                     { text: "Google homepage", url: "https://google.com" },
                 ],
                 search-links: [
-                    { title: "Nixos download page fjwifjwei weifjweifj wifjwe ifjweifjweifj", link: "https://nixos.org" },
+                    {
+                        title: "Nixos download page fjwifjwei weifjweifj wifjwe ifjweifjweifj",
+                        link: "https://nixos.org"
+                    },
                     { title: "Google homepage", link: "https://google.com" },
                 ],
             },

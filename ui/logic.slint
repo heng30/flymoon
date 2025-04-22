@@ -1,4 +1,4 @@
-import { Store,  SettingPreference, SettingProxy, SettingModel, TabIndex, SettingDetailIndex, PromptEntry } from "store.slint";
+import { Store,  SettingPreference, SettingProxy, SettingModel, TabIndex, SettingDetailIndex, PromptEntry, MCPEntry } from "store.slint";
 
 export global Logic {
     callback update-cache-size();
@@ -47,8 +47,18 @@ export global Logic {
     //////////////////////////////// Logic Start  ////////////////////////////////
 
     callback prompt-popup(text: string);
+    callback prompt-popup-clear(text: string);
     callback prompt-delete(uuid: string);
     callback prompt-update(promt: PromptEntry);
+
+    callback mcp-popup(text: string);
+    callback mcp-delete(uuid: string);
+    callback mcp-update(promt: MCPEntry);
+
+    callback start-mcp-server(index: int);
+    callback stop-mcp-server(index: int);
+    callback restart-mcp-server(index: int);
+    callback update-all-mcp-server-status();
 
     callback new-chat-session();
     callback load-chat-session(uuid: string);

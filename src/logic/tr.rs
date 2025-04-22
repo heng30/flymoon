@@ -219,6 +219,23 @@ pub fn tr(text: &str) -> String {
             "清空当前会话提示词成功",
         ),
         ("No Prompt", "没有提示词"),
+        ("Start", "启动"),
+        ("Stop", "停止"),
+        ("Restart", "重启"),
+        ("Not started", "未启动"),
+        ("Running", "正在运行"),
+        ("Failed", "运行失败"),
+        (
+            "Input '@' to show MCP's tip panel at homepage",
+            "提问框输入'@' 在首页显示提示面板",
+        ),
+        ("Server configuration(JSON)", "MCP服务配置（JSON）"),
+        ("Start server failed", "启动MCP服务失败"),
+        ("Start server successfully", "启动MCP服务成功"),
+        ("Restart server failed", "重启MCP服务失败"),
+        ("Restart server successfully", "重启MCP服务成功"),
+        ("Stop server failed", "关闭MCP服务失败"),
+        ("Stop server successfully", "关闭MCP服务成功"),
     ]);
 
     if let Some(txt) = items.get(text) {

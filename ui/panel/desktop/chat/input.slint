@@ -88,7 +88,16 @@ export component Input inherits Rectangle {
                             font-size: Theme.title4-font-size;
 
                             edited => {
-                                Logic.prompt-popup(te.text);
+                                if (!self.text.is-empty) {
+                                    if (Util.start-with(self.text, "/")) {
+                                        Logic.prompt-popup(te.text);
+                                    } else if (Util.start-with(self.text, "@")) {
+                                        Logic.mcp-popup(te.text);
+                                    }
+                                }
+
+                                Logic.prompt-popup-clear(self.text);
+
                                 ensure-show-cursor();
                             }
 

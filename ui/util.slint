@@ -47,6 +47,8 @@ export global Util {
 
     pure callback text-len(string) -> int;
 
+    pure callback start-with(text: string, sep: string) -> bool;
+
     pure callback rand-int(low-bound: int, up-bound: int) -> int;
 
     pure callback qr-code(text: string) -> image;

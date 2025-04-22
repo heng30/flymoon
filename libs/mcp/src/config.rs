@@ -1,6 +1,7 @@
 use anyhow::Result;
+use rmcp::{RoleClient, ServiceExt, service::RunningService};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, process::Stdio};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RawMcpServerConfig {
@@ -37,15 +38,15 @@ impl RawMcpServerConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct McpServerConfig {
-    pub name: String,
+pub(crate) struct McpServerConfig {
+    pub(crate) name: String,
     #[serde(flatten)]
-    pub transport: McpServerTransportConfig,
+    transport: McpServerTransportConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "protocol", rename_all = "lowercase")]
-pub enum McpServerTransportConfig {
+enum McpServerTransportConfig {
     Sse {
         url: String,
     },
@@ -59,12 +60,13 @@ pub enum McpServerTransportConfig {
 }
 
 impl McpServerConfig {
-    pub fn from_str(content: &str) -> Result<Self> {
+    #[allow(dead_code)]
+    fn from_str(content: &str) -> Result<Self> {
         let config: Self = serde_json::from_str(content)?;
         Ok(config)
     }
 
-    pub fn from_raw_str(content: &str) -> Result<Self> {
+    pub(crate) fn from_raw_str(content: &str) -> Result<Self> {
         let raw_config: RawMcpServerConfig = RawMcpServerConfig::from_str(content)?;
 
         let mut name: String = String::default();
@@ -88,6 +90,26 @@ impl McpServerConfig {
             }
         }
         Ok(McpServerConfig { name, transport })
+    }
+
+    pub(crate) async fn start(&self) -> Result<RunningService<RoleClient, ()>> {
+        let client = match &self.transport {
+            McpServerTransportConfig::Sse { url } => {
+                let transport = rmcp::transport::sse::SseTransport::start(url).await?;
+                ().serve(transport).await?
+            }
+            McpServerTransportConfig::Stdio { command, args, env } => {
+                let transport = rmcp::transport::child_process::TokioChildProcess::new(
+                    tokio::process::Command::new(command)
+                        .args(args)
+                        .envs(env)
+                        .stderr(Stdio::inherit())
+                        .stdout(Stdio::inherit()),
+                )?;
+                ().serve(transport).await?
+            }
+        };
+        Ok(client)
     }
 }
 

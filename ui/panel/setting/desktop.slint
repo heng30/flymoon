@@ -4,6 +4,7 @@ import { IconBtn, SettingEntryV2, Head, SettingDetail, ToastStatus, About, Dialo
 import { Preference } from "components/preference.slint";
 import { Donate } from "components/donate.slint";
 import { Prompt } from "components/prompt.slint";
+import { MCP } from "components/mcp.slint";
 import { Model } from "components/model.slint";
 import { HelpDetail } from "components/help-detail.slint";
 
@@ -12,7 +13,7 @@ component RightPanel inherits Rectangle {
 
     init => {
         Logic.switch-setting-detail(SettingDetailIndex.Preference);
-        // Logic.switch-setting-detail(SettingDetailIndex.Model);
+        // Logic.switch-setting-detail(SettingDetailIndex.MCP);
     }
 
     preference := Preference {
@@ -53,6 +54,11 @@ component RightPanel inherits Rectangle {
         visible: Store.current-setting-detail-index == SettingDetailIndex.Prompt;
         is-show-header: false;
     }
+
+    mcp := MCP {
+        visible: Store.current-setting-detail-index == SettingDetailIndex.MCP;
+        is-show-header: false;
+    }
 }
 
 component Setting inherits Rectangle {
@@ -68,6 +74,7 @@ component Setting inherits Rectangle {
                     { icon: Icons.ui, text: Logic.tr("Preference") },
                     { icon: Icons.model-light, text: Logic.tr("Model") },
                     { icon: Icons.prompt-light, text: Logic.tr("Prompt") },
+                    { icon: Icons.mcp, text: Logic.tr("MCP") },
                 ];
 
                 clicked(index) => {
@@ -77,6 +84,8 @@ component Setting inherits Rectangle {
                         Logic.switch-setting-detail(SettingDetailIndex.Model);
                     } else if (index == 2) {
                         Logic.switch-setting-detail(SettingDetailIndex.Prompt);
+                    } else if (index == 3) {
+                        Logic.switch-setting-detail(SettingDetailIndex.MCP);
                     }
                 }
             }

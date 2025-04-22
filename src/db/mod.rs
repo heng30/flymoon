@@ -9,6 +9,10 @@ pub async fn init(db_path: &str) {
         .await
         .expect("prompt table failed");
 
+    entry::new(def::MCP_TABLE)
+        .await
+        .expect("mcp table failed");
+
     entry::new(def::CHAT_SESSION_TABLE)
         .await
         .expect("chat session table failed");

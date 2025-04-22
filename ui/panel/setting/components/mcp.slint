@@ -1,6 +1,6 @@
 import {ListView} from "std-widgets.slint";
 import { Store, Logic, Theme, Icons } from "../../def.slint";
-import { PromptEntry } from "../../../store.slint";
+import { MCPEntry, MCPServerStatus } from "../../../store.slint";
 import { ConfirmDialogSetting, SettingDetail, IconBtn, SettingDetailInner, SettingDetailInnerVbox, Label, Divider, SettingDetailLabel, LineInput, TxtEdit, Select, CancelBtn, ConfirmBtn, CenterLayout, NoMessageImg } from "../../../base/widgets.slint";
 
 enum BtnType {
@@ -11,8 +11,8 @@ enum BtnType {
 
 global BtnTypeSetting {
     in-out property <BtnType> btn-type: BtnType.Home;
-    in-out property <PromptEntry> selected-entry;
-    in-out property <PromptEntry> default-entry;
+    in-out property <MCPEntry> selected-entry;
+    in-out property <MCPEntry> default-entry;
 
     public function reset() {
         self.selected-entry = default-entry;
@@ -21,13 +21,13 @@ global BtnTypeSetting {
     }
 }
 
-component PromptList inherits VerticalLayout {
+component mcpList inherits VerticalLayout {
     padding: Theme.padding * 2;
 
     lv := ListView {
         vertical-scrollbar-policy: always-off;
 
-        for entry[index] in Store.prompt-entries: VerticalLayout {
+        for entry[index] in Store.mcp-entries: VerticalLayout {
             padding-bottom: Theme.padding * 2;
 
             Rectangle {
@@ -57,23 +57,71 @@ component PromptList inherits VerticalLayout {
                     padding: Theme.padding * 2;
                     spacing: Theme.spacing * 2;
 
-                    Label {
-                        overflow: elide;
-                        wrap: no-wrap;
-                        text: entry.name + " (" + entry.shortcut + ")";
-                        font-size: Theme.title3-font-size;
-                        color: Theme.primary-text-color;
-                        font-weight: Theme.bold-font-weight;
+                    HorizontalLayout {
+                        alignment: LayoutAlignment.space-between;
+
+                        Label {
+                            overflow: elide;
+                            wrap: no-wrap;
+                            text: entry.name + " (" + entry.shortcut + ")";
+                            font-size: Theme.title3-font-size;
+                            color: Theme.primary-text-color;
+                            font-weight: Theme.bold-font-weight;
+                        }
+
+                        HorizontalLayout {
+                            spacing: Theme.spacing * 4;
+                            alignment: LayoutAlignment.end;
+
+                            if entry.status == MCPServerStatus.None: IconBtn {
+                                icon: Icons.control-start;
+                                is-show-tip: true;
+                                tip: Logic.tr("Start");
+
+                                clicked => {
+                                    Logic.start-mcp-server(index);
+                                }
+                            }
+
+                            if entry.status == MCPServerStatus.Running: IconBtn {
+                                icon: Icons.control-stop;
+                                is-show-tip: true;
+                                tip: Logic.tr("Stop");
+
+                                clicked => {
+                                    Logic.stop-mcp-server(index);
+                                }
+                            }
+
+                            if entry.status == MCPServerStatus.Failed: IconBtn {
+                                icon-size: Theme.icon-size * 0.8;
+                                icon: Icons.retry;
+                                is-show-tip: true;
+                                tip: Logic.tr("Restart");
+
+                                clicked => {
+                                    Logic.restart-mcp-server(index);
+                                }
+                            }
+
+                            IconBtn {
+                                mouse-cursor: MouseCursor.default;
+                                icon-size: Theme.icon-size * 0.8;
+                                icon: Icons.circle-fill;
+                                is-show-tip: true;
+                                show-icon-hover-background: false;
+                                colorize: entry.status == MCPServerStatus.None ? Theme.warning-color : (entry.status == MCPServerStatus.Running ? Theme.success-color : Theme.danger-color);
+                                tip: entry.status == MCPServerStatus.None ? Logic.tr("Not started") : (entry.status == MCPServerStatus.Running ? Logic.tr("Running") : Logic.tr("Failed"));
+                            }
+                        }
                     }
 
                     Divider { }
 
                     Label {
-                        height: self.font-size * 5;
-                        text: entry.detail;
+                        text: entry.config;
                         color: Theme.regular-text-color;
                         wrap: word-wrap;
-                        overflow: elide;
                         vertical-alignment: TextVerticalAlignment.top;
                     }
                 }
@@ -133,30 +181,28 @@ component BtnField inherits VerticalLayout {
             clicked() => {
                 BtnTypeSetting.btn-type = BtnType.Home;
 
-                ConfirmDialogSetting.set(true, Logic.tr("Warning"), Logic.tr("Delete or not?"), "prompt-delete", BtnTypeSetting.selected-entry.uuid);
+                ConfirmDialogSetting.set(true, Logic.tr("Warning"), Logic.tr("Delete or not?"), "mcp-delete", BtnTypeSetting.selected-entry.uuid);
             }
         }
     }
 }
 
-component PromptEdit inherits SettingDetail {
+component mcpEdit inherits SettingDetail {
     is-show-header: false;
 
-    public function get() -> PromptEntry {
+    public function get() -> MCPEntry {
         return {
             uuid: BtnTypeSetting.selected-entry.uuid,
             name: name-lineedit.text,
             shortcut: shortcut-lineedit.text,
-            detail: detail-txtedit.text,
-            temperature: temperature-select.current-value.to-float(),
+            config: detail-txtedit.text,
         };
     }
 
-    public function set(setting: PromptEntry) {
+    public function set(setting: MCPEntry) {
         name-lineedit.text = setting.name;
         shortcut-lineedit.text = setting.shortcut;
-        detail-txtedit.text = setting.detail;
-        temperature-select.current-value = setting.temperature;
+        detail-txtedit.text = setting.config;
     }
 
     init => {
@@ -173,7 +219,7 @@ component PromptEdit inherits SettingDetail {
 
         Label {
             color: Theme.warning-color;
-            text: Logic.tr("Input '/' to show prompts' tip panel at homepage");
+            text: Logic.tr("Input '@' to show MCP's tip panel at homepage");
             font-size: Theme.title4-font-size;
             font-weight: Theme.bold-font-weight;
         }
@@ -202,39 +248,7 @@ component PromptEdit inherits SettingDetail {
 
         SettingDetailInnerVbox {
             SettingDetailLabel {
-                text: Logic.tr("Temperature");
-            }
-
-            temperature-select := Select {
-                values: [
-                    0,
-                    0.1,
-                    0.2,
-                    0.3,
-                    0.4,
-                    0.5,
-                    0.6,
-                    0.7,
-                    0.8,
-                    0.9,
-                    1.0,
-                    1.2,
-                    1.3,
-                    1.4,
-                    1.5,
-                    1.6,
-                    1.7,
-                    1.8,
-                    1.9,
-                    2.0
-                ];
-                current-value: self.values[10];
-            }
-        }
-
-        SettingDetailInnerVbox {
-            SettingDetailLabel {
-                text: Logic.tr("Detail");
+                text: Logic.tr("Server configuration(JSON)");
             }
 
             detail-txtedit := TxtEdit {
@@ -264,20 +278,21 @@ component PromptEdit inherits SettingDetail {
             text: Logic.tr("Confirm");
 
             clicked => {
-                Logic.prompt-update(root.get());
+                Logic.mcp-update(root.get());
                 BtnTypeSetting.btn-type = BtnType.Home;
             }
         }
     }
 }
 
-export component Prompt inherits SettingDetail {
-    title: Logic.tr("Prompt");
+export component MCP inherits SettingDetail {
+    title: "MCP";
 
     private property <BtnType> btn-type <=> BtnTypeSetting.btn-type;
 
     init => {
         BtnTypeSetting.reset();
+        Logic.update-all-mcp-server-status();
     }
 
     VerticalLayout {
@@ -286,16 +301,16 @@ export component Prompt inherits SettingDetail {
         spacing: Theme.spacing * 4;
 
         Rectangle {
-            if Store.prompt-entries.length == 0 && root.btn-type == BtnType.Home: CenterLayout {
+            if Store.mcp-entries.length == 0 && root.btn-type == BtnType.Home: CenterLayout {
                 NoMessageImg {
                     width: root.width;
                     text: Logic.tr("No Message");
                 }
             }
 
-            if root.btn-type == BtnType.Home: PromptList { }
+            if root.btn-type == BtnType.Home: mcpList { }
 
-            if root.btn-type == BtnType.Add || root.btn-type == BtnType.Edit: PromptEdit { }
+            if root.btn-type == BtnType.Add || root.btn-type == BtnType.Edit: mcpEdit { }
         }
 
         if (root.btn-type == BtnType.Home): BtnField {
