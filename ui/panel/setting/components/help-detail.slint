@@ -50,6 +50,25 @@ component SettingHelp inherits VerticalLayout {
             contents: [
                 "1. 在对话输入框中输入'/'后会弹出提示词面板",
                 "2. 提问格式：'/' + 提示词快捷键 + 空格 + 问题",
+                "3. 会话提示词会被更改，并且一直有效",
+            ],
+        },
+        {
+            title: "如何配置MCP服务？",
+            picture: @image-url("../../../images-help/mcp-light-cn.png"),
+            contents: [
+                "1. 在对话输入框中输入'@'后会弹出提示面板",
+                "2. 提问格式：'@' + 提示快捷键 + 空格 + 问题",
+            ],
+        },
+        {
+            title: "如何使用MCP服务？",
+            picture: @image-url("../../../images-help/input-mcp-light-cn.png"),
+            contents: [
+                "1. 在对话输入框中输入'@'后会弹出提示面板",
+                "2. 提问格式：'@' + 提示快捷键 + 空格 + 问题",
+                "3. 每次使用MCP服务时都需要使用'@'方式来调用",
+                "4. 启动程序时，不会自动启动MCP服务。为了节约资源，只有在第一次调用时才会启动，并一直运行"
             ],
         },
         {
@@ -68,7 +87,6 @@ component SettingHelp inherits VerticalLayout {
             ],
         },
     ];
-
 
     private property <[ParagraphEntry]> entries-en:
     [
@@ -116,6 +134,25 @@ component SettingHelp inherits VerticalLayout {
             contents: [
                 "1. Entering '/' in the chat input box will open the prompt panel",
                 "2. Question format: '/' + prompt shortcut key + space + question",
+                "3. The conversation prompts will be modified and remain permanently effective",
+            ],
+        },
+        {
+            title: "How to configure MCP service?",
+            picture: @image-url("../../../images-help/mcp-light-en.png"),
+            contents: [
+                "1. A prompt panel will appear when you type '@' in the chat input box",
+                "2. Question format: '@' + prompt shortcut + space + question",
+            ],
+        },
+        {
+            title: "How to use MCP service?",
+            picture: @image-url("../../../images-help/input-mcp-light-en.png"),
+            contents: [
+                "1. A prompt panel will appear when you type '@' in the chat input box",
+                "2. Question format: '@' + prompt shortcut + space + question",
+                "3. You'll need to use the '@' method to invoke MCP service each time",
+                "4. The MCP service doesn't start automatically when launching the program. To save resources, it only starts during the first invocation and keeps running thereafter"
             ],
         },
         {
@@ -127,7 +164,6 @@ component SettingHelp inherits VerticalLayout {
                 "3. MacOS: /Users/Your-User-Name/Library/Application and /Users/Your-User-Name/Library/Application Support"
             ],
         },
-
         {
             title: "Note",
             contents: [

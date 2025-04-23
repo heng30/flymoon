@@ -48,3 +48,7 @@ pub fn mcp_server_name_from_config(config: &str) -> Result<String> {
     let config = McpServerConfig::from_raw_str(config)?;
     Ok(config.name)
 }
+
+pub fn mcp_server_is_running(name: &str) -> bool {
+    MCP_CLIENTS.lock().unwrap().contains_key(name)
+}

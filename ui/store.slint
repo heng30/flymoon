@@ -121,6 +121,7 @@ export struct PromptEntry {
 
 export enum MCPServerStatus {
     None,
+    Loading,
     Running,
     Failed,
 }
@@ -239,6 +240,7 @@ export global Store {
             uuid: "uuid-1",
             name: "text-1",
             shortcut: "cn",
+            status: MCPServerStatus.Loading,
             config: "{\n  \"mcpServers\": {\n    \"your-mcp-server\": {\n      \"url\": \"http://localhost:4000/sse\"\n    }\n  }\n}",
         },
         {

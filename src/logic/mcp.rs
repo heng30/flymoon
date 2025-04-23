@@ -120,7 +120,7 @@ pub fn init(ui: &AppWindow) {
     let ui_handle = ui.as_weak();
     ui.global::<Logic>()
         .on_update_all_mcp_server_status(move || {
-            update_all_mcp_server_status(ui_handle.clone());
+            update_all_mcp_server_status(ui_handle.unwrap());
         });
 }
 
@@ -180,9 +180,12 @@ fn delete_entry(ui: &AppWindow, uuid: SharedString) {
 }
 
 fn start_mcp_client(ui: Weak<AppWindow>, index: usize) {
-    let entry = store_mcp_entries!(ui.clone().unwrap())
+    let mut entry = store_mcp_entries!(ui.clone().unwrap())
         .row_data(index)
         .unwrap();
+
+    entry.status = UIMCPServerStatus::Loading;
+    store_mcp_entries!(ui.clone().unwrap()).set_row_data(index, entry.clone());
 
     tokio::spawn(async move {
         match mcp::create_mcp_client(&entry.config).await {
@@ -191,7 +194,7 @@ fn start_mcp_client(ui: Weak<AppWindow>, index: usize) {
                     let ui = ui.unwrap();
 
                     if let Some(mut entry) = store_mcp_entries!(ui).row_data(index) {
-                        entry.status = UIMCPServerStatus::Running;
+                        entry.status = UIMCPServerStatus::Failed;
                         store_mcp_entries!(ui).set_row_data(index, entry);
                     }
 
@@ -256,9 +259,12 @@ fn stop_mcp_client(ui: Weak<AppWindow>, index: usize) {
 }
 
 fn restart_mcp_client(ui: Weak<AppWindow>, index: usize) {
-    let entry = store_mcp_entries!(ui.clone().unwrap())
+    let mut entry = store_mcp_entries!(ui.clone().unwrap())
         .row_data(index)
         .unwrap();
+
+    entry.status = UIMCPServerStatus::Loading;
+    store_mcp_entries!(ui.clone().unwrap()).set_row_data(index, entry.clone());
 
     tokio::spawn(async move {
         match restart_mcp_client_inner(&entry.config).await {
@@ -267,7 +273,7 @@ fn restart_mcp_client(ui: Weak<AppWindow>, index: usize) {
                     let ui = ui.unwrap();
 
                     if let Some(mut entry) = store_mcp_entries!(ui).row_data(index) {
-                        entry.status = UIMCPServerStatus::Running;
+                        entry.status = UIMCPServerStatus::Failed;
                         store_mcp_entries!(ui).set_row_data(index, entry);
                     }
 
@@ -293,9 +299,23 @@ fn restart_mcp_client(ui: Weak<AppWindow>, index: usize) {
     });
 }
 
+fn update_all_mcp_server_status(ui: AppWindow) {
+    for (index, mut entry) in store_mcp_entries!(ui).iter().enumerate() {
+        match mcp::mcp_server_name_from_config(&entry.config) {
+            Ok(server_name) => {
+                entry.status = if mcp::mcp_server_is_running(&server_name) {
+                    UIMCPServerStatus::Running
+                } else {
+                    UIMCPServerStatus::None
+                };
+            }
+            _ => {
+                entry.status = UIMCPServerStatus::Failed;
+            }
+        }
 
-fn update_all_mcp_server_status(ui: Weak<AppWindow) {
-    todo!();
+        store_mcp_entries!(ui).set_row_data(index, entry);
+    }
 }
 
 async fn stop_mcp_client_inner(config: &str) -> Result<()> {

@@ -1,7 +1,7 @@
 import {ListView} from "std-widgets.slint";
 import { Store, Logic, Theme, Icons } from "../../def.slint";
 import { MCPEntry, MCPServerStatus } from "../../../store.slint";
-import { ConfirmDialogSetting, SettingDetail, IconBtn, SettingDetailInner, SettingDetailInnerVbox, Label, Divider, SettingDetailLabel, LineInput, TxtEdit, Select, CancelBtn, ConfirmBtn, CenterLayout, NoMessageImg } from "../../../base/widgets.slint";
+import { ConfirmDialogSetting, SettingDetail, IconBtn, SettingDetailInner, SettingDetailInnerVbox, Label, Divider, SettingDetailLabel, LineInput, TxtEdit, Select, CancelBtn, ConfirmBtn, CenterLayout, NoMessageImg, Loading } from "../../../base/widgets.slint";
 
 enum BtnType {
     Home,
@@ -104,7 +104,14 @@ component mcpList inherits VerticalLayout {
                                 }
                             }
 
-                            IconBtn {
+                            if entry.status == MCPServerStatus.Loading: Loading {
+                                loading-text: "";
+                                width: Theme.icon-size;
+                                height: self.width;
+                                icon-size: Theme.icon-size * 0.8;
+                            }
+
+                            if entry.status != MCPServerStatus.Loading: IconBtn {
                                 mouse-cursor: MouseCursor.default;
                                 icon-size: Theme.icon-size * 0.8;
                                 icon: Icons.circle-fill;

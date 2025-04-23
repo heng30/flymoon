@@ -19,13 +19,5 @@ rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "mai
   "tower",
 ] }
 
-env_logger = { version = "0.9", optional = true }
-
-[features]
-default = []
-test-bot = ["dep:env_logger"]
-
-[[bin]]
-name = "mcp"
-path = "./bin/main.rs"
-required-features = ["test-mcp"]
+[dev-dependencies]
+env_logger = "0.9"
