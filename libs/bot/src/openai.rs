@@ -17,12 +17,12 @@ pub mod request {
         pub btext: String,
     }
 
-    #[derive(Default, Clone, Debug)]
+    #[derive(Serialize, Deserialize, Default, Debug, Clone)]
     pub struct APIConfig {
         pub api_base_url: String,
         pub api_model: String,
         pub api_key: String,
-        pub temperature: f32,
+        pub temperature: Option<f32>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -30,7 +30,9 @@ pub mod request {
         pub messages: Vec<Message>,
         pub model: String,
         pub stream: bool,
-        pub temperature: f32,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub temperature: Option<f32>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone)]

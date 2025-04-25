@@ -1,6 +1,6 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
-import { ChatEntry} from "../../../store.slint";
+import { ChatEntry, ChatPhase } from "../../../store.slint";
 import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading } from "../../../base/widgets.slint";
 
 import { MdDetail } from "md.slint";
@@ -269,7 +269,7 @@ export component Session inherits Rectangle {
 
     Timer {
         interval: 100ms;
-        running: Store.is-chatting && Store.is-auto-scroll;
+        running: Store.chat-phase == ChatPhase.Chatting && Store.is-auto-scroll;
         triggered() => {
             scroll-auto();
         }
@@ -296,9 +296,6 @@ export component Session inherits Rectangle {
             padding-bottom: Theme.padding * 4;
             spacing: Theme.spacing * 3;
 
-            private property <bool> is-show-search-tip: index == Store.current-chat-session.histories.length - 1 && Store.is-searching-webpages;
-            private property <bool> is-show-thinking-tip: index == Store.current-chat-session.histories.length - 1 && entry.bot-reasoner.is-empty && entry.md_elems.length == 0 && Store.is-chatting && !is-show-search-tip;
-
             if index == 0 && !Store.current-model-name.is-empty: Label {
                 horizontal-alignment: TextHorizontalAlignment.center;
                 text: Store.current-model-name;
@@ -310,12 +307,17 @@ export component Session inherits Rectangle {
                 entry: entry;
             }
 
-            if is-show-search-tip: LoadingTip {
+            if Store.chat-phase == ChatPhase.MCP: LoadingTip {
+                loading-text: Logic.tr("Call MCP...");
+                colorize: Theme.warning-color;
+            }
+
+            if Store.chat-phase == ChatPhase.Searching: LoadingTip {
                 loading-text: Logic.tr("Searching...");
                 colorize: Theme.warning-color;
             }
 
-            if is-show-thinking-tip: LoadingTip {
+            if Store.chat-phase == ChatPhase.Thinking: LoadingTip {
                 loading-text: Logic.tr("Thinking...");
                 colorize: Theme.thirdly-brand-color;
             }

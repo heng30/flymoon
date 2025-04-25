@@ -22,14 +22,14 @@ async fn main() {
         api_base_url: "https://api.deepseek.com/v1".to_string(),
         api_model: "deepseek-chat".to_string(),
         api_key,
-        temperature: 1.0_f32,
+        temperature: None,
     };
 
     // let config = APIConfig {
     //     api_base_url: "https://api.deepseek.com/v1".to_string(),
     //     api_model: "deepseek-reasoner".to_string(),
     //     api_key,
-    //     temperature: 1.0_f32,
+    //     temperature: None,
     // };
 
     let histories = vec![HistoryChat {

@@ -22,13 +22,13 @@ mod tests {
 
         env_logger::init();
 
-        let (name, peer) = create_mcp_client(config).await?;
-        log::info!("{name}");
+        let client = create_mcp_client(config).await?;
+        log::info!("{}", client.name);
 
-        let info = peer.peer_info();
+        let info = client.client.peer_info();
         log::info!("{info:?}");
 
-        let prompt = peer.list_all_prompts().await?;
+        let prompt = client.client.list_all_prompts().await?;
         log::info!("{prompt:?}");
 
         Ok(())

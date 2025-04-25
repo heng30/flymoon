@@ -166,6 +166,14 @@ export struct ChatHistory {
     checked: bool,
 }
 
+export enum ChatPhase {
+    None,
+    Chatting,
+    Searching,
+    Thinking,
+    MCP,
+}
+
 //////////////////////////////// Logic Struct End  ////////////////////////////////
 
 export global Store {
@@ -192,10 +200,9 @@ export global Store {
 
     //////////////////////////////// Logic Start ////////////////////////////////
 
-    in-out property <bool> is-chatting;
+    in-out property <ChatPhase> chat-phase: None;
     in-out property <bool> is-auto-scroll: true;
     in-out property <bool> is-toggle-bot-markdown;
-    in-out property <bool> is-searching-webpages;
     in-out property <bool> enabled-search-webpages;
     in-out property <bool> search-webpages-available;
     in-out property <bool> reasoner-model-available: true;

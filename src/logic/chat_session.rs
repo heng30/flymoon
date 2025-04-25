@@ -1,16 +1,15 @@
 use super::{md, toast, tr::tr};
 use crate::{
-    toast_success,
     config::{data::Model as SettingModel, model as setting_model},
     db::{
         self,
         def::{CHAT_SESSION_TABLE as DB_TABLE, ChatEntry, ChatSession},
     },
     slint_generatedAppWindow::{
-        AppWindow, ChatEntry as UIChatEntry, ChatSession as UIChatSession, Logic,
-        PromptEntry as UIPromptEntry, SearchLink as UISearchLink, Store,
+        AppWindow, ChatEntry as UIChatEntry, ChatPhase, ChatSession as UIChatSession, Logic,
+        MCPEntry as UIMCPEntry, PromptEntry as UIPromptEntry, SearchLink as UISearchLink, Store,
     },
-    store_prompt_entries, toast_warn,
+    store_mcp_entries, store_prompt_entries, toast_success, toast_warn,
 };
 use anyhow::Result;
 use bot::openai::{
@@ -33,7 +32,17 @@ struct ChatCache {
     ui: Weak<AppWindow>,
     stop_tx: Arc<mpsc::Sender<()>>,
     reasoner_start: Option<DateTime<Utc>>,
+    bot_text: String,
 }
+
+#[derive(Copy, Debug, PartialEq, Clone)]
+enum PromptType {
+    Normal,
+    MCP,
+}
+
+const MCP_TOOL_START_SEP: &'static str = "TOOL_START";
+const MCP_TOOL_END_SEP: &'static str = "TOOL_END";
 
 static INC_CHAT_ID: AtomicU64 = AtomicU64::new(0);
 static CHAT_CACHE: Lazy<Mutex<Option<ChatCache>>> = Lazy::new(|| Mutex::new(None));
@@ -74,7 +83,7 @@ impl From<SettingModel> for ChatAPIConfig {
             api_base_url: setting.chat.api_base_url,
             api_model: setting.chat.model_name,
             api_key: setting.chat.api_key,
-            temperature: 1.0,
+            temperature: None,
         }
     }
 }
@@ -271,32 +280,55 @@ pub fn init(ui: &AppWindow) {
         });
 }
 
-fn parse_prompt(ui: &AppWindow, question: SharedString) -> (SharedString, SharedString, f32) {
-    let mut temperature = 1.0;
+fn parse_prompt(
+    ui: &AppWindow,
+    question: SharedString,
+) -> (SharedString, SharedString, Option<f32>, PromptType) {
     let mut session = store_current_chat_session!(ui);
 
-    if question.is_empty() || !question.starts_with("/") {
-        return (session.prompt, question, temperature);
+    if question.is_empty() || (!question.starts_with("/") && !question.starts_with("@")) {
+        return (session.prompt, question, None, PromptType::Normal);
     }
 
     if let Some(shortcut) = question.split_whitespace().next() {
-        if let Some(entry) = store_prompt_entries!(ui)
-            .iter()
-            .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
-        {
-            let question = question
-                .trim_start_matches(&format!("/{}", entry.shortcut))
-                .trim_start()
-                .into();
+        if question.starts_with("/") {
+            if let Some(entry) = store_prompt_entries!(ui)
+                .iter()
+                .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
+            {
+                let question = question
+                    .trim_start_matches(&format!("/{}", entry.shortcut))
+                    .trim_start()
+                    .into();
 
-            temperature = entry.temperature;
-            session.prompt = entry.detail.clone();
-            ui.global::<Store>().set_current_chat_session(session);
-            return (entry.detail, question, temperature);
+                session.prompt = entry.detail.clone();
+                ui.global::<Store>().set_current_chat_session(session);
+                return (
+                    entry.detail,
+                    question,
+                    Some(entry.temperature),
+                    PromptType::Normal,
+                );
+            }
+        } else if question.starts_with("@") {
+            if let Some(entry) = store_mcp_entries!(ui)
+                .iter()
+                .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
+            {
+                let question = question
+                    .trim_start_matches(&format!("@{}", entry.shortcut))
+                    .trim_start()
+                    .into();
+
+                // get the prompt later
+                session.prompt = entry.config.clone();
+                ui.global::<Store>().set_current_chat_session(session);
+                return (entry.config, question, Some(0.7), PromptType::MCP);
+            }
         }
     }
 
-    (session.prompt, question, temperature)
+    (session.prompt, question, None, PromptType::Normal)
 }
 
 fn stream_text(id: u64, item: StreamTextItem) {
@@ -320,7 +352,18 @@ fn stream_text(id: u64, item: StreamTextItem) {
         return;
     }
 
-    let _ = slint::invoke_from_event_loop(move || {
+    // for mcp server
+    if item.text.is_some() {
+        let mut cc = CHAT_CACHE.lock().unwrap();
+        if cc.is_some() {
+            cc.as_mut()
+                .unwrap()
+                .bot_text
+                .push_str(&item.text.as_ref().unwrap());
+        }
+    }
+
+    _ = slint::invoke_from_event_loop(move || {
         let ui = ui.unwrap();
 
         if item.etext.is_some() {
@@ -340,6 +383,10 @@ fn stream_text(id: u64, item: StreamTextItem) {
             md::parse_last_history_bot_text(&ui);
             update_db_entry(&ui);
             return;
+        }
+
+        if ui.global::<Store>().get_chat_phase() != ChatPhase::Chatting {
+            ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
         }
 
         if item.reasoning_text.is_some() {
@@ -393,7 +440,7 @@ async fn search_webpages(
         ui_handle
             .unwrap()
             .global::<Store>()
-            .set_is_searching_webpages(true);
+            .set_chat_phase(ChatPhase::Searching);
     });
 
     let config = setting_model().into();
@@ -435,7 +482,9 @@ async fn search_webpages(
 }
 
 fn send_question(ui: &AppWindow, question: SharedString) {
-    let (prompt, question, temperature) = parse_prompt(ui, question);
+    let (mut prompt, question, temperature, prompt_type) = parse_prompt(ui, question);
+
+    log::info!("{} - {:?}", prompt, prompt_type);
 
     let mut session = store_current_chat_session!(ui);
     let (is_new_chat, mut histories) = if session.uuid.is_empty() {
@@ -466,14 +515,12 @@ fn send_question(ui: &AppWindow, question: SharedString) {
         add_db_entry(ui);
     }
 
-    ui.global::<Store>().set_is_chatting(true);
     let enabled_search_webpages = ui.global::<Store>().get_enabled_search_webpages();
     let enabled_reasoner_model = ui.global::<Store>().get_enabled_reasoner_model();
 
     let ui = ui.as_weak();
     tokio::spawn(async move {
-        // search webpages
-        if enabled_search_webpages {
+        if enabled_search_webpages && prompt_type != PromptType::MCP {
             log::info!("start searching wabpages...");
 
             if let Err(e) = search_webpages(ui.clone(), &question, &mut histories).await {
@@ -481,20 +528,92 @@ fn send_question(ui: &AppWindow, question: SharedString) {
                     ui.clone(),
                     format!("{}. {}: {e:?}", tr("Search webpages failed"), tr("Reason")),
                 );
-            }
 
+                let ui_handle = ui.clone();
+                _ = slint::invoke_from_event_loop(move || {
+                    ui_handle
+                        .unwrap()
+                        .global::<Store>()
+                        .set_chat_phase(ChatPhase::None);
+                });
+
+                return;
+            }
+        }
+
+        let mut mcp_client = None;
+        if prompt_type == PromptType::MCP {
             let ui_handle = ui.clone();
-            let _ = slint::invoke_from_event_loop(move || {
+            _ = slint::invoke_from_event_loop(move || {
                 ui_handle
                     .unwrap()
                     .global::<Store>()
-                    .set_is_searching_webpages(false);
+                    .set_chat_phase(ChatPhase::MCP);
             });
+
+            let mut is_get_mcp_prompt_error = false;
+            match mcp::create_mcp_client(&prompt).await {
+                Ok(client) => match gen_mcp_prompt(&client) {
+                    Some(p) => {
+                        prompt = p.into();
+                        mcp_client = Some(client);
+
+                        // clear chat session system prompt
+                        let ui_handle = ui.clone();
+                        _ = slint::invoke_from_event_loop(move || {
+                            let ui = ui_handle.unwrap();
+                            let mut session = ui.global::<Store>().get_current_chat_session();
+                            session.prompt = SharedString::default();
+                            ui.global::<Store>().set_current_chat_session(session);
+                        });
+                    }
+                    _ => {
+                        is_get_mcp_prompt_error = true;
+                        toast::async_toast_warn(
+                            ui.clone(),
+                            format!("{}", tr("No MCP server tools")),
+                        );
+                    }
+                },
+                Err(e) => {
+                    is_get_mcp_prompt_error = true;
+                    toast::async_toast_warn(
+                        ui.clone(),
+                        format!(
+                            "{}. {}: {e:?}",
+                            tr("Get MCP server prompt failed"),
+                            tr("Reason")
+                        ),
+                    );
+                }
+            }
+
+            if is_get_mcp_prompt_error {
+                let ui_handle = ui.clone();
+                _ = slint::invoke_from_event_loop(move || {
+                    ui_handle
+                        .unwrap()
+                        .global::<Store>()
+                        .set_chat_phase(ChatPhase::None);
+                });
+
+                return;
+            }
         }
+
+        let ui_handle = ui.clone();
+        _ = slint::invoke_from_event_loop(move || {
+            let phase = if enabled_reasoner_model {
+                ChatPhase::Thinking
+            } else {
+                ChatPhase::Chatting
+            };
+
+            ui_handle.unwrap().global::<Store>().set_chat_phase(phase);
+        });
 
         log::info!("start sending question to model...");
 
-        // send question
         let mut config: ChatAPIConfig = setting_model().into();
         config.temperature = temperature;
         if enabled_reasoner_model {
@@ -511,6 +630,7 @@ fn send_question(ui: &AppWindow, question: SharedString) {
             *cc = Some(ChatCache {
                 id,
                 ui: ui.clone(),
+                bot_text: String::default(),
                 stop_tx: Arc::new(stop_tx),
                 reasoner_start: if enabled_reasoner_model {
                     Some(Utc::now())
@@ -530,10 +650,25 @@ fn send_question(ui: &AppWindow, question: SharedString) {
                 ui.clone(),
                 format!("{}. {}: {e:?}", tr("Chat failed"), tr("Reason")),
             );
+        } else {
+            if mcp_client.is_some() {
+                let ui_handle = ui.clone();
+                _ = slint::invoke_from_event_loop(move || {
+                    ui_handle
+                        .unwrap()
+                        .global::<Store>()
+                        .set_chat_phase(ChatPhase::MCP);
+                });
+
+                let mcp_client = mcp_client.unwrap();
+                call_mcp_server_tool(ui.clone(), mcp_client).await;
+            }
         }
 
         _ = slint::invoke_from_event_loop(move || {
-            ui.unwrap().global::<Store>().set_is_chatting(false);
+            ui.unwrap()
+                .global::<Store>()
+                .set_chat_phase(ChatPhase::None);
         });
     });
 }
@@ -609,5 +744,123 @@ pub fn delete_db_entry(ui: &AppWindow, uuid: SharedString) {
             ),
             _ => toast::async_toast_success(ui, tr("Remove entry successfully")),
         }
+    });
+}
+
+fn gen_mcp_prompt(client: &mcp::Client) -> Option<String> {
+    let tools = client.tool_set.tools();
+    if tools.is_empty() {
+        return None;
+    }
+
+    let mut prompt =
+        "you are a assistant, you can help user to complete various tasks. you have the following tools to use:\n".to_string();
+
+    for tool in tools {
+        prompt.push_str(&format!(
+            "\ntool name: {}\ndescription: {}\nparameters: {}\n",
+            tool.name(),
+            tool.description(),
+            serde_json::to_string_pretty(&tool.parameters()).unwrap_or_default()
+        ));
+    }
+
+    prompt.push_str(&format!(
+        r#"\nif you need to call tools, please use the following format:\n
+        \n{}\n
+        {{"name": "tool_name", "arguments": "tool_arguments"}}
+        \n{}\n"#,
+        MCP_TOOL_START_SEP, MCP_TOOL_END_SEP
+    ));
+
+    Some(prompt)
+}
+
+async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client) {
+    let content = {
+        let cc = CHAT_CACHE.lock().unwrap();
+        if cc.is_some() {
+            cc.as_ref().unwrap().bot_text.clone()
+        } else {
+            String::default()
+        }
+    };
+
+    if content.is_empty() {
+        return;
+    }
+
+    let (mut meet_tool, mut tool_list, mut tool_text) = (false, vec![], String::default());
+    let lines: Vec<&str> = content.split('\n').collect();
+
+    for line in lines {
+        if line.starts_with(MCP_TOOL_START_SEP) {
+            meet_tool = true;
+        } else if line.starts_with(MCP_TOOL_END_SEP) {
+            tool_list.push(tool_text.clone());
+            meet_tool = false;
+            tool_text.clear();
+        } else if meet_tool {
+            tool_text.push_str(&line);
+        }
+    }
+
+    for text in &tool_list {
+        if let Ok(item) = serde_json::from_str::<mcp::tool::ToolCall>(&text) {
+            if item.name.is_empty() {
+                continue;
+            }
+
+            if let Some(tool) = client.tool_set.get_tool(&item.name) {
+                log::info!("calling tool: {}", item.name);
+                log::info!("tool args: {:?}", item.arguments);
+
+                match tool.call(item.arguments).await {
+                    Ok(result) => {
+                        let ui_handle = ui.clone();
+                        _ = slint::invoke_from_event_loop(move || {
+                            let ui = ui_handle.unwrap();
+
+                            let rows = store_current_chat_session_histories!(ui).row_count();
+                            if rows <= 0 {
+                                return;
+                            }
+
+                            let last_index = rows - 1;
+                            let mut entry = store_current_chat_session_histories!(ui)
+                                .row_data(last_index)
+                                .unwrap();
+
+                            entry.bot.push_str(&format!("\n```\n{}\n```\n", &result));
+
+                            store_current_chat_session_histories!(ui)
+                                .set_row_data(last_index, entry);
+
+                            md::parse_stream_bot_text(&ui);
+                        });
+                    }
+                    Err(e) => {
+                        toast::async_toast_warn(
+                            ui.clone(),
+                            format!(
+                                "{} - {}. {}: {e:?}",
+                                item.name,
+                                tr("MCP server tool call failed"),
+                                tr("Reason")
+                            ),
+                        );
+                    }
+                }
+            } else {
+                toast::async_toast_warn(
+                    ui.clone(),
+                    format!("{} - {}", item.name, tr("MCP server tool not found"),),
+                );
+            }
+        }
+    }
+
+    _ = slint::invoke_from_event_loop(move || {
+        update_db_entry(&ui.unwrap());
     });
 }

@@ -1,4 +1,5 @@
 import { Theme, Logic, Store, Icons, Util, TabIndex } from "../../def.slint";
+import { ChatPhase } from "../../../store.slint";
 import { Divider, ElevatedBtn, IconBtn, TextBtn, ToastStatus} from "../../../base/widgets.slint";
 
 export component Input inherits Rectangle {
@@ -256,7 +257,7 @@ export component Input inherits Rectangle {
                         padding-left: Theme.padding * 2;
                         padding-right: Theme.padding * 2;
 
-                        if !Store.is_chatting: ElevatedBtn {
+                        if Store.chat-phase == ChatPhase.None: ElevatedBtn {
                             enable: te.text != "";
                             icon: Icons.send2;
                             colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
@@ -268,13 +269,13 @@ export component Input inherits Rectangle {
                             }
                         }
 
-                        if Store.is_chatting: ElevatedBtn {
+                        if Store.chat-phase != ChatPhase.None: ElevatedBtn {
                             icon: Icons.stop;
                             colorize: Theme.thirdly-brand-color;
                             gain-focus-when-clicked: false;
 
                             clicked => {
-                                Store.is-chatting = false;
+                                Store.chat-phase = ChatPhase.None;
                                 Logic.stop-question();
                             }
                         }
