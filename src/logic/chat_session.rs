@@ -35,9 +35,6 @@ struct ChatCache {
     bot_text: String,
 }
 
-// const MCP_TOOL_START_SEP: &'static str = "TOOL_START";
-// const MCP_TOOL_END_SEP: &'static str = "TOOL_END";
-
 const MCP_TOOL_START_SEP: &'static str = "```json";
 const MCP_TOOL_END_SEP: &'static str = "```";
 
@@ -863,6 +860,19 @@ fn pretty_mcp_tool_sep(ui: Weak<AppWindow>, tool_list: Vec<String>) {
 }
 
 fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
+    let response_text = match serde_json::from_str::<super::mcp::MCPResponse>(&result) {
+        Ok(v) => Some(
+            v.content
+                .into_iter()
+                .filter(|item| item.content_type == "text")
+                .map(|item| item.text)
+                .collect::<Vec<String>>()
+                .join("\n")
+                .to_string(),
+        ),
+        _ => None,
+    };
+
     _ = slint::invoke_from_event_loop(move || {
         let ui = ui.unwrap();
 
@@ -876,10 +886,22 @@ fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
             .row_data(last_index)
             .unwrap();
 
-        entry.bot.push_str(&format!("\n### Tool {} response\n", &name));
+        entry
+            .bot
+            .push_str(&format!("\n## Tool {} response\n", &name));
         entry
             .bot
             .push_str(&format!("\n```\n{}\n```\n", pretty_json(result.into())));
+
+        if response_text.is_some() {
+            entry
+                .bot
+                .push_str(&format!("\n## Tool {} response text\n", &name));
+
+            entry
+                .bot
+                .push_str(&response_text.unwrap());
+        }
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
 

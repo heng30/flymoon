@@ -11,8 +11,23 @@ use crate::{
     store_input_prompt_list_entries, toast_success, toast_warn,
 };
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use slint::{ComponentHandle, Model, SharedString, VecModel, Weak};
 use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MCPResponeContentItem {
+    pub text: String,
+    #[serde(rename = "type")]
+    pub content_type: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MCPResponse {
+    pub content: Vec<MCPResponeContentItem>,
+    #[serde(rename = "isError")]
+    pub is_error: bool,
+}
 
 #[macro_export]
 macro_rules! store_mcp_entries {
