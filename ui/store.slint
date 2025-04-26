@@ -152,10 +152,17 @@ export struct ChatEntry {
     search_links: [SearchLink],
 }
 
+export enum PromptType {
+    Normal,
+    MCPConfig,
+    MCPTool,
+}
+
 export struct ChatSession {
     uuid: string,
     time: string,
     prompt: string,
+    prompt-type: PromptType,
     histories: [ChatEntry],
 }
 
