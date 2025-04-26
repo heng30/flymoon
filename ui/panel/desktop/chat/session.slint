@@ -144,7 +144,7 @@ component LoadingTip inherits VerticalLayout {
 
     padding-top: Theme.padding * 4;
     padding-bottom: Theme.padding * 4;
-    height: 100px;
+    height: 150px;
 
     ld := Loading { }
 }
@@ -269,7 +269,7 @@ export component Session inherits Rectangle {
 
     Timer {
         interval: 100ms;
-        running: Store.chat-phase == ChatPhase.Chatting && Store.is-auto-scroll;
+        running: Store.chat-phase != ChatPhase.None && Store.is-auto-scroll;
         triggered() => {
             scroll-auto();
         }
@@ -326,7 +326,7 @@ export component Session inherits Rectangle {
             }
 
             if is-last-index && Store.chat-phase == ChatPhase.MCP: LoadingTip {
-                loading-text: Logic.tr("Call...");
+                loading-text: Logic.tr("Calling...");
                 colorize: Theme.warning-color;
             }
 

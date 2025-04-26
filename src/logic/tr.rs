@@ -236,6 +236,12 @@ pub fn tr(text: &str) -> String {
         ("Restart server successfully", "重启MCP服务成功"),
         ("Stop server failed", "关闭MCP服务失败"),
         ("Stop server successfully", "关闭MCP服务成功"),
+        ("Calling...", "调用工具..."),
+        ("mcp prompt", "mcp提示词"),
+        ("No MCP server tools", "没有MCP工具"),
+        ("Get MCP server prompt failed", "获取MCP工具提示词失败"),
+        ("MCP server tool call failed", "调用MCP服务工具失败"),
+        ("MCP server tool not found", "没有找到MCP服务工具"),
     ]);
 
     if let Some(txt) = items.get(text) {

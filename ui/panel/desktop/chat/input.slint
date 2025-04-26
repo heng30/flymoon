@@ -1,12 +1,11 @@
 import { Theme, Logic, Store, Icons, Util, TabIndex } from "../../def.slint";
-import { ChatPhase } from "../../../store.slint";
+import { ChatPhase, PromptType } from "../../../store.slint";
 import { Divider, ElevatedBtn, IconBtn, TextBtn, ToastStatus} from "../../../base/widgets.slint";
 
 export component Input inherits Rectangle {
     in-out property question <=> te.text;
 
     private property <bool> is-ctrl-pressed;
-    private property <bool> scroll-to-bottom-flag;
 
     callback scroll-up;
     callback scroll-down;
@@ -34,7 +33,7 @@ export component Input inherits Rectangle {
         Logic.send-question(question);
         root.question = "";
         ensure-show-cursor();
-        scroll-to-bottom-flag = true;
+        Store.is-auto-scroll = true;
     }
 
     function toggle-current-model-name() {
@@ -53,15 +52,6 @@ export component Input inherits Rectangle {
             return;
         }
         Store.enabled-search-webpages = !Store.enabled-search-webpages;
-    }
-
-    Timer {
-        interval: 200ms;
-        running: scroll-to-bottom-flag;
-        triggered() => {
-            scroll-to-bottom();
-            scroll-to-bottom-flag = false;
-        }
     }
 
     init => {
@@ -96,7 +86,6 @@ export component Input inherits Rectangle {
                                         Logic.mcp-popup(te.text);
                                     }
                                 }
-
                                 Logic.prompt-popup-clear(self.text);
 
                                 ensure-show-cursor();
@@ -218,8 +207,9 @@ export component Input inherits Rectangle {
                     spacing: Theme.spacing * 4;
 
                     IconBtn {
-                        icon: Icons.prompt;
-                        tip: Logic.tr("prompt");
+                        icon: Store.current-chat-session.prompt-type == PromptType.Normal ? Icons.prompt : Icons.mcp;
+                        tip: Store.current-chat-session.prompt-type == PromptType.Normal ? Logic.tr("prompt") : Logic.tr("mcp prompt");
+
                         is-show-tip: true;
                         gain-focus-when-clicked: false;
                         colorize: Store.current-chat-session.prompt.is-empty ? Theme.icon-color : Theme.warning-color;

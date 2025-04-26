@@ -154,8 +154,7 @@ export struct ChatEntry {
 
 export enum PromptType {
     Normal,
-    MCPConfig,
-    MCPTool,
+    MCP,
 }
 
 export struct ChatSession {
@@ -163,6 +162,7 @@ export struct ChatSession {
     time: string,
     prompt: string,
     prompt-type: PromptType,
+    mcp-config: string,
     histories: [ChatEntry],
 }
 

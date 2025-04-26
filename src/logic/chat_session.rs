@@ -12,7 +12,6 @@ use crate::{
     },
     store_mcp_entries, store_prompt_entries, toast_success, toast_warn,
 };
-// use anyhow::Result;
 use bot::openai::{
     Chat,
     request::{APIConfig as ChatAPIConfig, HistoryChat},
@@ -36,8 +35,11 @@ struct ChatCache {
     bot_text: String,
 }
 
-const MCP_TOOL_START_SEP: &'static str = "TOOL_START";
-const MCP_TOOL_END_SEP: &'static str = "TOOL_END";
+// const MCP_TOOL_START_SEP: &'static str = "TOOL_START";
+// const MCP_TOOL_END_SEP: &'static str = "TOOL_END";
+
+const MCP_TOOL_START_SEP: &'static str = "```json";
+const MCP_TOOL_END_SEP: &'static str = "```";
 
 static INC_CHAT_ID: AtomicU64 = AtomicU64::new(0);
 static CHAT_CACHE: Lazy<Mutex<Option<ChatCache>>> = Lazy::new(|| Mutex::new(None));
@@ -114,6 +116,8 @@ impl From<UIChatSession> for ChatSession {
             uuid: entry.uuid.into(),
             time: entry.time.into(),
             prompt: entry.prompt.into(),
+            prompt_type: entry.prompt_type,
+            mcp_config: entry.mcp_config.into(),
             histories,
         }
     }
@@ -133,7 +137,8 @@ impl From<ChatSession> for UIChatSession {
             uuid: entry.uuid.into(),
             time: entry.time.into(),
             prompt: entry.prompt.into(),
-            prompt_type: PromptType::Normal,
+            prompt_type: entry.prompt_type,
+            mcp_config: entry.mcp_config.into(),
             histories,
         }
     }
@@ -314,11 +319,10 @@ fn parse_prompt(
                     .trim_start()
                     .into();
 
-                // get the prompt later
-                session.prompt = entry.config.clone();
-                session.prompt_type = PromptType::MCPConfig;
+                session.prompt_type = PromptType::MCP;
+                session.mcp_config = entry.config;
                 ui.global::<Store>().set_current_chat_session(session);
-                return (entry.config, question, Some(0.7));
+                return (Default::default(), question, Some(0.7));
             }
         }
     }
@@ -380,7 +384,8 @@ fn stream_text(id: u64, item: StreamTextItem) {
             return;
         }
 
-        if ui.global::<Store>().get_chat_phase() != ChatPhase::Chatting {
+        let chat_phase = ui.global::<Store>().get_chat_phase();
+        if chat_phase != ChatPhase::Chatting && chat_phase != ChatPhase::MCP {
             ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
         }
 
@@ -518,39 +523,20 @@ fn chat_histories(ui: &AppWindow, question: SharedString) -> Vec<HistoryChat> {
 async fn create_mcp_client(
     ui: Weak<AppWindow>,
     config: &str,
-    prompt_type: PromptType,
 ) -> (Option<mcp::Client>, Option<String>) {
     async_update_chat_phase(ui.clone(), ChatPhase::MCP);
 
     match mcp::create_mcp_client(config).await {
-        Ok(client) => {
-            if prompt_type == PromptType::MCPConfig {
-                match gen_mcp_prompt(&client) {
-                    Some(prompt) => {
-                        let system_prompt = prompt.clone();
+        Ok(client) => match gen_mcp_prompt(&client) {
+            Some(prompt) => {
+                async_set_current_chat_session_prompt(ui.clone(), prompt.clone().into());
 
-                        let ui_handle = ui.clone();
-                        _ = slint::invoke_from_event_loop(move || {
-                            let ui = ui_handle.unwrap();
-                            let mut session = ui.global::<Store>().get_current_chat_session();
-                            session.prompt = system_prompt.into();
-                            session.prompt_type = PromptType::MCPTool;
-                            ui.global::<Store>().set_current_chat_session(session);
-                        });
-
-                        return (Some(client), Some(prompt));
-                    }
-                    _ => {
-                        toast::async_toast_warn(
-                            ui.clone(),
-                            format!("{}", tr("No MCP server tools")),
-                        );
-                    }
-                }
-            } else {
-                return (Some(client), None);
+                return (Some(client), Some(prompt));
             }
-        }
+            _ => {
+                toast::async_toast_warn(ui.clone(), format!("{}", tr("No MCP server tools")));
+            }
+        },
         Err(e) => {
             toast::async_toast_warn(
                 ui.clone(),
@@ -575,14 +561,7 @@ fn prepare_chat(
     temperature: Option<f32>,
     enabled_reasoner_model: bool,
 ) -> (Chat, u64) {
-    async_update_chat_phase(
-        ui.clone(),
-        if enabled_reasoner_model {
-            ChatPhase::Thinking
-        } else {
-            ChatPhase::Chatting
-        },
-    );
+    async_update_chat_phase(ui.clone(), ChatPhase::Thinking);
 
     let mut config: ChatAPIConfig = setting_model().into();
     config.temperature = temperature;
@@ -626,8 +605,7 @@ async fn start_chat(ui: Weak<AppWindow>, chat: Chat, id: u64, mcp_client: Option
         }
         _ => {
             if mcp_client.is_some() {
-                async_update_chat_phase(ui.clone(), ChatPhase::MCP);
-                call_mcp_server_tool(ui.clone(), mcp_client.unwrap()).await;
+                call_mcp_server_tool(ui.clone(), mcp_client.unwrap(), id).await;
             }
         }
     }
@@ -638,9 +616,12 @@ async fn start_chat(ui: Weak<AppWindow>, chat: Chat, id: u64, mcp_client: Option
 fn send_question(ui: &AppWindow, question: SharedString) {
     let (mut prompt, question, temperature) = parse_prompt(ui, question);
     let mut histories = chat_histories(ui, question.clone());
+
+    let mcp_config = store_current_chat_session!(ui).mcp_config;
     let prompt_type = store_current_chat_session!(ui).prompt_type;
-    let enabled_search_webpages = ui.global::<Store>().get_enabled_search_webpages();
+
     let enabled_reasoner_model = ui.global::<Store>().get_enabled_reasoner_model();
+    let enabled_search_webpages = ui.global::<Store>().get_enabled_search_webpages();
 
     let ui = ui.as_weak();
     tokio::spawn(async move {
@@ -649,19 +630,13 @@ fn send_question(ui: &AppWindow, question: SharedString) {
             return;
         }
 
-        // todo: we should save the prompt_type in the db
-        // todo: prompt have change, we should get the mcp config again
         let mut mcp_client = None;
-        if !prompt.is_empty()
-            && (prompt_type == PromptType::MCPConfig || prompt_type == PromptType::MCPTool)
-        {
-            match create_mcp_client(ui.clone(), &prompt, prompt_type).await {
-                (Some(client), p) => {
+        if !mcp_config.is_empty() && prompt_type == PromptType::MCP {
+            log::info!("start create mcp client...");
+            match create_mcp_client(ui.clone(), &mcp_config).await {
+                (Some(client), Some(p)) => {
                     mcp_client = Some(client);
-
-                    if p.is_some() {
-                        prompt = p.unwrap().into();
-                    }
+                    prompt = p.into();
                 }
                 _ => return,
             }
@@ -780,25 +755,31 @@ fn gen_mcp_prompt(client: &mcp::Client) -> Option<String> {
     }
 
     prompt.push_str(&format!(
-        r#"\nif you need to call tools, please use the following format:\n
-        \n{}\n
-        {{"name": "tool_name", "arguments": "tool_arguments"}}
-        \n{}\n"#,
+        r#"
+if you need to call tools, you must use the following format:
+{}
+{{"name": "tool_name", "arguments": "tool_arguments"}}
+{}
+"#,
         MCP_TOOL_START_SEP, MCP_TOOL_END_SEP
     ));
 
     Some(prompt)
 }
 
-async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client) {
+async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client, id: u64) {
     let content = get_chat_cache_bot_text();
     if content.is_empty() {
         return;
     }
 
-    pretty_mcp_tool_sep(ui.clone());
+    log::info!("start call mcp server tool...");
+
+    async_update_chat_phase(ui.clone(), ChatPhase::MCP);
 
     let tool_list = parse_tool_list(&content);
+
+    pretty_mcp_tool_sep(ui.clone(), tool_list.clone());
 
     for text in &tool_list {
         if let Ok(item) = serde_json::from_str::<mcp::tool::ToolCall>(&text) {
@@ -806,23 +787,36 @@ async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client) {
                 continue;
             }
 
+            if !is_current_chat(id) {
+                return;
+            }
+
             match client.tool_set.get_tool(&item.name) {
-                Some(tool) => match tool.call(item.arguments).await {
-                    Ok(result) => {
-                        pretty_mcp_tool_response(ui.clone(), item.name, result);
+                Some(tool) => {
+                    log::info!("tool: {}", item.name);
+                    log::info!("tool arguments: {:?}", item.arguments);
+
+                    match tool.call(item.arguments).await {
+                        Ok(result) => {
+                            if !is_current_chat(id) {
+                                return;
+                            }
+
+                            pretty_mcp_tool_response(ui.clone(), item.name, result);
+                        }
+                        Err(e) => {
+                            toast::async_toast_warn(
+                                ui.clone(),
+                                format!(
+                                    "{} - {}. {}: {e:?}",
+                                    item.name,
+                                    tr("MCP server tool call failed"),
+                                    tr("Reason")
+                                ),
+                            );
+                        }
                     }
-                    Err(e) => {
-                        toast::async_toast_warn(
-                            ui.clone(),
-                            format!(
-                                "{} - {}. {}: {e:?}",
-                                item.name,
-                                tr("MCP server tool call failed"),
-                                tr("Reason")
-                            ),
-                        );
-                    }
-                },
+                }
                 _ => {
                     toast::async_toast_warn(
                         ui.clone(),
@@ -836,7 +830,7 @@ async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client) {
     async_update_db_entry(ui);
 }
 
-fn pretty_mcp_tool_sep(ui: Weak<AppWindow>) {
+fn pretty_mcp_tool_sep(ui: Weak<AppWindow>, tool_list: Vec<String>) {
     _ = slint::invoke_from_event_loop(move || {
         let ui = ui.unwrap();
 
@@ -849,6 +843,13 @@ fn pretty_mcp_tool_sep(ui: Weak<AppWindow>) {
         let mut entry = store_current_chat_session_histories!(ui)
             .row_data(last_index)
             .unwrap();
+
+        for item in tool_list.iter() {
+            entry.bot = entry
+                .bot
+                .replace(item.as_str(), &pretty_json(item.clone().into()))
+                .into();
+        }
 
         entry.bot = entry
             .bot
@@ -875,13 +876,24 @@ fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
             .row_data(last_index)
             .unwrap();
 
-        entry.bot.push_str(&format!("\n### {}\n", &name));
-        entry.bot.push_str(&format!("\n```\n{}\n```\n", &result));
+        entry.bot.push_str(&format!("\n### Tool {} response\n", &name));
+        entry
+            .bot
+            .push_str(&format!("\n```\n{}\n```\n", pretty_json(result.into())));
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
 
         md::parse_stream_bot_text(&ui);
     });
+}
+
+fn pretty_json(content: SharedString) -> SharedString {
+    match serde_json::from_str::<serde_json::Value>(&content) {
+        Ok(v) => serde_json::to_string_pretty(&v)
+            .unwrap_or(content.into())
+            .into(),
+        _ => content,
+    }
 }
 
 fn parse_tool_list(content: &str) -> Vec<String> {
@@ -899,6 +911,7 @@ fn parse_tool_list(content: &str) -> Vec<String> {
             tool_text.clear();
         } else if meet_tool {
             tool_text.push_str(&line);
+            tool_text.push_str("\n");
         }
     }
 
@@ -914,8 +927,26 @@ fn get_chat_cache_bot_text() -> String {
     }
 }
 
+fn is_current_chat(id: u64) -> bool {
+    let cc = CHAT_CACHE.lock().unwrap();
+    if cc.is_some() {
+        cc.as_ref().unwrap().id == id
+    } else {
+        false
+    }
+}
+
 fn async_update_chat_phase(ui: Weak<AppWindow>, phase: ChatPhase) {
     _ = slint::invoke_from_event_loop(move || {
         ui.unwrap().global::<Store>().set_chat_phase(phase);
+    });
+}
+
+fn async_set_current_chat_session_prompt(ui: Weak<AppWindow>, prompt: SharedString) {
+    _ = slint::invoke_from_event_loop(move || {
+        let ui = ui.unwrap();
+        let mut session = ui.global::<Store>().get_current_chat_session();
+        session.prompt = prompt;
+        ui.global::<Store>().set_current_chat_session(session);
     });
 }

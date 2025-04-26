@@ -1,10 +1,12 @@
 use crate::slint_generatedAppWindow::{
     ChatEntry as UIChatEntry, ChatHistory, ChatSession as UIChatSession, MCPEntry as UIMCPEntry,
-    PromptEntry as UIPromptEntry, SearchLink as UISearchLink,
+    PromptEntry as UIPromptEntry, PromptType, SearchLink as UISearchLink,
 };
 use search::SearchLink;
-use serde::{Deserialize, Serialize};
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use slint::{Model, ModelRc, VecModel};
+use std::fmt;
 
 pub const PROMPT_TABLE: &str = "prompt";
 pub const MCP_TABLE: &str = "mcp";
@@ -133,6 +135,8 @@ pub struct ChatSession {
     pub uuid: String,
     pub time: String,
     pub prompt: String,
+    pub mcp_config: String,
+    pub prompt_type: PromptType,
     pub histories: Vec<ChatEntry>,
 }
 
@@ -150,5 +154,47 @@ impl From<UIChatSession> for ChatHistory {
                 .into(),
             ..Default::default()
         }
+    }
+}
+
+impl Serialize for PromptType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            PromptType::Normal => serializer.serialize_str("Normal"),
+            PromptType::MCP => serializer.serialize_str("MCP"),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for PromptType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct PromptTypeVisitor;
+
+        impl<'de> Visitor<'de> for PromptTypeVisitor {
+            type Value = PromptType;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a string representing PromptType ('Normal' or 'MCP')")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<PromptType, E>
+            where
+                E: de::Error,
+            {
+                match value {
+                    "Normal" => Ok(PromptType::Normal),
+                    "MCP" => Ok(PromptType::MCP),
+                    _ => Err(E::custom(format!("unknown PromptType variant: {}", value))),
+                }
+            }
+        }
+
+        deserializer.deserialize_str(PromptTypeVisitor)
     }
 }

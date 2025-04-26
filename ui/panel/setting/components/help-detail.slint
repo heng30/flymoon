@@ -67,8 +67,14 @@ component SettingHelp inherits VerticalLayout {
             contents: [
                 "1. 在对话输入框中输入'@'后会弹出提示面板",
                 "2. 提问格式：'@' + 提示快捷键 + 空格 + 问题",
-                "3. 每次使用MCP服务时都需要使用'@'方式来调用",
-                "4. 启动程序时，不会自动启动MCP服务。为了节约资源，只有在第一次调用时才会启动，并一直运行"
+                "3. 启动程序时，不会自动启动MCP服务。为了节约资源，只有在第一次调用时才会启动，并一直运行"
+            ],
+        },
+        {
+            title: "MCP服务配置格式？",
+            picture: @image-url("../../../images-help/mcp-config.png"),
+            contents: [
+                "支持claude MCP服务的配置格式",
             ],
         },
         {
@@ -151,8 +157,14 @@ component SettingHelp inherits VerticalLayout {
             contents: [
                 "1. A prompt panel will appear when you type '@' in the chat input box",
                 "2. Question format: '@' + prompt shortcut + space + question",
-                "3. You'll need to use the '@' method to invoke MCP service each time",
-                "4. The MCP service doesn't start automatically when launching the program. To save resources, it only starts during the first invocation and keeps running thereafter"
+                "3. The MCP service doesn't start automatically when launching the program. To save resources, it only starts during the first invocation and keeps running thereafter"
+            ],
+        },
+        {
+            title: "MCP Service Configuration Format?",
+            picture: @image-url("../../../images-help/mcp-config.png"),
+            contents: [
+                "Supported configuration format for Claude MCP service",
             ],
         },
         {
