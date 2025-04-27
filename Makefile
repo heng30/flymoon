@@ -92,6 +92,10 @@ slint-viewer-desktop:
 slint-viewer-web:
 	$(web-build-env) slint-viewer --auto-reload -I ui ./ui/web-window.slint
 
+deb:
+	cd ./pkg/deb && ./create_deb.sh
+	mv ./pkg/deb/flymoon.deb ./target
+
 test:
 	$(build-env) $(run-env) cargo test -- --nocapture
 

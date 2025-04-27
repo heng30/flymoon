@@ -61,6 +61,9 @@ pub struct MCPEntry {
     pub name: String,
     pub shortcut: String,
     pub config: String,
+
+    #[serde(default = "mcp_default_temperature")]
+    pub temperature: f32,
 }
 
 impl From<UIMCPEntry> for MCPEntry {
@@ -70,6 +73,7 @@ impl From<UIMCPEntry> for MCPEntry {
             name: entry.name.into(),
             shortcut: entry.shortcut.into(),
             config: entry.config.into(),
+            temperature: entry.temperature,
         }
     }
 }
@@ -81,6 +85,7 @@ impl From<MCPEntry> for UIMCPEntry {
             name: entry.name.into(),
             shortcut: entry.shortcut.into(),
             config: entry.config.into(),
+            temperature: entry.temperature,
             ..Default::default()
         }
     }
@@ -197,4 +202,8 @@ impl<'de> Deserialize<'de> for PromptType {
 
         deserializer.deserialize_str(PromptTypeVisitor)
     }
+}
+
+fn mcp_default_temperature() -> f32 {
+    return 0.7;
 }

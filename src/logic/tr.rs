@@ -242,6 +242,7 @@ pub fn tr(text: &str) -> String {
         ("Get MCP server prompt failed", "获取MCP工具提示词失败"),
         ("MCP server tool call failed", "调用MCP服务工具失败"),
         ("MCP server tool not found", "没有找到MCP服务工具"),
+        ("Copy latest bot responsing contents", "复制最新的机器人回复内容"),
     ]);
 
     if let Some(txt) = items.get(text) {

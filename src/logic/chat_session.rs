@@ -235,6 +235,21 @@ pub fn init(ui: &AppWindow) {
         });
 
     let ui_handle = ui.as_weak();
+    ui.global::<Logic>().on_copy_last_bot_text(move || {
+        let ui = ui_handle.unwrap();
+        let index = store_current_chat_session_histories!(ui).row_count();
+        if index <= 0 {
+            return;
+        }
+
+        let entry = store_current_chat_session_histories!(ui)
+            .row_data(index - 1)
+            .unwrap();
+
+        ui.global::<Logic>().invoke_copy_to_clipboard(entry.bot);
+    });
+
+    let ui_handle = ui.as_weak();
     ui.global::<Logic>().on_remove_question(move |index| {
         let ui = ui_handle.unwrap();
         store_current_chat_session_histories!(ui).remove(index as usize);
@@ -303,7 +318,6 @@ fn parse_prompt(
                 session.prompt = entry.detail.clone();
                 session.prompt_type = PromptType::Normal;
                 ui.global::<Store>().set_current_chat_session(session);
-
                 return (entry.detail, question, Some(entry.temperature));
             }
         } else if question.starts_with("@") {
@@ -319,7 +333,7 @@ fn parse_prompt(
                 session.prompt_type = PromptType::MCP;
                 session.mcp_config = entry.config;
                 ui.global::<Store>().set_current_chat_session(session);
-                return (Default::default(), question, Some(0.7));
+                return (Default::default(), question, Some(entry.temperature));
             }
         }
     }
@@ -328,8 +342,6 @@ fn parse_prompt(
 }
 
 fn stream_text(id: u64, item: StreamTextItem) {
-    // log::debug!("{item:?}");
-
     if id != item.id {
         return;
     }
@@ -898,9 +910,7 @@ fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
                 .bot
                 .push_str(&format!("\n## Tool {} response text\n", &name));
 
-            entry
-                .bot
-                .push_str(&response_text.unwrap());
+            entry.bot.push_str(&response_text.unwrap());
         }
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);

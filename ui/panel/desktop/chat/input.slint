@@ -131,8 +131,11 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "d") {
                                         toggle-current-model-name();
                                         return accept;
-                                    } else if (event.text == "y") {
+                                    } else if (event.text == "w") {
                                         toggle-search-webpages();
+                                        return accept;
+                                    } else if (event.text == "y") {
+                                        Logic.copy-last-bot-text();
                                         return accept;
                                     } else if (event.text == "m") {
                                         Store.is-toggle-bot-markdown = !Store.is-toggle-bot-markdown;

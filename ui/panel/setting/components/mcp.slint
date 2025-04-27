@@ -203,6 +203,7 @@ component mcpEdit inherits SettingDetail {
             name: name-lineedit.text,
             shortcut: shortcut-lineedit.text,
             config: detail-txtedit.text,
+            temperature: temperature-select.current-value.to-float(),
         };
     }
 
@@ -210,6 +211,7 @@ component mcpEdit inherits SettingDetail {
         name-lineedit.text = setting.name;
         shortcut-lineedit.text = setting.shortcut;
         detail-txtedit.text = setting.config;
+        temperature-select.current-value = setting.temperature;
     }
 
     init => {
@@ -250,6 +252,38 @@ component mcpEdit inherits SettingDetail {
 
             shortcut-lineedit := LineInput {
                 placeholder-text: Logic.tr("shortcut");
+            }
+        }
+
+        SettingDetailInnerVbox {
+            SettingDetailLabel {
+                text: Logic.tr("Temperature");
+            }
+
+            temperature-select := Select {
+                values: [
+                    0,
+                    0.1,
+                    0.2,
+                    0.3,
+                    0.4,
+                    0.5,
+                    0.6,
+                    0.7,
+                    0.8,
+                    0.9,
+                    1.0,
+                    1.2,
+                    1.3,
+                    1.4,
+                    1.5,
+                    1.6,
+                    1.7,
+                    1.8,
+                    1.9,
+                    2.0
+                ];
+                current-value: self.values[7];
             }
         }
 

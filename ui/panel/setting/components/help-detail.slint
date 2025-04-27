@@ -72,6 +72,7 @@ component SettingHelp inherits VerticalLayout {
         },
         {
             title: "MCP服务配置格式？",
+            title-link: "https://mcpservers.org/",
             picture: @image-url("../../../images-help/mcp-config.png"),
             contents: [
                 "支持claude MCP服务的配置格式",
@@ -162,6 +163,7 @@ component SettingHelp inherits VerticalLayout {
         },
         {
             title: "MCP Service Configuration Format?",
+            title-link: "https://mcpservers.org/",
             picture: @image-url("../../../images-help/mcp-config.png"),
             contents: [
                 "Supported configuration format for Claude MCP service",
@@ -233,8 +235,12 @@ component ShortcutsHelp inherits VerticalLayout {
             detail: Logic.tr("Toggle reasoner model"),
         },
         {
-            shortcut: "Ctrl + Y",
+            shortcut: "Ctrl + W",
             detail: Logic.tr("Toggle network searching"),
+        },
+        {
+            shortcut: "Ctrl + Y",
+            detail: Logic.tr("Copy latest bot responsing contents"),
         },
         {
             shortcut: "Ctrl + Q",
