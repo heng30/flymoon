@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 icon_name="brand.png"
 icon_dir="../../ui/images"

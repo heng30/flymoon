@@ -93,7 +93,7 @@ slint-viewer-web:
 	$(web-build-env) slint-viewer --auto-reload -I ui ./ui/web-window.slint
 
 deb:
-	cd ./pkg/deb && ./create_deb.sh
+	cd ./pkg/deb && bash -e "./create_deb.sh"
 	mv ./pkg/deb/$(app-name).deb ./target
 
 test:
