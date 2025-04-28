@@ -238,22 +238,6 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
                 .push(md_elems[rows + i].clone().into());
         }
     }
-
-    // update link_urls
-    // let rows = store_current_chat_session_histories_link_urls!(last_entry).row_count();
-    // if rows == 0 || rows > link_urls.len() {
-    //     let urls = link_urls
-    //         .into_iter()
-    //         .map(|item| item.into())
-    //         .collect::<Vec<_>>();
-    //     store_current_chat_session_histories_link_urls!(last_entry).set_vec(urls);
-    // } else {
-    //     let offset = link_urls.len() - rows;
-    //     for i in 0..offset {
-    //         store_current_chat_session_histories_link_urls!(last_entry)
-    //             .push(link_urls[rows + i].clone().into());
-    //     }
-    // }
 }
 
 pub fn parse_last_history_bot_text(ui: &AppWindow) {

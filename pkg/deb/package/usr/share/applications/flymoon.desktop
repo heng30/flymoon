@@ -1,9 +1,10 @@
 [Desktop Entry]
 Name=flymoon
 Exec=/usr/local/bin/flymoon
-Icon=flymoon.png
+Icon=flymoon
 Terminal=false
 Type=Application
 Categories=Utility;Development;
+StartupNotify=true
 StartupWMClass=flymoon
-Comment=Description:This is a large language model chat client built with Rust and Slint GUI, compatible with OpenAI's API.
+Comment=Description: This is a large language model chat client built with Rust and Slint GUI, compatible with OpenAI's API.

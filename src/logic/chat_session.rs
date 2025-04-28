@@ -909,8 +909,8 @@ fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
             entry
                 .bot
                 .push_str(&format!("\n## Tool {} response text\n", &name));
-
             entry.bot.push_str(&response_text.unwrap());
+            entry.bot.push_str("\n");
         }
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
