@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 app_name="flymoon"
 icon_name="brand.png"
@@ -14,7 +14,7 @@ chmod a+x ${bin_dir}/${app_name}
 
 for size in "${sizes[@]}"; do
     mkdir -p ./package/usr/share/icons/hicolor/${size}/apps
-    magick "${icon_dir}/${icon_name}" -resize "$size" -background none -gravity center -extent "$size" "./package/usr/share/icons/hicolor/${size}/apps/${dst_icon_name}"
+    convert "${icon_dir}/${icon_name}" -resize "$size" -background none -gravity center -extent "$size" "./package/usr/share/icons/hicolor/${size}/apps/${dst_icon_name}"
 done
 
 dpkg-deb --build package ${app_name}.deb
