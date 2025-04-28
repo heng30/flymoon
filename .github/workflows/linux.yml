@@ -46,7 +46,7 @@ jobs:
           tar -zcf $output $binary_name
           echo "ASSET=$output" >> $GITHUB_ENV
           deb_output="$binary_name-${{ env.VERSION }}-x86_64-linux.deb"
-          cp -rf target/release/$binary_name.deb $deb_output
+          cp -rf target/$binary_name.deb $deb_output
           echo "DEB_ASSET=$deb_output" >> $GITHUB_ENV
       - run: echo "end packing..."
 
