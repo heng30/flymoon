@@ -94,7 +94,7 @@ slint-viewer-web:
 
 deb:
 	cd ./pkg/deb && ./create_deb.sh
-	mv ./pkg/deb/flymoon.deb ./target
+	mv ./pkg/deb/$(app-name).deb ./target
 
 test:
 	$(build-env) $(run-env) cargo test -- --nocapture
