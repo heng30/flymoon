@@ -21,7 +21,7 @@ component RightPanel inherits Rectangle {
         is-show-header: false;
 
         confirmed => {
-            if (self.get().font-size.is_empty|| self.get().win-width.is_empty || self.get().win-height.is_empty) {
+            if (self.get().font-size.is_empty || self.get().win-width.is_empty || self.get().win-height.is_empty) {
                 Util.show-toast(Logic.tr("Input can not be empty"), ToastStatus.Warning);
                 return;
             }
@@ -139,7 +139,7 @@ export component HelpDialog inherits Dialog {
         height: root.inner-height;
         is-show-header: false;
 
-        HelpDetail {}
+        HelpDetail { }
     }
 
     cancel-clicked => {

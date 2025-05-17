@@ -8,6 +8,7 @@
 </div>
 
 [English Documentation](./README.md)
+[视频介绍](https://www.bilibili.com/video/BV1i7G2z6ELL)
 
 ### 简介
 这是一个基于Rust和Slint GUI构建的大语言模型聊天客户端，兼容OpenAI的API。

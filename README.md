@@ -8,6 +8,7 @@
 </div>
 
 [中文文档](./README.zh-CN.md)
+[video](https://youtu.be/cDYzmzq-LKw)
 
 ### Introduction
 This is a large language model chat client built with Rust and Slint GUI, compatible with OpenAI's API.
