@@ -67,7 +67,7 @@ embed-resource = "2.4"
 [profile.release]
 codegen-units = 1
 opt-level = "z"
-panic = "abort"
+# panic = "abort" # no work for html2md crate
 strip = true
 lto = true
 
