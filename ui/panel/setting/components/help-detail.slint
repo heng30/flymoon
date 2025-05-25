@@ -34,7 +34,7 @@ component SettingHelp inherits VerticalLayout {
             contents: [
                 "1. 「CX」是谷歌搜索ID，需要自己创建",
                 "2. 「链接数量」是每次进行搜索的网页数量，最高支持10个网页",
-                "启用网络搜索后，会先使用谷歌搜索引擎进行搜索。然后下载网页，并对网页进行分析，获取所有<p>标签的内容。从而避免发送大量Html标签给大语言模型，也能减少Token消耗。"
+                "启用网络搜索后，会先使用谷歌搜索引擎进行搜索。然后下载网页，并将网页转换为Markdown。从而避免发送大量Html标签给大语言模型，也能减少Token消耗。"
             ],
         },
         {
@@ -126,7 +126,7 @@ component SettingHelp inherits VerticalLayout {
             contents: [
                 "1. 「CX」 is the Google Search ID, which you need to create yourself",
                 "2. 「Link number」 is the number of web pages searched per query, with a maximum of 10 pages",
-                "When web search is enabled, the Google search engine will be used first. The web pages will then be downloaded and analyzed to extract all <p> tag content. This avoids sending excessive HTML tags to the large language model and reduces token consumption."
+                "When web search is enabled, the Google search engine will be used first. The web pages will then be downloaded and converted to Markdown. This avoids sending excessive HTML tags to the large language model and reduces token consumption."
             ],
         },
         {
