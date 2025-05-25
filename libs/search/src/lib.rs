@@ -1,6 +1,7 @@
 use anyhow::Result;
 use cutil::{http, reqwest};
-use scraper::{Html, Selector};
+use html2md::parse_html;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 pub mod google;
@@ -30,22 +31,21 @@ async fn req_link(link: &str) -> Result<Option<String>> {
         .text()
         .await
     {
-        let document = Html::parse_document(&html_content);
-
-        if let Ok(p_selector) = Selector::parse("p") {
-            let mut contents = String::default();
-
-            for element in document.select(&p_selector) {
-                contents.push_str(&element.text().collect::<String>());
-            }
-
-            let contents: String = contents.split_whitespace().collect::<Vec<&str>>().join(" ");
-
-            if !contents.is_empty() {
-                return Ok(Some(contents));
-            }
+        let filtered_html = strip_tags(&html_content, &["script"]);
+        let md_contents = parse_html(&filtered_html);
+        if !md_contents.is_empty() {
+            return Ok(Some(md_contents));
         }
     }
 
     Ok(None)
+}
+
+fn strip_tags(html: &str, tags: &[&str]) -> String {
+    let mut processed_html = html.to_string();
+    for tag in tags {
+        let re = Regex::new(&format!(r"(?is)<{}.*?>.*?</{}>", tag, tag)).unwrap();
+        processed_html = re.replace_all(&processed_html, "").to_string();
+    }
+    processed_html
 }

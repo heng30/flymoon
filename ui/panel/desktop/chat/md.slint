@@ -48,8 +48,10 @@ component MdListItem inherits HorizontalLayout {
         Rectangle {
             width: Theme.default-font-size / 2;
             height: self.width;
-            border-radius: self.width / 2;
-            background: txt.color;
+            border-color: txt.color;
+            border-radius: entry.level < 3 ? self.width / 2 : 2px;
+            border-width: entry.level == 2 ? Theme.default-border-width * 2 : 0;
+            background: entry.level == 2 ? Colors.transparent : txt.color;
         }
     }
 

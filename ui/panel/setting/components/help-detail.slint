@@ -14,7 +14,8 @@ component SettingHelp inherits VerticalLayout {
                 "1. 支持聊天和深度思考两种聊天模式",
                 "2. 支持联网谷歌搜索",
                 "3. 自动保存历史聊天记录",
-                "4. 自定义系统提示词"
+                "4. 自定义系统提示词",
+                "5. 支持MCP服务"
             ],
         },
         {
@@ -105,7 +106,8 @@ component SettingHelp inherits VerticalLayout {
                 "1. Supports both chat and deep thinking modes",
                 "2. Supports online Google search",
                 "3. Automatically saves chat history",
-                "4. Customizable system prompts"
+                "4. Customizable system prompts",
+                "5. Supports MCP service"
             ],
         },
         {
@@ -322,13 +324,11 @@ component ShortcutsHelp inherits VerticalLayout {
     }
 }
 
-export component HelpDetail inherits Flickable {
-    VerticalLayout {
-        spacing: Theme.spacing * 4;
-        padding: Theme.padding * 2;
+export component HelpDetail inherits VerticalLayout {
+    spacing: Theme.spacing * 4;
+    padding: Theme.padding * 2;
 
-        SettingHelp { }
+    SettingHelp { }
 
-        ShortcutsHelp { }
-    }
+    ShortcutsHelp { }
 }
