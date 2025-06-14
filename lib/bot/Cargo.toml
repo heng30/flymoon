@@ -1,0 +1,23 @@
+[package]
+name = "bot"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+log.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+tokio-stream.workspace = true
+env_logger = { workspace = true, optional = true }
+serde = { workspace = true, features = ["serde_derive"] }
+cutil = { workspace = true, features = ["default", "http"] }
+tokio = { workspace = true, features = ["full"], optional = true }
+
+[features]
+default = []
+test-bot = ["dep:env_logger", "dep:tokio"]
+
+[[bin]]
+name = "bot"
+path = "./bin/main.rs"
+required-features = ["test-bot"]
