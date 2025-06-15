@@ -8,57 +8,48 @@ version=`git describe --tags --abbrev=0`
 build-env=
 android-build-env=SLINT_STYLE=material $(build-env)
 desktop-build-env=SLINT_STYLE=fluent $(build-env)
-web-build-env=SLINT_STYLE=fluent $(build-env)
-# desktop-build-debug-env=SLINT_BACKEND=qt
+web-build-env=SLINT_STYLE=fluent $(build-env) RUSTFLAGS='--cfg getrandom_backend="wasm_js"'
 
-run-env=RUST_LOG="info,sqlx=off,reqwest=off,scraper=off"
+run-env=RUST_LOG=debug,reqwest=warn,sqlx=warn
 
 all: desktop-build-release
 
 android-build:
-	$(android-build-env) cargo apk build --lib --features=android
+	$(android-build-env) cargo apk build --lib -p ${app-name} --features=android
 
 android-build-release:
-	$(android-build-env) cargo apk build --lib --release --features=android
+	$(android-build-env) cargo apk build --lib --release -p ${app-name} --features=android
 
 android-debug:
-	$(android-build-env) $(run-env) cargo apk run --lib --features=android
+	$(android-build-env) $(run-env) cargo apk run --lib -p ${app-name} --features=android
 
 desktop-build-debug:
-	$(desktop-build-debug-env) $(desktop-build-env) cargo build --features=desktop
+	$(desktop-build-env) cargo build --features=desktop
 
 desktop-build-release:
 	$(desktop-build-env) cargo build --release --features=desktop
 
-desktop-build-debug-nixos:
-	nix-shell --run "$(desktop-build-debug-env) $(desktop-build-env) cargo build --features=desktop"
-
-desktop-build-release-nixos:
-	nix-shell --run "$(desktop-build-env) cargo build --release --features=desktop"
-
 desktop-debug:
-	$(desktop-build-debug-env) $(desktop-build-env) $(run-env) cargo run --features=desktop
-
-desktop-debug-nixos-wayland:
-	nix-shell wayland-shell.nix --run "$(desktop-build-debug-env) $(desktop-build-env) cargo run --features=desktop"
+	$(desktop-build-env) $(run-env) cargo run --features=desktop
 
 web-build-debug:
-	$(web-build-env) wasm-pack build --target web --out-dir ./web/pkg --features=web
+	cd $(app-name) && $(web-build-env) wasm-pack build --no-opt --dev --target web --out-dir ./web/pkg --features=web
 
+# `--no-opt`: disable wasm-opt. Because wasm-opt can't work on rutc-1.87.0
 web-build-release:
-	$(web-build-env) wasm-pack build --release --target web --out-dir ./web/pkg --features=web
+	cd $(app-name) && $(web-build-env) wasm-pack build --no-opt --release --target web --out-dir ./web/pkg --features=web
 
+# `--no-opt`: disable wasm-opt. Because wasm-opt can't work on rutc-1.87.0
 web-build-dist:
 	- rm -rf ./web/dist/*
-	$(web-build-env) wasm-pack build --release --target web --out-dir ./web/dist/pkg --features=web
-	cp -f ./web/index.html ./web/dist
-	cp -f ./ui/images/brand.png ./web/dist/pkg/favicon.png
+	cd $(app-name) && $(web-build-env) wasm-pack build --no-opt --release --target web --out-dir ./web/dist/pkg --features=web
+	cd $(app-name) && cp -f ./web/index.html ./web/dist && cp -f ./ui/images/brand.png ./web/dist/pkg/favicon.png
 
 web-server:
-	python3 -m http.server -d web 8000
+	cd $(app-name) && python3 -m http.server -d web 8000
 
 web-server-dist:
-	python3 -m http.server -d web/dist 8800
+	cd $(app-name) && python3 -m http.server -d web/dist 8800
 
 packing-android:
 	cp -f target/release/apk/${app-name}.apk target/${app-name}-${version}-aarch64-linux-android.apk
@@ -77,30 +68,32 @@ packing-darwin:
 	echo "${app-name}-${version}-x86_64-darwin" > target/output-name
 
 packing-web:
-	tar -zcf target/$(app-name)-$(version)-web.tar.gz web/dist
+	tar -zcf target/$(app-name)-$(version)-web.tar.gz ${app-name}/web/dist
 	echo "$(app-name)-$(version)-web.tar.gz" > target/output-name
 
 reduce-linux-binary-size:
 	upx -9 target/release/$(app-name)
 
 slint-viewer-android:
-	$(android-build-env) slint-viewer --auto-reload -I ui ./ui/android-window.slint
+	$(android-build-env) slint-viewer --auto-reload -I $(app-name)/ui ${app-name}/ui/android-window.slint
 
 slint-viewer-desktop:
-	$(desktop-build-env) slint-viewer --auto-reload -I ui ./ui/desktop-window.slint
+	$(desktop-build-env) slint-viewer --auto-reload -I $(app-name)/ui ${app-name}/ui/desktop-window.slint
 
 slint-viewer-web:
-	$(web-build-env) slint-viewer --auto-reload -I ui ./ui/web-window.slint
+	$(web-build-env) slint-viewer --auto-reload -I $(app-name)/ui ${app-name}/ui/web-window.slint
 
-deb:
-	cd ./pkg/deb && bash -ef "./create_deb.sh"
-	mv ./pkg/deb/$(app-name).deb ./target
+nix-shell:
+	nix-shell
 
 test:
 	$(build-env) $(run-env) cargo test -- --nocapture
 
 clippy:
 	cargo clippy
+
+outdated:
+	cargo outdated
 
 clean-incremental:
 	rm -rf ./target/debug/incremental
@@ -112,12 +105,14 @@ clean-unused-dependences:
 clean:
 	cargo clean
 
+deb:
+	cd ./${app-name}/pkg/deb && bash -e "./create_deb.sh"
+	mv ./${app-name}/pkg/deb/$(app-name).deb ./target
+
 app-name:
 	- mkdir -p target
 	echo "$(app-name)" > target/app-name
 
 get-font-name:
-	fc-scan ./ui/fonts/SourceHanSerifCN.ttf | grep fullname
+	fc-scan ./${app-name}/ui/fonts/*.{ttf,otf} | grep "fullname:"
 
-outdated:
-	cargo outdated

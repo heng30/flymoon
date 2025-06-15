@@ -1,0 +1,22 @@
+[package]
+name = "cutil"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+hex.workspace = true
+rand.workspace = true
+bytes.workspace = true
+chrono.workspace = true
+anyhow.workspace = true
+aes = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
+crypto-hash = { workspace = true, optional = true }
+
+[features]
+default = []
+time = []
+full = ["default", "time", "http", "crypto"]
+native-tls-vendored = ["reqwest/native-tls-vendored"]
+http = ["reqwest/json", "reqwest/socks", "reqwest/stream"]
+crypto = ["dep:aes", "dep:crypto-hash"]

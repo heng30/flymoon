@@ -1,0 +1,11 @@
+[package]
+name = "dummy_markdown"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+log.workspace = true
+pulldown-cmark.workspace = true
+
+[dev-dependencies]
+env_logger.workspace = true
