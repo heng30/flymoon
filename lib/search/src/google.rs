@@ -1,4 +1,4 @@
-use super::{SearchItem, SearchLink, req_link};
+use super::{req_link, SearchItem, SearchLink};
 use anyhow::Result;
 use cutil::reqwest;
 use serde::Deserialize;
@@ -72,7 +72,7 @@ pub async fn search(query: &str, config: Config) -> Result<(Option<String>, Vec<
 
     drop(sender);
 
-    if let Some(item) = receiver.recv().await {
+    while let Some(item) = receiver.recv().await {
         bris.push(item);
     }
 

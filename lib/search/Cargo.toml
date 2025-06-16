@@ -5,9 +5,10 @@ edition.workspace = true
 
 [dependencies]
 log.workspace = true
-regex.workspace = true
 anyhow.workspace = true
-html2md.workspace = true
+scraper.workspace = true
+html5ever.workspace = true
+html2text.workspace = true
 serde_json.workspace = true
 urlencoding.workspace = true
 tokio = { workspace = true, features = ["full"] }
