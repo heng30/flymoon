@@ -1,7 +1,7 @@
 [workspace]
 exclude = []
 resolver = "2"
-members = ["flymoon/", "lib/*"]
+members = ["flymoon", "lib/*"]
 
 [workspace.package]
 license = "MIT"

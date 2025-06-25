@@ -146,6 +146,12 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "/") {
                                         Logic.clear-current-chat-session-prompt();
                                         return accept;
+                                    } else if (event.text == "-") {
+                                        Logic.decrease-font-size();
+                                        return accept;
+                                    } else if (event.text == "=") {
+                                        Logic.increase-font-size();
+                                        return accept;
                                     }
                                 }
                                 return reject;

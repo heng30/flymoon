@@ -16,6 +16,9 @@ export global Logic {
     callback get-setting-model() -> SettingModel;
     callback set-setting-model(SettingModel);
 
+    callback increase-font-size();
+    callback decrease-font-size();
+
     pure callback inner-tr(bool, string) -> string;
     inner-tr(is-cn, text) => {
         return text;
