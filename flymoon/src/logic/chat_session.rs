@@ -3,7 +3,7 @@ use crate::{
     config::{data::Model as SettingModel, model as setting_model},
     db::{
         self,
-        def::{CHAT_SESSION_TABLE as DB_TABLE, ChatEntry, ChatSession},
+        def::{ChatEntry, ChatSession, CHAT_SESSION_TABLE as DB_TABLE},
     },
     slint_generatedAppWindow::{
         AppWindow, ChatEntry as UIChatEntry, ChatPhase, ChatSession as UIChatSession, Logic,
@@ -13,17 +13,16 @@ use crate::{
     store_mcp_entries, store_prompt_entries, toast_success, toast_warn,
 };
 use bot::openai::{
-    Chat,
     request::{APIConfig as ChatAPIConfig, HistoryChat},
     response::StreamTextItem,
+    Chat,
 };
 use cutil::time::chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::sync::{
-    Arc, Mutex,
     atomic::{AtomicU64, Ordering},
-    mpsc,
+    mpsc, Arc, Mutex,
 };
 use uuid::Uuid;
 
@@ -394,11 +393,12 @@ fn stream_text(id: u64, item: StreamTextItem) {
         }
 
         let chat_phase = ui.global::<Store>().get_chat_phase();
-        if chat_phase != ChatPhase::Chatting && chat_phase != ChatPhase::MCP {
-            ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
-        }
 
         if item.reasoning_text.is_some() {
+            if chat_phase != ChatPhase::Chatting && chat_phase != ChatPhase::MCP {
+                ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
+            }
+
             let rows = store_current_chat_session_histories!(ui).row_count();
             if rows <= 0 {
                 return;
@@ -433,6 +433,10 @@ fn stream_text(id: u64, item: StreamTextItem) {
             store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
 
             if md::need_parse_stream_bot_text(&ui) {
+                if chat_phase != ChatPhase::Chatting && chat_phase != ChatPhase::MCP {
+                    ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
+                }
+
                 md::parse_stream_bot_text(&ui);
             }
         }
