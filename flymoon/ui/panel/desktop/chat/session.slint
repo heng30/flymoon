@@ -1,7 +1,7 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
 import { ChatEntry, ChatPhase } from "../../../store.slint";
-import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading } from "../../../base/widgets.slint";
+import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading, Skeleton, SkeletonType } from "../../../base/widgets.slint";
 
 import { MdDetail } from "md.slint";
 
@@ -142,9 +142,8 @@ component LoadingTip inherits VerticalLayout {
     in-out property loading-text <=> ld.loading-text;
     in-out property colorize <=> ld.colorize;
 
-    padding-top: Theme.padding * 4;
-    padding-bottom: Theme.padding * 4;
-    height: 150px;
+    padding-top: Theme.padding * 2;
+    padding-bottom: Theme.padding * 2;
 
     ld := Loading { }
 }
@@ -325,19 +324,34 @@ export component Session inherits Rectangle {
                 text: entry.bot;
             }
 
-            if is-last-index && Store.chat-phase == ChatPhase.MCP: LoadingTip {
-                loading-text: Logic.tr("Calling...");
-                colorize: Theme.warning-color;
-            }
+            if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
+                width: lv.width;
+                height: 300px;
 
-            if is-last-index && Store.chat-phase == ChatPhase.Searching: LoadingTip {
-                loading-text: Logic.tr("Searching...");
-                colorize: Theme.warning-color;
-            }
+                sk := Skeleton {
+                    width: parent.width;
+                    height: parent.height;
+                    type: SkeletonType.Content;
+                }
 
-            if is-last-index && Store.chat-phase == ChatPhase.Thinking: LoadingTip {
-                loading-text: Logic.tr("Thinking...");
-                colorize: Theme.thirdly-brand-color;
+                VerticalLayout {
+                    alignment: LayoutAlignment.start;
+
+                    if Store.chat-phase == ChatPhase.MCP: LoadingTip {
+                        loading-text: Logic.tr("Calling...");
+                        colorize: Theme.warning-color;
+                    }
+
+                    if Store.chat-phase == ChatPhase.Searching: LoadingTip {
+                        loading-text: Logic.tr("Searching...");
+                        colorize: Theme.warning-color;
+                    }
+
+                    if Store.chat-phase == ChatPhase.Thinking: LoadingTip {
+                        loading-text: Logic.tr("Thinking...");
+                        colorize: Theme.thirdly-brand-color;
+                    }
+                }
             }
         }
     }
