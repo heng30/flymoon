@@ -148,7 +148,7 @@ component MdTable inherits VerticalLayout {
                     spacing: Theme.spacing * 2;
 
                     property <length> mean-column-width: (self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing) / Math.max(1, table.head.length);
-                    property <length> first-column-width: Math.min((self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing) * 0.33, mean-column-width);
+                    property <length> first-column-width: Math.min((self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing) * 0.25, mean-column-width);
                     property <length> other-column-width: (self.width - self.padding * 2 - (table.head.length - 1) * head-hbox.spacing - first-column-width) / Math.max(1, table.head.length - 1);
 
                     for htext[index] in table.head: MdTableCell {
