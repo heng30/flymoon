@@ -1,7 +1,7 @@
 use crate::slint_generatedAppWindow::{
     AppWindow, ChatEntry as UIChatEntry, Logic, MdElement as UIMdElement,
     MdElementType as UIMdElementType, MdHeading as UIMdHeading, MdImage as UIMdImage,
-    MdListItem as UIMdListItem, MdTable as UIMdTable, MdUrl as UIMdUrl, Store,
+    MdListItem as UIMdListItem, MdMath as UIMdMath, MdTable as UIMdTable, MdUrl as UIMdUrl, Store,
 };
 use crate::{config::cache_dir, store_current_chat_session_histories};
 use cutil::{crypto, http};
@@ -44,6 +44,7 @@ impl From<MdElementType> for UIMdElementType {
     fn from(ty: MdElementType) -> Self {
         match ty {
             MdElementType::Text => UIMdElementType::Text,
+            MdElementType::Math => UIMdElementType::Math,
             MdElementType::ImageUrl => UIMdElementType::Image,
             MdElementType::ListItem => UIMdElementType::ListItem,
             MdElementType::Heading => UIMdElementType::Heading,
@@ -77,6 +78,15 @@ impl From<MdListItem> for UIMdListItem {
         UIMdListItem {
             level: entry.level,
             text: entry.text.into(),
+        }
+    }
+}
+
+impl From<String> for UIMdMath {
+    fn from(formula: String) -> Self {
+        UIMdMath {
+            formula: formula.into(),
+            ..Default::default()
         }
     }
 }
@@ -123,6 +133,7 @@ impl From<MdElement> for UIMdElement {
         UIMdElement {
             ty: entry.ty.into(),
             text: entry.text.into(),
+            math: entry.math.into(),
             code_block: entry.code_block.trim().to_string().into(),
             list_item: entry.list_item.into(),
             img: entry.image_url.into(),
@@ -173,6 +184,10 @@ pub fn init(ui: &AppWindow) {
                 }
             });
         });
+
+    // TODO
+    ui.global::<Logic>()
+        .on_render_formula_svg(move |histories_entry_index, index, formula| {});
 }
 
 pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {

@@ -1769,6 +1769,7 @@ dependencies = [
  "env_logger",
  "log",
  "pulldown-cmark",
+ "regex",
 ]
 
 [[package]]

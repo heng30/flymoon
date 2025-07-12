@@ -4,6 +4,7 @@ pub mod parser;
 pub enum MdElementType {
     #[default]
     Text,
+    Math,
     ImageUrl,
     ListItem,
     Heading,
@@ -43,6 +44,7 @@ pub struct MdTable {
 pub struct MdElement {
     pub ty: MdElementType,
     pub text: String,
+    pub math: String,
     pub image_url: String,
     pub code_block: String,
     pub list_item: MdListItem,

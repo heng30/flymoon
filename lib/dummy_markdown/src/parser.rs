@@ -1,9 +1,11 @@
 use super::*;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
+use regex::Regex;
 
 #[derive(Debug, Clone)]
 enum MarkdownElement {
     Text(String),
+    Math(String),
     Url(String),
     List(Vec<MarkdownElement>),
     ListItem(Vec<MarkdownElement>),
@@ -30,22 +32,39 @@ struct GenerateMdElemUserData {
 }
 
 pub fn run(doc: &str) -> (Vec<MdElement>, Vec<MdUrl>) {
-    let mut options = Options::empty();
-    options.insert(Options::ENABLE_TABLES);
-    // options.insert(Options::ENABLE_MATH);
+    let mut items = vec![];
+    let mut link_urls = vec![];
 
-    let mut parser = Parser::new_ext(doc, options);
-    let mut elems = parse_events(&mut parser);
-    log::trace!("{:#?}", elems);
-    // println!("{:#?}", elems);
+    for item in split_text_and_latex(doc) {
+        match item {
+            MarkdownElement::Text(text) => {
+                let mut options = Options::empty();
+                options.insert(Options::ENABLE_TABLES);
 
-    let mut ui_elems = vec![];
-    let mut elems_iter = elems.iter_mut();
-    let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> = &mut elems_iter;
-    let mut user_data = GenerateMdElemUserData::default();
-    generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
+                let mut parser = Parser::new_ext(&text, options);
+                let mut elems = parse_events(&mut parser);
+                log::trace!("{:#?}", elems);
+                // println!("{:#?}", elems);
 
-    (ui_elems, user_data.link_urls)
+                let mut ui_elems = vec![];
+                let mut elems_iter = elems.iter_mut();
+                let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
+                    &mut elems_iter;
+                let mut user_data = GenerateMdElemUserData::default();
+                generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
+                items.extend(ui_elems.into_iter());
+                link_urls.extend(user_data.link_urls.into_iter());
+            }
+            MarkdownElement::Math(formula) => items.push(MdElement {
+                ty: MdElementType::Math,
+                math: formula.into(),
+                ..Default::default()
+            }),
+            _ => unreachable!(),
+        }
+    }
+
+    (items, link_urls)
 }
 
 fn heading_level_from(level: &HeadingLevel) -> i32 {
@@ -434,4 +453,44 @@ fn generate_ui_elements(
             _ => (),
         }
     }
+}
+
+fn split_text_and_latex(text: &str) -> Vec<MarkdownElement> {
+    let mut last_end = 0;
+    let mut items = vec![];
+    let re = Regex::new(r"(?s)\\\((.*?)\\\)|\\\[(.*?)\\\]").unwrap();
+
+    for mat in re.find_iter(text) {
+        let start = mat.start();
+
+        // normal text
+        if last_end < start {
+            items.push(MarkdownElement::Text(text[last_end..start].to_string()));
+        }
+
+        // LaTeX
+        let formula = &text[mat.start()..mat.end()];
+        let formula = formula
+            .trim_start_matches("\\(")
+            .trim_end_matches("\\)")
+            .trim()
+            .to_string();
+
+        let formula = formula
+            .trim_start_matches("\\[")
+            .trim_end_matches("\\]")
+            .trim()
+            .to_string();
+
+        items.push(MarkdownElement::Math(formula));
+
+        last_end = mat.end();
+    }
+
+    // last normal text if exist
+    if last_end < text.len() {
+        items.push(MarkdownElement::Text(text[last_end..].to_string()));
+    }
+
+    items
 }
