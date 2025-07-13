@@ -186,6 +186,7 @@ pub fn init(ui: &AppWindow) {
         });
 
     // TODO
+    let ui_handle = ui.as_weak();
     ui.global::<Logic>()
         .on_render_formula_svg(move |histories_entry_index, index, formula| {});
 }
