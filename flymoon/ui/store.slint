@@ -46,6 +46,7 @@ export struct SettingProxy {
 export enum MdElementType {
     Text,
     Image,
+    Math,
     ListItem,
     Heading,
     CodeBlock,
@@ -67,6 +68,12 @@ export struct MdListItem {
     text: string,
 }
 
+export struct MdMath {
+    is-loaded: bool,
+    formula: string,
+    img: image,
+}
+
 export struct MdImage {
     is-loaded: bool,
     url: string,
@@ -84,6 +91,7 @@ export struct MdElement {
     code-block: string,
     list-item: MdListItem,
     img: MdImage,
+    math: MdMath,
     heading: MdHeading,
     table: MdTable,
 }
@@ -336,6 +344,14 @@ export global Store {
                                     "fewji fewjifw ji jiwjfiw jfiwj ifjwefijwefi ",
                                 ],
                             ],
+                        },
+                    },
+                    {
+                        ty: MdElementType.Math,
+                        math:  {
+                            is-loaded: true,
+                            formula: "",
+                            img: @image-url("../ui/images/formula-test.svg"),
                         },
                     },
                     {

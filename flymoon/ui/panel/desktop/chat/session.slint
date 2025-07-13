@@ -325,16 +325,16 @@ export component Session inherits Rectangle {
             }
 
             if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
-                width: lv.width;
-                height: 300px;
+                height: 200px;
 
                 sk := Skeleton {
                     width: parent.width;
                     height: parent.height;
-                    type: SkeletonType.Content;
+                    type: SkeletonType.List;
                 }
 
-                VerticalLayout {
+                // disable
+                if false: VerticalLayout {
                     alignment: LayoutAlignment.start;
 
                     if Store.chat-phase == ChatPhase.MCP: LoadingTip {

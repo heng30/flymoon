@@ -1,7 +1,7 @@
 [workspace]
 exclude = []
 resolver = "2"
-members = ["flymoon", "lib/*"]
+members = ["flymoon", "latex-image", "lib/*"]
 
 [workspace.package]
 license = "MIT"
@@ -15,7 +15,9 @@ repository = "https://github.com/Heng30/flymoon"
 description = "It's a LLM chatbot, compatible with OpenAI's API."
 
 [profile.dev]
-debug = "full"
+lto = false
+debug = false
+opt-level = 0
 incremental = true
 
 [profile.release]
@@ -40,6 +42,7 @@ uuid = "1.16"
 serde = "1.0"
 bytes = "1.10"
 tokio = "1.44"
+regex = "1.11"
 slint = "1.12"
 image = "0.25"
 cfg-if = "1.0"
@@ -70,6 +73,12 @@ embed-resource = "3.0"
 android_logger = "0.15"
 pulldown-cmark = "0.13"
 terminal-clipboard = "0.4"
+
+# latex-image dependencies
+clap = "4.5"
+resvg = "0.45.1"
+tiny-skia = "0.11"
+mathjax_svg = "3.1"
 
 mcp = { path = "lib/mcp" }
 bot = { path = "lib/bot" }

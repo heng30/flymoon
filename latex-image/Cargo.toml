@@ -1,0 +1,15 @@
+[package]
+name = "latex-image"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+resvg.workspace = true
+anyhow.workspace = true
+tiny-skia.workspace = true
+mathjax_svg.workspace = true
+clap = { workspace = true, features = ["derive"] }
+
+[[bin]]
+path = "src/main.rs"
+name = "latex-image"

@@ -1,5 +1,5 @@
 import { Theme, Store, Logic, Icons, Util } from "../../def.slint";
-import { ChatEntry, MdElementType, MdImage, MdElement, MdUrl, MdHeading, MdUrl, MdListItem, MdTable } from "../../../store.slint";
+import { ChatEntry, MdElementType, MdImage, MdMath, MdElement, MdUrl, MdHeading, MdUrl, MdListItem, MdTable } from "../../../store.slint";
 import { IconBtn, Label, Link, ToolTipSetting, ComponentPosition } from "../../../base/widgets.slint";
 import { SearchLink } from "../../../store.slint";
 
@@ -117,6 +117,19 @@ component MdImage inherits HorizontalLayout {
 
     Image {
         source: img.img;
+    }
+}
+
+component MdMath inherits HorizontalLayout {
+    in-out property <MdMath> img;
+
+    padding-bottom: Theme.padding * 4;
+    alignment: LayoutAlignment.center;
+
+    Image {
+        width: Math.min(root.width, self.preferred-width * 2);
+        source: img.img;
+        colorize: Theme.icon-color;
     }
 }
 
@@ -250,6 +263,11 @@ export component MdDetail inherits Rectangle {
                         Logic.download-image(histories-entry-index, index, entry.img.url);
                     }
                 }
+                if (entry.ty == MdElementType.Math) {
+                    if (!entry.img.is-loaded) {
+                        Logic.render-formula-svg(histories-entry-index, index, entry.math.formula);
+                    }
+                }
             }
 
             if entry.ty == MdElementType.Text: MdText {
@@ -271,6 +289,10 @@ export component MdDetail inherits Rectangle {
 
             if entry.ty == MdElementType.CodeBlock: MdCodeBlock {
                 code: entry.code_block;
+            }
+
+            if entry.ty == MdElementType.Math: MdMath {
+                img: entry.math;
             }
 
             if entry.ty == MdElementType.Image && entry.img.is-loaded: MdImage {

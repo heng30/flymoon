@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 log.workspace = true
+regex.workspace = true
 pulldown-cmark.workspace = true
 
 [dev-dependencies]

@@ -11,6 +11,7 @@ cfg-if.workspace = true
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos", target_os = "android"))'.dependencies]
 toml.workspace = true
+duct.workspace = true
 anyhow.workspace = true
 once_cell.workspace = true
 webbrowser.workspace = true
@@ -34,9 +35,6 @@ cutil = { workspace = true, features = ["default", "time"] }
 clipboard.workspace = true
 env_logger.workspace = true
 platform-dirs.workspace = true
-
-[target.'cfg(target_os = "linux")'.dependencies]
-duct.workspace = true
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger.workspace = true
