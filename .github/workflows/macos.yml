@@ -41,6 +41,13 @@ jobs:
           cp -rf target/release/$binary_name $binary_name
           tar -zcf $output $binary_name
           echo "ASSET=$output" >> $GITHUB_ENV
+
+          binary_name=latex-image
+          output="$binary_name-${{ env.VERSION }}-x86_64-darwin.tar.gz"
+          cp -rf target/release/$binary_name $binary_name
+          tar -zcf $output $binary_name
+          echo "LATEX_ASSET=$output" >> $GITHUB_ENV
+
       - run: echo "end packing..."
 
       - name: Upload the package
@@ -49,5 +56,6 @@ jobs:
         with:
           files: |
             ${{ env.ASSET }}
+            ${{ env.LATEX_ASSET }}
 
       - run: echo "🍏 This job's status is ${{ job.status }}."

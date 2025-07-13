@@ -12,7 +12,7 @@ web-build-env=SLINT_STYLE=fluent $(build-env) RUSTFLAGS='--cfg getrandom_backend
 
 run-env=RUST_LOG=debug,reqwest=warn,sqlx=warn
 
-all: desktop-build-release latex-image-build
+all: desktop-build-release latex-image-build-release
 
 android-build:
 	$(android-build-env) cargo apk build --lib -p ${app-name} --features=android
@@ -116,6 +116,6 @@ app-name:
 get-font-name:
 	fc-scan ./${app-name}/ui/fonts/*.{ttf,otf} | grep "fullname:"
 
-latex-image-build:
+latex-image-build-release:
 	cargo build --release --bin latex-image
 
