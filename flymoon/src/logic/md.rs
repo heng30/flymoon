@@ -7,6 +7,7 @@ use crate::{config::cache_dir, store_current_chat_session_histories};
 use cutil::{crypto, http};
 use dummy_markdown::{self, MdElement, MdElementType, MdHeading, MdListItem, MdTable, MdUrl};
 use once_cell::sync::Lazy;
+use once_cell::sync::OnceCell;
 use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, VecModel, Weak};
 use std::{collections::HashMap, sync::Mutex};
 
@@ -185,10 +186,40 @@ pub fn init(ui: &AppWindow) {
             });
         });
 
-    // TODO
     let ui_handle = ui.as_weak();
     ui.global::<Logic>()
-        .on_render_formula_svg(move |histories_entry_index, index, formula| {});
+        .on_render_formula_svg(move |histories_entry_index, index, formula| {
+            let index = index as usize;
+            let histories_entry_index = histories_entry_index as usize;
+
+            let ui = ui_handle.clone();
+            tokio::spawn(async move {
+                let file_path = cache_dir().join(&format!("{}.svg", crypto::hash(&formula)));
+
+                if let Ok(true) = std::fs::exists(&file_path) {
+                    async_load_math(ui, histories_entry_index, index, formula.clone(), file_path);
+                } else {
+                    match duct::cmd!("latex-image", "-f", &formula, "-o", &file_path).read() {
+                        Err(e) => log::warn!(
+                            "latex-image can't render: `{}`. error: {}",
+                            formula,
+                            e.to_string()
+                        ),
+                        Ok(output) => {
+                            log::debug!("{output:?}");
+
+                            async_load_math(
+                                ui,
+                                histories_entry_index,
+                                index,
+                                formula.clone(),
+                                file_path,
+                            );
+                        }
+                    }
+                }
+            });
+        });
 }
 
 pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {
@@ -224,12 +255,12 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
 
     let ((md_elems, _link_urls), _unfinished_text) = {
         if is_end_with_newline {
-            (dummy_markdown::parser::run(bot_text), "")
+            (dummy_markdown::parser::run(bot_text, can_parse_math()), "")
         } else {
             if let Some((before, after)) = bot_text.rsplit_once('\n') {
-                (dummy_markdown::parser::run(before), after)
+                (dummy_markdown::parser::run(before, can_parse_math()), after)
             } else {
-                (dummy_markdown::parser::run(bot_text), "")
+                (dummy_markdown::parser::run(bot_text, can_parse_math()), "")
             }
         }
     };
@@ -271,7 +302,7 @@ pub fn parse_last_history_bot_text(ui: &AppWindow) {
         return;
     }
 
-    let (md_elems, link_urls) = dummy_markdown::parser::run(&entry.bot);
+    let (md_elems, link_urls) = dummy_markdown::parser::run(&entry.bot, can_parse_math());
 
     let elems = md_elems
         .into_iter()
@@ -292,7 +323,7 @@ pub fn parse_histories_bot_text(ui: &AppWindow) {
             continue;
         }
 
-        let (md_elems, link_urls) = dummy_markdown::parser::run(&entry.bot);
+        let (md_elems, link_urls) = dummy_markdown::parser::run(&entry.bot, can_parse_math());
 
         let elems = md_elems
             .into_iter()
@@ -349,4 +380,34 @@ fn async_load_image(
             }
         }
     });
+}
+
+fn async_load_math(
+    ui: Weak<AppWindow>,
+    histories_entry_index: usize,
+    index: usize,
+    formula: SharedString,
+    file_path: std::path::PathBuf,
+) {
+    _ = slint::invoke_from_event_loop(move || {
+        let ui = ui.unwrap();
+
+        if let Some(mut entry) = get_md_entry(&ui, histories_entry_index, index) {
+            if entry.math.formula != formula {
+                return;
+            }
+            if let Ok(img) = Image::load_from_path(&file_path) {
+                entry.math.img = img;
+                entry.math.is_loaded = true;
+                set_md_entry(&ui, histories_entry_index, index, entry);
+            } else {
+                _ = std::fs::remove_file(&file_path);
+            }
+        }
+    });
+}
+
+fn can_parse_math() -> bool {
+    static CACHE: OnceCell<bool> = OnceCell::new();
+    *CACHE.get_or_init(|| duct::cmd!("latex-image", "--version").run().is_ok())
 }

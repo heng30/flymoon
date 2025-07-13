@@ -11,7 +11,7 @@ enum ImgFormat {
 #[derive(Parser, Debug)]
 #[command(
     name = "latex-image",
-    version = "1.0",
+    version = "v1.0.0",
     about = "A tool to render LaTeX math formulas to SVG or PNG",
     long_about = None
 )]
@@ -29,13 +29,17 @@ struct Args {
     #[arg(short = 's', long, default_value_t = 30.0)]
     font_size: f32,
 
-    /// Background color in hex format (e.g. FFFFFF for white)
+    /// Background color in hex format for PNG (e.g. FFFFFF for white)
     #[arg(short = 'b', long, default_value = "transparent")]
     background: String,
 
-    /// Text color in hex format (e.g. 000000 for black)
+    /// Text color in hex format for PNG (e.g. 000000 for black)
     #[arg(short = 'c', long, default_value = "000000")]
     text_color: String,
+
+    /// Padding for PNG
+    #[arg(short = 'p', long, default_value_t = 4)]
+    padding: u32,
 }
 
 fn render_math_to_svg(latex: &str) -> Result<String> {
@@ -52,6 +56,7 @@ fn render_svg_to_png(
     svg_data: &str,
     output_path: &str,
     font_size: f32,
+    padding: u32,
     text_color: &str,
     background: &str,
 ) -> Result<()> {
@@ -63,12 +68,15 @@ fn render_svg_to_png(
         .with_context(|| "Failed to parse SVG data")?;
 
     let pixmap_size = rtree.size().to_int_size();
-    let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height())
-        .with_context(|| "Failed to create pixmap")?;
+    let mut pixmap = tiny_skia::Pixmap::new(
+        pixmap_size.width() + padding * 2,
+        pixmap_size.height() + padding * 2,
+    )
+    .with_context(|| "Failed to create pixmap")?;
 
     render(
         &rtree,
-        tiny_skia::Transform::identity(),
+        tiny_skia::Transform::from_translate(padding as f32, padding as f32),
         &mut pixmap.as_mut(),
     );
 
@@ -157,6 +165,7 @@ fn main() -> Result<()> {
             &svg_data,
             &output,
             args.font_size,
+            args.padding,
             &args.text_color,
             &args.background,
         )?,

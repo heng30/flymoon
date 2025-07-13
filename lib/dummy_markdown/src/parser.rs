@@ -31,37 +31,59 @@ struct GenerateMdElemUserData {
     link_urls: Vec<MdUrl>,
 }
 
-pub fn run(doc: &str) -> (Vec<MdElement>, Vec<MdUrl>) {
+pub fn run(doc: &str, parser_math: bool) -> (Vec<MdElement>, Vec<MdUrl>) {
     let mut items = vec![];
     let mut link_urls = vec![];
 
-    for item in split_text_and_latex(doc) {
-        match item {
-            MarkdownElement::Text(text) => {
-                let mut options = Options::empty();
-                options.insert(Options::ENABLE_TABLES);
+    if parser_math {
+        for item in split_text_and_latex(doc) {
+            match item {
+                MarkdownElement::Text(text) => {
+                    let mut options = Options::empty();
+                    options.insert(Options::ENABLE_TABLES);
 
-                let mut parser = Parser::new_ext(&text, options);
-                let mut elems = parse_events(&mut parser);
-                log::trace!("{:#?}", elems);
-                // println!("{:#?}", elems);
+                    let mut parser = Parser::new_ext(&text, options);
+                    let mut elems = parse_events(&mut parser);
+                    log::trace!("{:#?}", elems);
+                    // println!("{:#?}", elems);
 
-                let mut ui_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-                let mut user_data = GenerateMdElemUserData::default();
-                generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
-                items.extend(ui_elems.into_iter());
-                link_urls.extend(user_data.link_urls.into_iter());
+                    let mut ui_elems = vec![];
+                    let mut elems_iter = elems.iter_mut();
+                    let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
+                        &mut elems_iter;
+                    let mut user_data = GenerateMdElemUserData::default();
+
+                    generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
+
+                    items.extend(ui_elems.into_iter());
+                    link_urls.extend(user_data.link_urls.into_iter());
+                }
+                MarkdownElement::Math(formula) => items.push(MdElement {
+                    ty: MdElementType::Math,
+                    math: formula.into(),
+                    ..Default::default()
+                }),
+                _ => unreachable!(),
             }
-            MarkdownElement::Math(formula) => items.push(MdElement {
-                ty: MdElementType::Math,
-                math: formula.into(),
-                ..Default::default()
-            }),
-            _ => unreachable!(),
         }
+    } else {
+        let mut options = Options::empty();
+        options.insert(Options::ENABLE_TABLES);
+
+        let mut parser = Parser::new_ext(doc, options);
+        let mut elems = parse_events(&mut parser);
+        log::trace!("{:#?}", elems);
+        // println!("{:#?}", elems);
+
+        let mut ui_elems = vec![];
+        let mut elems_iter = elems.iter_mut();
+        let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> = &mut elems_iter;
+        let mut user_data = GenerateMdElemUserData::default();
+
+        generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
+
+        items.extend(ui_elems.into_iter());
+        link_urls.extend(user_data.link_urls.into_iter());
     }
 
     (items, link_urls)
