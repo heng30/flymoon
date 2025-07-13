@@ -49,10 +49,10 @@ jobs:
           cp $output ..
           echo "ASSET=$output" >> $GITHUB_ENV
 
-          deb_output="$binary_name-${{ env.VERSION }}-x86_64-linux.deb"
-          cp -rf $binary_name.deb $deb_output
+          output="$binary_name-${{ env.VERSION }}-x86_64-linux.deb"
+          cp -rf $binary_name.deb $output
           cp $output ..
-          echo "DEB_ASSET=$deb_output" >> $GITHUB_ENV
+          echo "DEB_ASSET=$output" >> $GITHUB_ENV
 
           binary_name=latex-image
           output="$binary_name-${{ env.VERSION }}-x86_64-linux.tar.gz"
