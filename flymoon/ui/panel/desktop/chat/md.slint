@@ -257,19 +257,6 @@ export component MdDetail inherits Rectangle {
         padding-bottom: 0;
 
         for entry[index] in entries: VerticalLayout {
-            init => {
-                if (entry.ty == MdElementType.Image) {
-                    if (!entry.img.is-loaded) {
-                        Logic.download-image(histories-entry-index, index, entry.img.url);
-                    }
-                }
-                if (entry.ty == MdElementType.Math) {
-                    if (!entry.img.is-loaded) {
-                        Logic.render-formula-svg(histories-entry-index, index, entry.math.formula);
-                    }
-                }
-            }
-
             if entry.ty == MdElementType.Text: MdText {
                 text: entry.text;
             }
@@ -292,10 +279,22 @@ export component MdDetail inherits Rectangle {
             }
 
             if entry.ty == MdElementType.Math: MdMath {
+                init => {
+                    if (!entry.math.is-loaded) {
+                        Logic.render-formula-svg(histories-entry-index, index, entry.math.formula);
+                    }
+                }
+
                 img: entry.math;
             }
 
-            if entry.ty == MdElementType.Image && entry.img.is-loaded: MdImage {
+            if entry.ty == MdElementType.Image: MdImage {
+                init => {
+                    if (!entry.img.is-loaded) {
+                        Logic.download-image(histories-entry-index, index, entry.img.url);
+                    }
+                }
+
                 img: entry.img;
             }
         }
