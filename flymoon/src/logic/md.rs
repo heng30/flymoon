@@ -240,30 +240,16 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
     if rows == 0 {
         return;
     }
-    let last_index = rows - 1;
-
     let last_entry = store_current_chat_session_histories!(ui)
-        .row_data(last_index)
+        .row_data(rows - 1)
         .unwrap();
 
-    if last_entry.bot.trim().is_empty() {
+    let bot_text = last_entry.bot.trim();
+    if bot_text.is_empty() {
         return;
     }
 
-    let is_end_with_newline = last_entry.bot.ends_with('\n');
-    let bot_text = last_entry.bot.trim();
-
-    let ((md_elems, _link_urls), _unfinished_text) = {
-        if is_end_with_newline {
-            (dummy_markdown::parser::run(bot_text, can_parse_math()), "")
-        } else {
-            if let Some((before, after)) = bot_text.rsplit_once('\n') {
-                (dummy_markdown::parser::run(before, can_parse_math()), after)
-            } else {
-                (dummy_markdown::parser::run(bot_text, can_parse_math()), "")
-            }
-        }
-    };
+    let (md_elems, _) = dummy_markdown::parser::run(bot_text, can_parse_math());
 
     // update Markdown elements
     let rows = store_current_chat_session_histories_md_elems!(last_entry).row_count();
@@ -277,8 +263,13 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
     } else {
         let offset = md_elems.len() - rows;
 
-        store_current_chat_session_histories_md_elems!(last_entry)
-            .set_row_data(rows - 1, md_elems[rows - 1].clone().into());
+        // should not update it, because it has been verified.
+        if !(md_elems[rows - 1].ty == MdElementType::Math
+            || md_elems[rows - 1].ty == MdElementType::ImageUrl)
+        {
+            store_current_chat_session_histories_md_elems!(last_entry)
+                .set_row_data(rows - 1, md_elems[rows - 1].clone().into());
+        }
 
         for i in 0..offset {
             store_current_chat_session_histories_md_elems!(last_entry)
@@ -292,10 +283,9 @@ pub fn parse_last_history_bot_text(ui: &AppWindow) {
     if rows == 0 {
         return;
     }
-    let last_index = rows - 1;
 
     let entry = store_current_chat_session_histories!(ui)
-        .row_data(last_index)
+        .row_data(rows - 1)
         .unwrap();
 
     if entry.bot.trim().is_empty() {
