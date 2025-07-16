@@ -71,6 +71,17 @@ macro_rules! store_current_chat_session_histories_search_links {
     };
 }
 
+#[macro_export]
+macro_rules! store_current_chat_session_histories_mcp {
+    ($entry:expr) => {
+        $entry
+            .mcp
+            .as_any()
+            .downcast_ref::<VecModel<UIMCPElement>>()
+            .expect("We know we set UIMCPElement a VecModel earlier")
+    };
+}
+
 impl From<SettingModel> for ChatAPIConfig {
     fn from(setting: SettingModel) -> Self {
         ChatAPIConfig {
@@ -94,10 +105,14 @@ impl From<SettingModel> for search::google::Config {
 
 impl From<UIChatEntry> for HistoryChat {
     fn from(entry: UIChatEntry) -> Self {
-        let mcp_resp = if !entry.mcp.resp.is_empty() {
-            entry.mcp.resp
+        let mcp_resp = if entry.mcp.row_count() > 0 {
+            entry
+                .mcp
+                .iter()
+                .map(|entry| entry.resp.clone().to_string())
+                .collect::<String>()
         } else {
-            SharedString::default()
+            String::default()
         };
 
         let btext = format!("{}\n\n{}", entry.bot, mcp_resp).into();
@@ -532,6 +547,7 @@ fn chat_histories(ui: &AppWindow, question: SharedString) -> Vec<HistoryChat> {
         md_elems: ModelRc::new(VecModel::from(vec![])),
         link_urls: ModelRc::new(VecModel::from(vec![])),
         search_links: ModelRc::new(VecModel::from(vec![])),
+        mcp: ModelRc::new(VecModel::from(vec![])),
         ..Default::default()
     });
 
@@ -778,7 +794,7 @@ fn gen_mcp_prompt(client: &mcp::Client) -> Option<String> {
 
     prompt.push_str(&format!(
         r#"
-You can only call one tool at a time. Tool calling format:
+Each tool calling format:
 {}
 {{"name": "tool_name", "arguments": "tool_arguments"}}
 {}
@@ -823,7 +839,7 @@ async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client, id: u64)
                                 return;
                             }
 
-                            pretty_mcp_tool_response(ui.clone(), item.name, result);
+                            add_mcp_tool_response(ui.clone(), item.name, result);
                         }
                         Err(e) => {
                             toast::async_toast_warn(
@@ -905,7 +921,7 @@ fn paser_mcp_response(result: &str) -> Option<String> {
     response_text
 }
 
-fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
+fn add_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
     _ = slint::invoke_from_event_loop(move || {
         let ui = ui.unwrap();
 
@@ -915,14 +931,14 @@ fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
         }
 
         let last_index = rows - 1;
-        let mut entry = store_current_chat_session_histories!(ui)
+        let entry = store_current_chat_session_histories!(ui)
             .row_data(last_index)
             .unwrap();
 
-        entry.mcp = UIMCPElement {
+        store_current_chat_session_histories_mcp!(entry).push(UIMCPElement {
             tool_name: name.into(),
             resp: pretty_json(result.into()),
-        };
+        });
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
         md::parse_stream_bot_text(&ui);

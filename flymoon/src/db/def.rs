@@ -120,7 +120,7 @@ impl From<UIMCPElement> for MCPElement {
 pub struct ChatEntry {
     user: String,
     bot: String,
-    mcp: MCPElement,
+    mcp: Vec<MCPElement>,
     search_links: Vec<SearchLink>,
 }
 
@@ -135,7 +135,11 @@ impl From<UIChatEntry> for ChatEntry {
         ChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
-            mcp: entry.mcp.into(),
+            mcp: entry
+                .mcp
+                .iter()
+                .map(|entry| entry.into())
+                .collect::<Vec<MCPElement>>(),
             search_links,
         }
     }
@@ -151,10 +155,18 @@ impl From<ChatEntry> for UIChatEntry {
                 .collect::<VecModel<UISearchLink>>(),
         );
 
+        let mcp = ModelRc::new(
+            entry
+                .mcp
+                .into_iter()
+                .map(|item| item.into())
+                .collect::<VecModel<UIMCPElement>>(),
+        );
+
         UIChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
-            mcp: entry.mcp.into(),
+            mcp,
             search_links,
             md_elems: ModelRc::new(VecModel::from(vec![])),
             link_urls: ModelRc::new(VecModel::from(vec![])),

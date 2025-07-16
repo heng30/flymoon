@@ -152,7 +152,7 @@ export struct ChatEntry {
     user: string,
     bot: string,
 
-    mcp: MCPElement,
+    mcp: [MCPElement],
 
     is-user-edit: bool,
 
@@ -324,10 +324,16 @@ export global Store {
                         text: "how are you? I am fine.",
                     },
                 ],
-                mcp: {
-                    tool-name: "Crate file",
-                    resp: "{In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods}",
-                }
+                mcp: [
+                    {
+                        tool-name: "Crate file",
+                        resp: "{In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods}",
+                    },
+                    {
+                        tool-name: "Remove file",
+                        resp: "{you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods}",
+                    },
+                ]
             },
             {
                 user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",

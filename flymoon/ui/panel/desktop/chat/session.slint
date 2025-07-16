@@ -138,15 +138,15 @@ component User inherits Rectangle {
     }
 }
 
-component LoadingTip inherits VerticalLayout {
-    in-out property loading-text <=> ld.loading-text;
-    in-out property colorize <=> ld.colorize;
-
-    padding-top: Theme.padding * 2;
-    padding-bottom: Theme.padding * 2;
-
-    ld := Loading { }
-}
+// component LoadingTip inherits VerticalLayout {
+//     in-out property loading-text <=> ld.loading-text;
+//     in-out property colorize <=> ld.colorize;
+//
+//     padding-top: Theme.padding * 2;
+//     padding-bottom: Theme.padding * 2;
+//
+//     ld := Loading { }
+// }
 
 component BlankWelcome inherits HorizontalLayout {
     padding: Theme.padding * 2;
@@ -226,38 +226,36 @@ component ReasonerText inherits VerticalLayout {
 }
 
 component MCPDetail inherits Rectangle {
-    in-out property <MCPElement> entry;
+    in-out property <[MCPElement]> entries;
 
-    height: hbox.preferred-height;
+    height: vbox.preferred-height;
 
-    hbox := HorizontalLayout {
-        spacing: Theme.spacing * 4;
+    vbox := VerticalLayout {
+        for entry in entries: HorizontalLayout {
+            spacing: Theme.spacing * 4;
 
-        VerticalLayout {
-            alignment: center;
+            VerticalLayout {
+                alignment: center;
 
-            Divider {
-                background: Theme.warning-color;
-                width: Theme.padding;
-                height: vbox.preferred-height - Theme.padding * 6;
-            }
-        }
-
-        vbox := VerticalLayout {
-            MdHeading {
-                heading: {
-                    level: 2,
-                    text: Logic.tr("Tool") + " API " + "\"" + entry.tool-name + "\"" + " " + Logic.tr("output"),
-                };
+                Divider {
+                    background: Theme.warning-color;
+                    width: Theme.padding;
+                    height: inner-vbox.preferred-height - Theme.padding * 6;
+                }
             }
 
-            if !entry.resp.is-empty: MdCodeBlock {
-                code: entry.resp;
-            }
+            inner-vbox := VerticalLayout {
+                MdHeading {
+                    heading: {
+                        level: 2,
+                        text: Logic.tr("Tool") + " API " + "\"" + entry.tool-name + "\"" + " " + Logic.tr("output"),
+                    };
+                }
 
-            // if !entry.resp-text.is-empty: MdText {
-            //     text: entry.resp-text;
-            // }
+                if !entry.resp.is-empty: MdCodeBlock {
+                    code: entry.resp;
+                }
+            }
         }
     }
 }
@@ -362,8 +360,8 @@ export component Session inherits Rectangle {
                 text: entry.bot;
             }
 
-            if !entry.mcp.resp.is-empty: MCPDetail {
-                entry: entry.mcp;
+            if entry.mcp.length > 0: MCPDetail {
+                entries: entry.mcp;
             }
 
             if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
@@ -376,24 +374,24 @@ export component Session inherits Rectangle {
                 }
 
                 // disable
-                if false: VerticalLayout {
-                    alignment: LayoutAlignment.start;
-
-                    if Store.chat-phase == ChatPhase.MCP: LoadingTip {
-                        loading-text: Logic.tr("Calling...");
-                        colorize: Theme.warning-color;
-                    }
-
-                    if Store.chat-phase == ChatPhase.Searching: LoadingTip {
-                        loading-text: Logic.tr("Searching...");
-                        colorize: Theme.warning-color;
-                    }
-
-                    if Store.chat-phase == ChatPhase.Thinking: LoadingTip {
-                        loading-text: Logic.tr("Thinking...");
-                        colorize: Theme.thirdly-brand-color;
-                    }
-                }
+                // if false: VerticalLayout {
+                //     alignment: LayoutAlignment.start;
+                //
+                //     if Store.chat-phase == ChatPhase.MCP: LoadingTip {
+                //         loading-text: Logic.tr("Calling...");
+                //         colorize: Theme.warning-color;
+                //     }
+                //
+                //     if Store.chat-phase == ChatPhase.Searching: LoadingTip {
+                //         loading-text: Logic.tr("Searching...");
+                //         colorize: Theme.warning-color;
+                //     }
+                //
+                //     if Store.chat-phase == ChatPhase.Thinking: LoadingTip {
+                //         loading-text: Logic.tr("Thinking...");
+                //         colorize: Theme.thirdly-brand-color;
+                //     }
+                // }
             }
         }
     }
