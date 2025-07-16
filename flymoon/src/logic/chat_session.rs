@@ -7,8 +7,8 @@ use crate::{
     },
     slint_generatedAppWindow::{
         AppWindow, ChatEntry as UIChatEntry, ChatPhase, ChatSession as UIChatSession, Logic,
-        MCPEntry as UIMCPEntry, PromptEntry as UIPromptEntry, PromptType,
-        SearchLink as UISearchLink, Store,
+        MCPElement as UIMCPElement, MCPEntry as UIMCPEntry, PromptEntry as UIPromptEntry,
+        PromptType, SearchLink as UISearchLink, Store,
     },
     store_mcp_entries, store_prompt_entries, toast_success, toast_warn,
 };
@@ -19,6 +19,7 @@ use bot::openai::{
 };
 use cutil::time::chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
+use regex::Regex;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::sync::{
     atomic::{AtomicU64, Ordering},
@@ -34,7 +35,7 @@ struct ChatCache {
     bot_text: String,
 }
 
-const MCP_TOOL_START_SEP: &'static str = "```json";
+const MCP_TOOL_START_SEP: &'static str = "```";
 const MCP_TOOL_END_SEP: &'static str = "```";
 
 static INC_CHAT_ID: AtomicU64 = AtomicU64::new(0);
@@ -70,6 +71,17 @@ macro_rules! store_current_chat_session_histories_search_links {
     };
 }
 
+#[macro_export]
+macro_rules! store_current_chat_session_histories_mcp {
+    ($entry:expr) => {
+        $entry
+            .mcp
+            .as_any()
+            .downcast_ref::<VecModel<UIMCPElement>>()
+            .expect("We know we set UIMCPElement a VecModel earlier")
+    };
+}
+
 impl From<SettingModel> for ChatAPIConfig {
     fn from(setting: SettingModel) -> Self {
         ChatAPIConfig {
@@ -93,9 +105,21 @@ impl From<SettingModel> for search::google::Config {
 
 impl From<UIChatEntry> for HistoryChat {
     fn from(entry: UIChatEntry) -> Self {
+        let mcp_resp = if entry.mcp.row_count() > 0 {
+            entry
+                .mcp
+                .iter()
+                .map(|entry| entry.resp.clone().to_string())
+                .collect::<String>()
+        } else {
+            String::default()
+        };
+
+        let btext = format!("{}\n\n{}", entry.bot, mcp_resp).into();
+
         HistoryChat {
             utext: entry.user.into(),
-            btext: entry.bot.into(),
+            btext,
         }
     }
 }
@@ -523,6 +547,7 @@ fn chat_histories(ui: &AppWindow, question: SharedString) -> Vec<HistoryChat> {
         md_elems: ModelRc::new(VecModel::from(vec![])),
         link_urls: ModelRc::new(VecModel::from(vec![])),
         search_links: ModelRc::new(VecModel::from(vec![])),
+        mcp: ModelRc::new(VecModel::from(vec![])),
         ..Default::default()
     });
 
@@ -756,7 +781,7 @@ fn gen_mcp_prompt(client: &mcp::Client) -> Option<String> {
     }
 
     let mut prompt =
-        "you are a assistant, you can help user to complete various tasks. you have the following tools to use:\n".to_string();
+        "You are a assistant, you can help user to complete various tasks. You have the following tools to use:\n".to_string();
 
     for tool in tools {
         prompt.push_str(&format!(
@@ -769,7 +794,7 @@ fn gen_mcp_prompt(client: &mcp::Client) -> Option<String> {
 
     prompt.push_str(&format!(
         r#"
-if you need to call tools, you must use the following format:
+Each tool calling format:
 {}
 {{"name": "tool_name", "arguments": "tool_arguments"}}
 {}
@@ -791,7 +816,6 @@ async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client, id: u64)
     async_update_chat_phase(ui.clone(), ChatPhase::MCP);
 
     let tool_list = parse_tool_list(&content);
-
     pretty_mcp_tool_sep(ui.clone(), tool_list.clone());
 
     for text in &tool_list {
@@ -815,7 +839,7 @@ async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client, id: u64)
                                 return;
                             }
 
-                            pretty_mcp_tool_response(ui.clone(), item.name, result);
+                            add_mcp_tool_response(ui.clone(), item.name, result);
                         }
                         Err(e) => {
                             toast::async_toast_warn(
@@ -844,6 +868,10 @@ async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client, id: u64)
 }
 
 fn pretty_mcp_tool_sep(ui: Weak<AppWindow>, tool_list: Vec<String>) {
+    if tool_list.is_empty() {
+        return;
+    }
+
     _ = slint::invoke_from_event_loop(move || {
         let ui = ui.unwrap();
 
@@ -866,17 +894,18 @@ fn pretty_mcp_tool_sep(ui: Weak<AppWindow>, tool_list: Vec<String>) {
 
         entry.bot = entry
             .bot
-            .replace(MCP_TOOL_START_SEP, "\n```\n")
-            .replace(MCP_TOOL_END_SEP, "\n```\n")
+            .replace(MCP_TOOL_START_SEP, "```")
+            .replace(MCP_TOOL_END_SEP, "```")
             .into();
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
-        md::parse_stream_bot_text(&ui);
+        md::parse_last_history_bot_text(&ui);
     });
 }
 
-fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
-    let response_text = match serde_json::from_str::<super::mcp::MCPResponse>(&result) {
+#[allow(dead_code)]
+fn paser_mcp_response(result: &str) -> Option<String> {
+    let response_text = match serde_json::from_str::<super::mcp::MCPResponse>(result) {
         Ok(v) => Some(
             v.content
                 .into_iter()
@@ -889,6 +918,10 @@ fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
         _ => None,
     };
 
+    response_text
+}
+
+fn add_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
     _ = slint::invoke_from_event_loop(move || {
         let ui = ui.unwrap();
 
@@ -898,27 +931,16 @@ fn pretty_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
         }
 
         let last_index = rows - 1;
-        let mut entry = store_current_chat_session_histories!(ui)
+        let entry = store_current_chat_session_histories!(ui)
             .row_data(last_index)
             .unwrap();
 
-        entry
-            .bot
-            .push_str(&format!("\n## Tool {} response\n", &name));
-        entry
-            .bot
-            .push_str(&format!("\n```\n{}\n```\n", pretty_json(result.into())));
-
-        if response_text.is_some() {
-            entry
-                .bot
-                .push_str(&format!("\n## Tool {} response text\n", &name));
-            entry.bot.push_str(&response_text.unwrap());
-            entry.bot.push_str("\n");
-        }
+        store_current_chat_session_histories_mcp!(entry).push(UIMCPElement {
+            tool_name: name.into(),
+            resp: pretty_json(result.into()),
+        });
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
-
         md::parse_stream_bot_text(&ui);
     });
 }
@@ -933,25 +955,17 @@ fn pretty_json(content: SharedString) -> SharedString {
 }
 
 fn parse_tool_list(content: &str) -> Vec<String> {
-    let mut meet_tool = false;
-    let mut tool_list = vec![];
-    let mut tool_text = String::default();
-    let lines: Vec<&str> = content.split('\n').collect();
+    let content = content.replace("```json", "```");
 
-    for line in lines {
-        if line.starts_with(MCP_TOOL_START_SEP) {
-            meet_tool = true;
-        } else if line.starts_with(MCP_TOOL_END_SEP) {
-            tool_list.push(tool_text.clone());
-            meet_tool = false;
-            tool_text.clear();
-        } else if meet_tool {
-            tool_text.push_str(&line);
-            tool_text.push_str("\n");
-        }
-    }
+    let re = Regex::new(&format!(
+        r"(?s){}[\s]*(.*?)[\s]*{}",
+        MCP_TOOL_START_SEP, MCP_TOOL_END_SEP
+    ))
+    .unwrap();
 
-    tool_list
+    re.captures_iter(&content)
+        .filter_map(|cap| cap.get(1).map(|m| m.as_str().trim().to_string()))
+        .collect()
 }
 
 fn get_chat_cache_bot_text() -> String {

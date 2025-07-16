@@ -143,11 +143,18 @@ export struct MCPEntry {
     status: MCPServerStatus,
 }
 
+export struct MCPElement{
+    tool-name: string,
+    resp: string,
+}
+
 export struct ChatEntry {
     user: string,
-    is-user-edit: bool,
-
     bot: string,
+
+    mcp: [MCPElement],
+
+    is-user-edit: bool,
 
     // reasoner
     bot-reasoner: string,
@@ -310,13 +317,23 @@ export global Store {
             {
                 user: "hi",
                 bot: "how are you?",
-                bot-reasoner: " 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： ",
+                bot-reasoner: " 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。请根据实际 API 文档调整参数和结构： 以下是一个使用 Rust 实现 DeepSeek R1 API 调用的示例。",
                 md-elems : [
                     {
                         ty: MdElementType.Text,
                         text: "how are you? I am fine.",
                     },
                 ],
+                mcp: [
+                    {
+                        tool-name: "Crate file",
+                        resp: "{In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods}",
+                    },
+                    {
+                        tool-name: "Remove file",
+                        resp: "{you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods}",
+                    },
+                ]
             },
             {
                 user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
