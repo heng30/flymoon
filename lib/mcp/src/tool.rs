@@ -40,7 +40,11 @@ impl Tool for McpToolAdapter {
     }
 
     fn description(&self) -> String {
-        self.tool.description.clone().to_string()
+        self.tool
+            .description
+            .clone()
+            .unwrap_or(std::borrow::Cow::Borrowed(""))
+            .to_string()
     }
 
     fn parameters(&self) -> Value {

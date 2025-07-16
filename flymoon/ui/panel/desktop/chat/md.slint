@@ -3,7 +3,7 @@ import { ChatEntry, MdElementType, MdImage, MdMath, MdElement, MdUrl, MdHeading,
 import { IconBtn, Label, Link, ToolTipSetting, ComponentPosition } from "../../../base/widgets.slint";
 import { SearchLink } from "../../../store.slint";
 
-component MdText inherits HorizontalLayout {
+export component MdText inherits HorizontalLayout {
     in-out property text <=> txt.text;
 
     padding-bottom: Theme.padding * 4;
@@ -17,7 +17,7 @@ component MdText inherits HorizontalLayout {
     }
 }
 
-component MdHeading inherits HorizontalLayout {
+export component MdHeading inherits HorizontalLayout {
     in-out property <MdHeading> heading;
 
     padding-bottom: Theme.padding * 2;
@@ -65,7 +65,7 @@ component MdListItem inherits HorizontalLayout {
     }
 }
 
-component MdCodeBlock inherits HorizontalLayout {
+export component MdCodeBlock inherits HorizontalLayout {
     in-out property <string> code;
 
     padding-bottom: Theme.padding * 4;

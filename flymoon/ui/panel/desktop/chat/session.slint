@@ -1,9 +1,9 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
-import { ChatEntry, ChatPhase } from "../../../store.slint";
-import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading, Skeleton, SkeletonType } from "../../../base/widgets.slint";
+import { ChatEntry, ChatPhase, MCPElement } from "../../../store.slint";
+import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading, Skeleton, SkeletonType, VideoControl, Divider } from "../../../base/widgets.slint";
 
-import { MdDetail } from "md.slint";
+import { MdDetail, MdHeading, MdCodeBlock, MdText } from "md.slint";
 
 component ChatDetail inherits HorizontalLayout {
     in-out property text <=> txt.text;
@@ -208,18 +208,56 @@ component ReasonerText inherits VerticalLayout {
     if !entry.is-hide-bot-reasoner: HorizontalLayout {
         spacing: Theme.spacing * 4;
 
-        Rectangle {
-            background: Theme.placeholder-text-color;
-            width: Theme.padding / 2;
+        Divider {
+            background: Theme.thirdly-brand-color;
+            width: Theme.padding;
+            height: txt-input.preferred-height;
         }
 
-        TextInput {
+        txt-input := TextInput {
             wrap: word-wrap;
             font-size: Theme.title4-font-size;
             single-line: false;
             read-only: true;
             color: Theme.primary-text-color;
             text: entry.bot-reasoner;
+        }
+    }
+}
+
+component MCPDetail inherits Rectangle {
+    in-out property <MCPElement> entry;
+
+    height: hbox.preferred-height;
+
+    hbox := HorizontalLayout {
+        spacing: Theme.spacing * 4;
+
+        VerticalLayout {
+            alignment: center;
+
+            Divider {
+                background: Theme.warning-color;
+                width: Theme.padding;
+                height: vbox.preferred-height - Theme.padding * 6;
+            }
+        }
+
+        vbox := VerticalLayout {
+            MdHeading {
+                heading: {
+                    level: 2,
+                    text: Logic.tr("Tool") + " API " + "\"" + entry.tool-name + "\"" + " " + Logic.tr("output"),
+                };
+            }
+
+            if !entry.resp.is-empty: MdCodeBlock {
+                code: entry.resp;
+            }
+
+            // if !entry.resp-text.is-empty: MdText {
+            //     text: entry.resp-text;
+            // }
         }
     }
 }
@@ -320,8 +358,12 @@ export component Session inherits Rectangle {
                 search-links: entry.search-links;
             }
 
-            if Store.is-toggle-bot-markdown && !entry.bot.is_empty: ChatDetail {
+            if Store.is-toggle-bot-markdown && !entry.bot.is-empty: ChatDetail {
                 text: entry.bot;
+            }
+
+            if !entry.mcp.resp.is-empty: MCPDetail {
+                entry: entry.mcp;
             }
 
             if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {

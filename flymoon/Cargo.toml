@@ -12,6 +12,7 @@ cfg-if.workspace = true
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos", target_os = "android"))'.dependencies]
 toml.workspace = true
 duct.workspace = true
+regex.workspace = true
 anyhow.workspace = true
 once_cell.workspace = true
 webbrowser.workspace = true

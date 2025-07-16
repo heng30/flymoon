@@ -1,6 +1,7 @@
 use crate::slint_generatedAppWindow::{
-    ChatEntry as UIChatEntry, ChatHistory, ChatSession as UIChatSession, MCPEntry as UIMCPEntry,
-    PromptEntry as UIPromptEntry, PromptType, SearchLink as UISearchLink,
+    ChatEntry as UIChatEntry, ChatHistory, ChatSession as UIChatSession,
+    MCPElement as UIMCPElement, MCPEntry as UIMCPEntry, PromptEntry as UIPromptEntry, PromptType,
+    SearchLink as UISearchLink,
 };
 use search::SearchLink;
 use serde::de::{self, Visitor};
@@ -92,9 +93,34 @@ impl From<MCPEntry> for UIMCPEntry {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct MCPElement {
+    tool_name: String,
+    resp: String,
+}
+
+impl From<MCPElement> for UIMCPElement {
+    fn from(entry: MCPElement) -> Self {
+        UIMCPElement {
+            tool_name: entry.tool_name.into(),
+            resp: entry.resp.into(),
+        }
+    }
+}
+
+impl From<UIMCPElement> for MCPElement {
+    fn from(entry: UIMCPElement) -> Self {
+        MCPElement {
+            tool_name: entry.tool_name.into(),
+            resp: entry.resp.into(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ChatEntry {
     user: String,
     bot: String,
+    mcp: MCPElement,
     search_links: Vec<SearchLink>,
 }
 
@@ -109,6 +135,7 @@ impl From<UIChatEntry> for ChatEntry {
         ChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
+            mcp: entry.mcp.into(),
             search_links,
         }
     }
@@ -127,6 +154,7 @@ impl From<ChatEntry> for UIChatEntry {
         UIChatEntry {
             user: entry.user.into(),
             bot: entry.bot.into(),
+            mcp: entry.mcp.into(),
             search_links,
             md_elems: ModelRc::new(VecModel::from(vec![])),
             link_urls: ModelRc::new(VecModel::from(vec![])),

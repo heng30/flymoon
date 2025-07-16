@@ -14,7 +14,8 @@ serde = { workspace = true, features = ["serde_derive"] }
 cutil = { workspace = true, features = ["default", "http"] }
 rmcp = { workspace = true, features = [
   "client",
-  "transport-sse",
+  "reqwest",
+  "transport-sse-client",
   "transport-child-process",
   "tower",
 ] }
