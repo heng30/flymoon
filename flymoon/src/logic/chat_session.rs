@@ -453,10 +453,11 @@ fn stream_text(id: u64, item: StreamTextItem) {
                 .row_data(last_index)
                 .unwrap();
 
-            entry.bot.push_str(&item.text.unwrap());
+            let text = item.text.unwrap();
+            entry.bot.push_str(&text);
             store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
 
-            if md::need_parse_stream_bot_text(&ui) {
+            if text.contains("\n") {
                 if chat_phase != ChatPhase::Chatting && chat_phase != ChatPhase::MCP {
                     ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
                 }

@@ -222,6 +222,7 @@ pub fn init(ui: &AppWindow) {
         });
 }
 
+#[allow(dead_code)]
 pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {
     let rows = store_current_chat_session_histories!(ui).row_count();
     if rows == 0 {
