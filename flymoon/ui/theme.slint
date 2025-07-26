@@ -67,6 +67,8 @@ export global Theme {
     out property <color> have-read-text-color: is-dark ? #555555 : #606060;
     out property <color> link-text-color: is-dark ? #4B60D8 : #3F51FF;
 
+    out property <color> code-header-color: is-dark ? thirdly-background.darker(80%) : thirdly-background.darker(20%);
+
     out property <[color]> tag-colors: is-dark ? [#A3B3CC, #94C2AF, #9AC0C4, #B2ACCA, #CCA8A3, #CAA6BC, #A8C085, #B0B2B6] : [#CCE0FF, #BAF3DB, #C1F0F5, #DFD8FD, #FFD2CC, #FDD0EC, #D3F1A7, #DCDFE4];
 
     out property <float> golden-ratio: 0.618;
@@ -82,15 +84,15 @@ export global Theme {
     }
 
     public pure function title-font-size(level: int) -> length {
-        if(level == 1) {
+        if (level == 1) {
             return title1-font-size;
-        } else if(level == 2) {
+        } else if (level == 2) {
             return title2-font-size;
-        } else if(level == 3) {
+        } else if (level == 3) {
             return title3-font-size;
-        } else if(level == 4) {
+        } else if (level == 4) {
             return title4-font-size;
-        } else if(level == 5) {
+        } else if (level == 5) {
             return title5-font-size;
         } else {
             return title6-font-size;

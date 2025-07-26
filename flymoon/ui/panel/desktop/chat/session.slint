@@ -138,16 +138,6 @@ component User inherits Rectangle {
     }
 }
 
-// component LoadingTip inherits VerticalLayout {
-//     in-out property loading-text <=> ld.loading-text;
-//     in-out property colorize <=> ld.colorize;
-//
-//     padding-top: Theme.padding * 2;
-//     padding-bottom: Theme.padding * 2;
-//
-//     ld := Loading { }
-// }
-
 component BlankWelcome inherits HorizontalLayout {
     padding: Theme.padding * 2;
     padding-top: Theme.padding * 8;
@@ -372,26 +362,6 @@ export component Session inherits Rectangle {
                     height: parent.height;
                     type: SkeletonType.List;
                 }
-
-                // disable
-                // if false: VerticalLayout {
-                //     alignment: LayoutAlignment.start;
-                //
-                //     if Store.chat-phase == ChatPhase.MCP: LoadingTip {
-                //         loading-text: Logic.tr("Calling...");
-                //         colorize: Theme.warning-color;
-                //     }
-                //
-                //     if Store.chat-phase == ChatPhase.Searching: LoadingTip {
-                //         loading-text: Logic.tr("Searching...");
-                //         colorize: Theme.warning-color;
-                //     }
-                //
-                //     if Store.chat-phase == ChatPhase.Thinking: LoadingTip {
-                //         loading-text: Logic.tr("Thinking...");
-                //         colorize: Theme.thirdly-brand-color;
-                //     }
-                // }
             }
         }
     }

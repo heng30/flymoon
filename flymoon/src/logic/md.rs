@@ -222,6 +222,7 @@ pub fn init(ui: &AppWindow) {
         });
 }
 
+#[allow(dead_code)]
 pub fn need_parse_stream_bot_text(ui: &AppWindow) -> bool {
     let rows = store_current_chat_session_histories!(ui).row_count();
     if rows == 0 {
@@ -261,19 +262,46 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
             .collect::<Vec<_>>();
         store_current_chat_session_histories_md_elems!(last_entry).set_vec(elems);
     } else {
-        let offset = md_elems.len() - rows;
+        let mut insert_row_index = rows;
+        let mut offset = md_elems.len() - rows;
+        let ui_md_elems = store_current_chat_session_histories_md_elems!(last_entry)
+            .iter()
+            .collect::<Vec<UIMdElement>>();
 
-        // should not update it, because it has been verified.
-        if !(md_elems[rows - 1].ty == MdElementType::Math
-            || md_elems[rows - 1].ty == MdElementType::ImageUrl)
-        {
-            store_current_chat_session_histories_md_elems!(last_entry)
-                .set_row_data(rows - 1, md_elems[rows - 1].clone().into());
+        // find the first unmatched element
+        let mut diff_row_index = None;
+        for (index, elems) in ui_md_elems.iter().enumerate() {
+            if <dummy_markdown::MdElementType as Into<UIMdElementType>>::into(md_elems[index].ty)
+                != elems.ty
+            {
+                diff_row_index = Some(index);
+                break;
+            }
+        }
+
+        // remove all element after unmatched element and unmatched element itself
+        if let Some(index) = diff_row_index {
+            let remove_counts = rows - index;
+
+            for _ in 0..remove_counts {
+                store_current_chat_session_histories_md_elems!(last_entry).remove(index);
+            }
+
+            offset += remove_counts;
+            insert_row_index -= remove_counts;
+        } else {
+            // should not update it, because it has been verified.
+            if !(md_elems[rows - 1].ty == MdElementType::Math
+                || md_elems[rows - 1].ty == MdElementType::ImageUrl)
+            {
+                store_current_chat_session_histories_md_elems!(last_entry)
+                    .set_row_data(rows - 1, md_elems[rows - 1].clone().into());
+            }
         }
 
         for i in 0..offset {
             store_current_chat_session_histories_md_elems!(last_entry)
-                .push(md_elems[rows + i].clone().into());
+                .push(md_elems[insert_row_index + i].clone().into());
         }
     }
 }

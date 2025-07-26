@@ -70,29 +70,18 @@ export component MdCodeBlock inherits HorizontalLayout {
 
     padding-bottom: Theme.padding * 4;
 
-    Rectangle {
-        border-radius: Theme.border-radius;
-        background: Theme.thirdly-background;
+    VerticalLayout {
+        alignment: LayoutAlignment.start;
 
-        HorizontalLayout {
-            padding: Theme.padding * 3;
-
-            txt := TextInput {
-                wrap: word-wrap;
-                color: Theme.primary-text-color;
-                font-size: Theme.title4-font-size;
-                single-line: false;
-                read-only: true;
-                text: code;
-            }
-        }
-
-        VerticalLayout {
-            padding: Theme.padding * 2;
-            alignment: LayoutAlignment.start;
+        Rectangle {
+            border-top-left-radius: Theme.border-radius;
+            border-top-right-radius: Theme.border-radius;
+            background: Theme.code-header-color;
 
             HorizontalLayout {
                 alignment: LayoutAlignment.end;
+                padding: Theme.padding * 2;
+                padding-right: Theme.padding * 3;
 
                 IconBtn {
                     icon: Icons.copy;
@@ -103,6 +92,26 @@ export component MdCodeBlock inherits HorizontalLayout {
                     clicked => {
                         Logic.copy-to-clipboard(code);
                     }
+                }
+            }
+        }
+
+        Rectangle {
+            border-bottom-left-radius: Theme.border-radius;
+            border-bottom-right-radius: Theme.border-radius;
+            background: Theme.thirdly-background;
+
+            HorizontalLayout {
+                padding: Theme.padding * 4;
+                padding-top: Theme.padding * 2;
+
+                txt := TextInput {
+                    wrap: word-wrap;
+                    color: Theme.primary-text-color;
+                    font-size: Theme.title4-font-size;
+                    single-line: false;
+                    read-only: true;
+                    text: code;
                 }
             }
         }
