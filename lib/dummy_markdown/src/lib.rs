@@ -1,6 +1,6 @@
 pub mod parser;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MdElementType {
     #[default]
     Text,
