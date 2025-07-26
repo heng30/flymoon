@@ -484,7 +484,7 @@ async fn search_webpages(
             log::info!("finished searching webpages");
 
             let text = format!(
-                "The following web content is relevant to the user's question. Please consult these resources when preparing your answer. {text}"
+                "The following web contents are relevant to the user's question. Please consult these resources when preparing your answer. {text}"
             );
 
             histories.push(HistoryChat {
