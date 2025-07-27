@@ -895,8 +895,8 @@ fn pretty_mcp_tool_sep(ui: Weak<AppWindow>, tool_list: Vec<String>) {
 
         entry.bot = entry
             .bot
-            .replace(MCP_TOOL_START_SEP, "```")
-            .replace(MCP_TOOL_END_SEP, "```")
+            .replace(MCP_TOOL_START_SEP, "\n```")
+            // .replace(MCP_TOOL_END_SEP, "```")
             .into();
 
         store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
