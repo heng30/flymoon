@@ -243,7 +243,10 @@ component MCPDetail inherits Rectangle {
                 }
 
                 if !entry.resp.is-empty: MdCodeBlock {
-                    code: entry.resp;
+                    code-block: {
+                        lang: "json",
+                        code: entry.resp,
+                    };
                 }
             }
         }

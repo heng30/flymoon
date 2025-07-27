@@ -1,5 +1,5 @@
 use super::*;
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
+use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use regex::Regex;
 
 #[derive(Debug, Clone)]
@@ -11,13 +11,17 @@ enum MarkdownElement {
     ListItem(Vec<MarkdownElement>),
     Link(Vec<MarkdownElement>),
     Image(Vec<MarkdownElement>),
-    CodeBlock(Vec<MarkdownElement>),
     Paragraph(Vec<MarkdownElement>),
 
     TableHead(Vec<MarkdownElement>),
     TableRow(Vec<MarkdownElement>),
     TableCell(Vec<MarkdownElement>),
     Table(Vec<MarkdownElement>),
+
+    CodeBlock {
+        lang: String,
+        elems: Vec<MarkdownElement>,
+    },
 
     Heading {
         level: HeadingLevel,
@@ -121,8 +125,16 @@ fn parse_events(parser: &mut Parser<'_>) -> Vec<MarkdownElement> {
             Event::Code(code) => {
                 items.push(MarkdownElement::Text(code.into_string()));
             }
-            Event::Start(Tag::CodeBlock(_kind)) => {
-                items.push(MarkdownElement::CodeBlock(parse_events(parser)));
+            Event::Start(Tag::CodeBlock(kind)) => {
+                let lang = match kind {
+                    CodeBlockKind::Fenced(lang) => lang.to_string(),
+                    _ => String::default(),
+                };
+
+                items.push(MarkdownElement::CodeBlock {
+                    lang,
+                    elems: parse_events(parser),
+                });
             }
             Event::End(TagEnd::CodeBlock) => {
                 return elems;
@@ -249,7 +261,7 @@ fn generate_ui_elements(
                     }
                 }
             }
-            MarkdownElement::CodeBlock(elems) => {
+            MarkdownElement::CodeBlock { lang, elems } => {
                 let mut code = String::default();
 
                 for item in elems.iter() {
@@ -263,7 +275,10 @@ fn generate_ui_elements(
 
                 ui_elems.push(MdElement {
                     ty: MdElementType::CodeBlock,
-                    code_block: code.into(),
+                    code_block: MdCodeBlock {
+                        lang: lang.to_string(),
+                        code,
+                    },
                     ..Default::default()
                 });
             }
@@ -344,7 +359,7 @@ fn generate_ui_elements(
                 generate_ui_elements(&mut elems_iter_ref, &mut list_item_elems, user_data);
 
                 let mut list_item_text = String::default();
-                let mut code_block = String::default();
+                let mut code_block = MdCodeBlock::default();
 
                 for item in list_item_elems.iter() {
                     if item.ty == MdElementType::Text {
@@ -364,7 +379,8 @@ fn generate_ui_elements(
 
                         ui_elems.push(item.clone());
                     } else if item.ty == MdElementType::CodeBlock {
-                        code_block.push_str(&item.code_block);
+                        code_block.lang = item.code_block.lang.to_string();
+                        code_block.code.push_str(&item.code_block.code);
                     }
                 }
 
@@ -379,10 +395,10 @@ fn generate_ui_elements(
                     });
                 }
 
-                if !code_block.is_empty() {
+                if !code_block.code.is_empty() {
                     ui_elems.push(MdElement {
                         ty: MdElementType::CodeBlock,
-                        code_block: code_block,
+                        code_block,
                         ..Default::default()
                     });
                 }

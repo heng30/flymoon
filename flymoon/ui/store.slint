@@ -85,10 +85,15 @@ export struct MdTable {
     rows: [[string]],
 }
 
+export struct MdCodeBlock {
+    lang: string,
+    code: string,
+}
+
 export struct MdElement {
     ty: MdElementType,
     text: string,
-    code-block: string,
+    code-block: MdCodeBlock,
     list-item: MdListItem,
     img: MdImage,
     math: MdMath,
@@ -389,7 +394,10 @@ export global Store {
                     },
                     {
                         ty: MdElementType.CodeBlock,
-                        code-block: "int main(void) {\n       printf(\"%s\", hello world);\n}",
+                        code-block: {
+                            lang: "c",
+                            code: "int main(void) {\n       printf(\"%s\", hello world);\n}",
+                        }
                     },
                     {
                         ty: MdElementType.Heading,
