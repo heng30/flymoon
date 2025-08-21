@@ -108,7 +108,7 @@ impl From<MdCodeBlock> for UIMdCodeBlock {
     fn from(code_block: MdCodeBlock) -> Self {
         UIMdCodeBlock {
             lang: code_block.lang.into(),
-            code: code_block.code.into(),
+            code: code_block.code.trim().into(),
         }
     }
 }
