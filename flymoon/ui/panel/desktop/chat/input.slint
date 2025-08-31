@@ -15,6 +15,10 @@ export component Input inherits Rectangle {
     height: 130px;
     forward-focus: te;
 
+    function update-height(height: length) {
+        root.height = Math.clamp(height, 130px, Theme.default-height / 3 * 2);
+    }
+
     function ensure-show-cursor() {
         if (flick.viewport-height <= flick.height) {
             flick.viewport-y = 0;
@@ -68,6 +72,10 @@ export component Input inherits Rectangle {
             Rectangle {
                 flick := Flickable {
                     y: Theme.padding * 2;
+
+                    changed viewport-height => {
+                        root.update-height(self.viewport-height + h-btns.preferred-height);
+                    }
 
                     VerticalLayout {
                         padding: Theme.padding * 2;
@@ -170,7 +178,7 @@ export component Input inherits Rectangle {
                 }
             }
 
-            HorizontalLayout {
+            h-btns := HorizontalLayout {
                 height: Theme.icon-size * 2;
                 alignment: LayoutAlignment.space-between;
 

@@ -250,6 +250,7 @@ pub fn tr(text: &str) -> String {
         ),
         ("Increase font size", "增大字体"),
         ("Decrease font size", "缩小字体"),
+        ("Focus question input box", "输入框获取输入焦点"),
     ]);
 
     if let Some(txt) = items.get(text) {

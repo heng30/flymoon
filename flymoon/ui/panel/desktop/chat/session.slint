@@ -254,6 +254,8 @@ component MCPDetail inherits Rectangle {
 }
 
 export component Session inherits Rectangle {
+    callback focus-input;
+
     public function scroll-to-top() {
         lv.viewport-y = 0;
         Store.is-auto-scroll = false;
@@ -305,65 +307,76 @@ export component Session inherits Rectangle {
 
     if Store.current-chat-session.histories.length == 0: BlankWelcome { }
 
-    lv := ListView {
-        width: root.width;
-        height: root.height;
-        vertical-scrollbar-policy: always-off;
-
-        scrolled => {
-            if (is-on-bottom()) {
-                Store.is-auto-scroll = true;
-            } else {
-                Store.is-auto-scroll = false;
+    FocusScope {
+        key-pressed(event) => {
+            if (event.modifiers.control) {
+                if (event.text == "i") {
+                    focus-input();
+                    return accept;
+                }
             }
+            return reject;
         }
 
-        for entry[index] in Store.current-chat-session.histories: VerticalLayout {
-            padding: Theme.padding * 2;
-            padding-top: 0;
-            padding-bottom: Theme.padding * 4;
-            spacing: Theme.spacing * 3;
+        lv := ListView {
+            width: root.width;
+            height: root.height;
 
-            private property <bool> is-last-index: index == Store.current-chat-session.histories.length - 1;
-
-            if index == 0 && !Store.current-model-name.is-empty: Label {
-                horizontal-alignment: TextHorizontalAlignment.center;
-                text: Store.current-model-name;
-                color: Theme.disabled-color;
+            scrolled => {
+                if (is-on-bottom()) {
+                    Store.is-auto-scroll = true;
+                } else {
+                    Store.is-auto-scroll = false;
+                }
             }
 
-            user := User {
-                index: index;
-                entry: entry;
-            }
+            for entry[index] in Store.current-chat-session.histories: VerticalLayout {
+                padding: Theme.padding * 2;
+                padding-top: 0;
+                padding-bottom: Theme.padding * 4;
+                spacing: Theme.spacing * 3;
 
-            if !entry.bot-reasoner.is-empty: ReasonerText {
-                entry: entry;
-                index: index;
-            }
+                private property <bool> is-last-index: index == Store.current-chat-session.histories.length - 1;
 
-            if !Store.is-toggle-bot-markdown && entry.md-elems.length > 0: MdDetail {
-                entries: entry.md-elems;
-                urls: entry.link-urls;
-                histories-entry-index: index;
-                search-links: entry.search-links;
-            }
+                if index == 0 && !Store.current-model-name.is-empty: Label {
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: Store.current-model-name;
+                    color: Theme.disabled-color;
+                }
 
-            if Store.is-toggle-bot-markdown && !entry.bot.is-empty: ChatDetail {
-                text: entry.bot;
-            }
+                user := User {
+                    index: index;
+                    entry: entry;
+                }
 
-            if entry.mcp.length > 0: MCPDetail {
-                entries: entry.mcp;
-            }
+                if !entry.bot-reasoner.is-empty: ReasonerText {
+                    entry: entry;
+                    index: index;
+                }
 
-            if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
-                height: 200px;
+                if !Store.is-toggle-bot-markdown && entry.md-elems.length > 0: MdDetail {
+                    entries: entry.md-elems;
+                    urls: entry.link-urls;
+                    histories-entry-index: index;
+                    search-links: entry.search-links;
+                }
 
-                sk := Skeleton {
-                    width: parent.width;
-                    height: parent.height;
-                    type: SkeletonType.List;
+                if Store.is-toggle-bot-markdown && !entry.bot.is-empty: ChatDetail {
+                    text: entry.bot;
+                }
+
+                if entry.mcp.length > 0: MCPDetail {
+                    entries: entry.mcp;
+                }
+
+                if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
+                    height: 200px;
+
+                    sk := Skeleton {
+                        width: parent.width;
+                        height: parent.height;
+                        type: SkeletonType.List;
+                    }
                 }
             }
         }

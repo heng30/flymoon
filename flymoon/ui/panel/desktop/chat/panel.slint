@@ -13,7 +13,11 @@ export component Chat inherits VerticalLayout {
     spacing: Theme.spacing * 2;
 
     Rectangle {
-        session := Session { }
+        session := Session {
+            focus-input => {
+                input.focus();
+            }
+        }
 
         if Store.input-prompt-list-entries.length > 0: InputPromptList {
             x: 0;
