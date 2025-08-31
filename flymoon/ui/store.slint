@@ -85,10 +85,15 @@ export struct MdTable {
     rows: [[string]],
 }
 
+export struct MdCodeBlock {
+    lang: string,
+    code: string,
+}
+
 export struct MdElement {
     ty: MdElementType,
     text: string,
-    code-block: string,
+    code-block: MdCodeBlock,
     list-item: MdListItem,
     img: MdImage,
     math: MdMath,
@@ -327,7 +332,7 @@ export global Store {
                 mcp: [
                     {
                         tool-name: "Crate file",
-                        resp: "{In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods}",
+                        resp: " {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} ",
                     },
                     {
                         tool-name: "Remove file",
@@ -389,7 +394,10 @@ export global Store {
                     },
                     {
                         ty: MdElementType.CodeBlock,
-                        code-block: "int main(void) {\n       printf(\"%s\", hello world);\n}",
+                        code-block: {
+                            lang: "c",
+                            code: "int main(void) {\n       printf(\"%s\", hello world);\n}",
+                        }
                     },
                     {
                         ty: MdElementType.Heading,

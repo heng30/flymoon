@@ -21,7 +21,7 @@ struct Args {
     #[arg(short, long)]
     formula: String,
 
-    /// Output file path(*.png or *.svg)
+    /// Output file path (*.png or *.svg)
     #[arg(short, long, default_value = None)]
     output: Option<String>,
 

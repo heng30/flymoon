@@ -1,11 +1,14 @@
 use crate::slint_generatedAppWindow::{
-    AppWindow, ChatEntry as UIChatEntry, Logic, MdElement as UIMdElement,
-    MdElementType as UIMdElementType, MdHeading as UIMdHeading, MdImage as UIMdImage,
-    MdListItem as UIMdListItem, MdMath as UIMdMath, MdTable as UIMdTable, MdUrl as UIMdUrl, Store,
+    AppWindow, ChatEntry as UIChatEntry, Logic, MdCodeBlock as UIMdCodeBlock,
+    MdElement as UIMdElement, MdElementType as UIMdElementType, MdHeading as UIMdHeading,
+    MdImage as UIMdImage, MdListItem as UIMdListItem, MdMath as UIMdMath, MdTable as UIMdTable,
+    MdUrl as UIMdUrl, Store,
 };
 use crate::{config::cache_dir, store_current_chat_session_histories};
 use cutil::{crypto, http};
-use dummy_markdown::{self, MdElement, MdElementType, MdHeading, MdListItem, MdTable, MdUrl};
+use dummy_markdown::{
+    self, MdCodeBlock, MdElement, MdElementType, MdHeading, MdListItem, MdTable, MdUrl,
+};
 use once_cell::sync::Lazy;
 use once_cell::sync::OnceCell;
 use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, VecModel, Weak};
@@ -101,6 +104,15 @@ impl From<String> for UIMdImage {
     }
 }
 
+impl From<MdCodeBlock> for UIMdCodeBlock {
+    fn from(code_block: MdCodeBlock) -> Self {
+        UIMdCodeBlock {
+            lang: code_block.lang.into(),
+            code: code_block.code.trim().into(),
+        }
+    }
+}
+
 impl From<MdTable> for UIMdTable {
     fn from(table: MdTable) -> Self {
         UIMdTable {
@@ -135,7 +147,7 @@ impl From<MdElement> for UIMdElement {
             ty: entry.ty.into(),
             text: entry.text.into(),
             math: entry.math.into(),
-            code_block: entry.code_block.trim().to_string().into(),
+            code_block: entry.code_block.into(),
             list_item: entry.list_item.into(),
             img: entry.image_url.into(),
             heading: entry.heading.into(),

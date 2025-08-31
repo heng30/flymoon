@@ -41,12 +41,18 @@ pub struct MdTable {
 }
 
 #[derive(Debug, Clone, Default)]
+pub struct MdCodeBlock {
+    pub lang: String,
+    pub code: String,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct MdElement {
     pub ty: MdElementType,
     pub text: String,
     pub math: String,
     pub image_url: String,
-    pub code_block: String,
+    pub code_block: MdCodeBlock,
     pub list_item: MdListItem,
     pub heading: MdHeading,
 

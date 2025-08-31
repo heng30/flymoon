@@ -15,7 +15,7 @@ export enum SkeletonType {
 component InnerItem inherits Rectangle {
     in-out property <color> active-item-color: Theme.base-background;
     in-out property <bool> enabled-active: true;
-    in-out property <float> active-opacity: 0.2;
+    in-out property <float> active-opacity: 0.4;
     in-out property <duration> active-duration: 500ms;
 
     width: root.width * 80%;
@@ -39,8 +39,8 @@ export component Skeleton inherits Rectangle {
     in-out property <color> item-color: Theme.is-dark ? Theme.secondary-background.darker(5%) : Theme.secondary-background.darker(5%);
 
     in-out property <bool> enabled-active: true;
-    in-out property <color> active-item-color: self.item-color.brighter(20%);
-    in-out property <float> active-opacity: 0.2;
+    in-out property <color> active-item-color: self.item-color.brighter(50%);
+    in-out property <float> active-opacity: 0.4;
     in-out property <duration> active-duration: 800ms;
 
     pure public function from-number(index: int) -> SkeletonType {

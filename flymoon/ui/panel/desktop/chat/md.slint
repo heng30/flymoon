@@ -1,7 +1,8 @@
 import { Theme, Store, Logic, Icons, Util } from "../../def.slint";
-import { ChatEntry, MdElementType, MdImage, MdMath, MdElement, MdUrl, MdHeading, MdUrl, MdListItem, MdTable } from "../../../store.slint";
+import { ChatEntry, MdElementType, MdImage, MdMath, MdElement, MdUrl, MdHeading, MdUrl, MdListItem, MdTable, MdCodeBlock } from "../../../store.slint";
 import { IconBtn, Label, Link, ToolTipSetting, ComponentPosition } from "../../../base/widgets.slint";
 import { SearchLink } from "../../../store.slint";
+import { ScrollView } from "std-widgets.slint";
 
 export component MdText inherits HorizontalLayout {
     in-out property text <=> txt.text;
@@ -66,7 +67,7 @@ component MdListItem inherits HorizontalLayout {
 }
 
 export component MdCodeBlock inherits HorizontalLayout {
-    in-out property <string> code;
+    in-out property <MdCodeBlock> code-block;
 
     padding-bottom: Theme.padding * 4;
 
@@ -79,39 +80,83 @@ export component MdCodeBlock inherits HorizontalLayout {
             background: Theme.code-header-color;
 
             HorizontalLayout {
-                alignment: LayoutAlignment.end;
+                alignment: LayoutAlignment.space-between;
                 padding: Theme.padding * 2;
                 padding-right: Theme.padding * 3;
+                padding-left: Theme.padding * 4;
 
-                IconBtn {
-                    icon: Icons.copy;
-                    tip: Logic.tr("copy");
-                    is-show-tip: true;
-                    gain-focus-when-clicked: false;
+                Label {
+                    text: code-block.lang;
+                }
 
-                    clicked => {
-                        Logic.copy-to-clipboard(code);
+                HorizontalLayout {
+                    spacing: Theme.spacing * 4;
+
+                    IconBtn {
+                        icon: Icons.copy;
+                        tip: Logic.tr("copy");
+                        is-show-tip: true;
+                        gain-focus-when-clicked: false;
+
+                        clicked => {
+                            Logic.copy-to-clipboard(code-block.code);
+                        }
                     }
                 }
             }
         }
 
+        // `ScrollView` could catch scroll event. However, short content should not catch scroll event
         Rectangle {
-            border-bottom-left-radius: Theme.border-radius;
-            border-bottom-right-radius: Theme.border-radius;
-            background: Theme.thirdly-background;
+            private property <float> rate: 0.5;
+            private property <bool> use-scrollview: txt-rect.preferred-height > (Theme.default-height * rate);
 
-            HorizontalLayout {
-                padding: Theme.padding * 4;
-                padding-top: Theme.padding * 2;
+            height: use-scrollview ? Theme.default-height * rate : txt-rect.preferred-height;
 
-                txt := TextInput {
-                    wrap: word-wrap;
-                    color: Theme.primary-text-color;
-                    font-size: Theme.title4-font-size;
-                    single-line: false;
-                    read-only: true;
-                    text: code;
+            Rectangle {
+                visible: !use-scrollview;
+                border-bottom-left-radius: Theme.border-radius;
+                border-bottom-right-radius: Theme.border-radius;
+                background: Theme.thirdly-background;
+
+                HorizontalLayout {
+                    padding: Theme.padding * 4;
+                    padding-top: Theme.padding * 2;
+
+                    TextInput {
+                        wrap: word-wrap;
+                        color: Theme.primary-text-color;
+                        font-size: Theme.title4-font-size;
+                        single-line: false;
+                        read-only: true;
+                        text: code-block.code;
+                    }
+                }
+            }
+
+            ScrollView {
+                visible: use-scrollview;
+                viewport-height: txt-rect.preferred-height;
+                height: Math.min(txt-rect.preferred-height, Theme.default-height * rate);
+
+                txt-rect := Rectangle {
+                    border-bottom-left-radius: Theme.border-radius;
+                    border-bottom-right-radius: Theme.border-radius;
+                    background: Theme.thirdly-background;
+
+                    HorizontalLayout {
+                        padding: Theme.padding * 4;
+                        padding-top: Theme.padding * 2;
+
+                        txt := TextInput {
+                            wrap: word-wrap;
+                            color: Theme.primary-text-color;
+                            font-size: Theme.title4-font-size;
+                            single-line: false;
+                            read-only: true;
+                            text: code-block.code;
+                        }
+                    }
                 }
             }
         }
@@ -284,7 +329,7 @@ export component MdDetail inherits Rectangle {
             }
 
             if entry.ty == MdElementType.CodeBlock: MdCodeBlock {
-                code: entry.code_block;
+                code-block: entry.code-block;
             }
 
             if entry.ty == MdElementType.Math: MdMath {
