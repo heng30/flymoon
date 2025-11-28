@@ -65,7 +65,10 @@ pub mod response {
     #[derive(Serialize, Deserialize)]
     pub(crate) struct ChatCompletionChunk {
         pub id: String,
+
+        #[serde(default)]
         pub object: String,
+
         pub created: i64,
         pub model: String,
         pub choices: Vec<ChunkChoice>,
