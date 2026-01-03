@@ -29,6 +29,9 @@ desktop-build-debug:
 desktop-build-release:
 	$(desktop-build-env) cargo build --release --features=desktop
 
+desktop-build-release-winit:
+	SLINT_BACKEND=winit-femtovg $(desktop-build-env) cargo build --release --features=desktop
+
 desktop-debug:
 	$(desktop-build-env) $(run-env) cargo run --bin ${app-name} --features=desktop
 

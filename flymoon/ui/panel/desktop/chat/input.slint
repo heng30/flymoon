@@ -1,6 +1,12 @@
 import { Theme, Logic, Store, Icons, Util, TabIndex } from "../../def.slint";
 import { ChatPhase, PromptType } from "../../../store.slint";
-import { Divider, ElevatedBtn, IconBtn, TextBtn, ToastStatus} from "../../../base/widgets.slint";
+import {
+    Divider,
+    ElevatedBtn,
+    IconBtn,
+    TextBtn,
+    ToastStatus,
+} from "../../../base/widgets.slint";
 
 export component Input inherits Rectangle {
     in-out property question <=> te.text;
@@ -101,10 +107,7 @@ export component Input inherits Rectangle {
 
                             key-pressed(event) => {
                                 if (event.modifiers.control) {
-                                    if (event.text == Key.Return) {
-                                        send-question();
-                                        return accept;
-                                    } else if (event.text == "r") {
+                                    if (event.text == "r") {
                                         Logic.retry-question(Store.current-chat-session.histories.length - 1, "");
                                         scroll-to-bottom();
                                         return accept;
@@ -161,7 +164,13 @@ export component Input inherits Rectangle {
                                         Logic.increase-font-size();
                                         return accept;
                                     }
+                                } else {
+                                    if (event.text == Key.Return) {
+                                        send-question();
+                                        return accept;
+                                    }
                                 }
+
                                 return reject;
                             }
                         }
@@ -268,7 +277,7 @@ export component Input inherits Rectangle {
                             enable: te.text != "";
                             icon: Icons.send2;
                             colorize: te.text != "" ? Theme.thirdly-brand-color : Theme.disabled-color;
-                            icon-rotation-angle: -90deg;
+                            icon-transform-rotation: -90deg;
                             gain-focus-when-clicked: false;
 
                             clicked => {
