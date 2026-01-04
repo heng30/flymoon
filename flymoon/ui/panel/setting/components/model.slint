@@ -1,4 +1,4 @@
-import { Store, Logic, Theme, DeviceType, Icons } from "../../def.slint";
+import { Store, Logic, Theme, Icons } from "../../def.slint";
 import { SettingDetail, SettingDetailInner, SettingDetailInnerVbox, SettingDetailLabel, LineInput, ConfirmBtn, Label, Select } from "../../../base/widgets.slint";
 import { SettingModel } from "../../../store.slint";
 
@@ -97,7 +97,7 @@ export component Model inherits SettingDetail {
         }
     }
 
-    if Store.device-type == DeviceType.Desktop: VerticalLayout {
+    VerticalLayout {
         padding: Theme.padding * 4;
         padding-top: 0;
         alignment: LayoutAlignment.end;

@@ -1,27 +1,25 @@
 use super::{md, toast, tr::tr};
 use crate::{
-    config::{data::Model as SettingModel, model as setting_model},
-    db::{
-        self,
-        def::{ChatEntry, ChatSession, CHAT_SESSION_TABLE as DB_TABLE},
-    },
+    config::{Model as SettingModel, model as setting_model},
+    db::{CHAT_SESSION_TABLE as DB_TABLE, ChatSession, entry},
+    global_logic, global_store, logic_cb,
     slint_generatedAppWindow::{
-        AppWindow, ChatEntry as UIChatEntry, ChatPhase, ChatSession as UIChatSession, Logic,
-        Store,
+        AppWindow, ChatEntry as UIChatEntry, ChatPhase, ChatSession as UIChatSession,
     },
-    toast_success, toast_warn,
+    toast_warn,
 };
 use bot::openai::{
+    Chat,
     request::{APIConfig as ChatAPIConfig, HistoryChat},
     response::StreamTextItem,
-    Chat,
 };
 use cutil::time::chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::sync::{
+    Arc, Mutex,
     atomic::{AtomicU64, Ordering},
-    mpsc, Arc, Mutex,
+    mpsc,
 };
 use uuid::Uuid;
 
@@ -39,14 +37,14 @@ static CHAT_CACHE: Lazy<Mutex<Option<ChatCache>>> = Lazy::new(|| Mutex::new(None
 #[macro_export]
 macro_rules! store_current_chat_session {
     ($ui:expr) => {
-        $ui.global::<Store>().get_current_chat_session()
+        crate::global_store!($ui).get_current_chat_session()
     };
 }
 
 #[macro_export]
 macro_rules! store_current_chat_session_histories {
     ($ui:expr) => {
-        $ui.global::<Store>()
+        crate::global_store!($ui)
             .get_current_chat_session()
             .histories
             .as_any()
@@ -55,202 +53,36 @@ macro_rules! store_current_chat_session_histories {
     };
 }
 
-impl From<SettingModel> for ChatAPIConfig {
-    fn from(setting: SettingModel) -> Self {
-        ChatAPIConfig {
-            api_base_url: setting.chat.api_base_url,
-            api_model: setting.chat.model_name,
-            api_key: setting.chat.api_key,
-            temperature: None,
-        }
-    }
-}
-
-impl From<UIChatEntry> for HistoryChat {
-    fn from(entry: UIChatEntry) -> Self {
-        HistoryChat {
-            utext: entry.user.into(),
-            btext: entry.bot.into(),
-        }
-    }
-}
-
-impl From<UIChatSession> for ChatSession {
-    fn from(entry: UIChatSession) -> Self {
-        let histories = entry
-            .histories
-            .iter()
-            .map(|entry| entry.into())
-            .collect::<Vec<ChatEntry>>();
-
-        ChatSession {
-            uuid: entry.uuid.into(),
-            time: entry.time.into(),
-            prompt: entry.prompt.into(),
-            histories,
-        }
-    }
-}
-
-impl From<ChatSession> for UIChatSession {
-    fn from(entry: ChatSession) -> Self {
-        let histories = ModelRc::new(
-            entry
-                .histories
-                .into_iter()
-                .map(|entry| entry.into())
-                .collect::<VecModel<UIChatEntry>>(),
-        );
-
-        UIChatSession {
-            uuid: entry.uuid.into(),
-            time: entry.time.into(),
-            prompt: entry.prompt.into(),
-            histories,
-        }
-    }
-}
-
-pub async fn get_from_db() -> Vec<UIChatSession> {
-    let entries = match db::entry::select_all(DB_TABLE).await {
-        Ok(items) => items
-            .into_iter()
-            .filter_map(|item| serde_json::from_str::<ChatSession>(&item.data).ok())
-            .map(|item| item.into())
-            .collect(),
-
-        Err(e) => {
-            log::warn!("{:?}", e);
-            vec![]
-        }
-    };
-
-    entries
-}
-
-fn chat_session_init(ui: &AppWindow) {
-    let mut session = UIChatSession::default();
-    session.histories = ModelRc::new(VecModel::from(vec![]));
-    ui.global::<Store>().set_current_chat_session(session);
-}
-
 pub fn init(ui: &AppWindow) {
     chat_session_init(ui);
 
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_new_chat_session(move || {
-        let ui = ui_handle.unwrap();
-        chat_session_init(&ui);
-    });
+    logic_cb!(new_chat_session, ui);
+    logic_cb!(load_chat_session, ui, uuid);
+    logic_cb!(send_question, ui, question);
+    logic_cb!(stop_question, ui);
+    logic_cb!(retry_question, ui, index, question);
+    logic_cb!(copy_last_bot_text, ui);
+    logic_cb!(remove_question, ui, index);
+    logic_cb!(toggle_edit_question, ui, index);
+    logic_cb!(toggle_hide_bot_reasoner, ui, index);
+}
 
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_load_chat_session(move |uuid| {
-        let ui = ui_handle.unwrap();
-        load_entry_db(&ui, uuid);
-    });
-
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_send_question(move |question| {
-        let ui = ui_handle.unwrap();
-        send_question(&ui, question);
-    });
-
-    ui.global::<Logic>().on_stop_question(move || {
-        tokio::spawn(async move {
-            let mut cc = CHAT_CACHE.lock().unwrap();
-            if let Some(cc) = cc.take() {
-                _ = cc.stop_tx.send(());
-            }
-        });
-    });
-
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>()
-        .on_retry_question(move |index, mut question| {
-            let ui = ui_handle.unwrap();
-            let index = index as usize;
-
-            if question.is_empty() {
-                let entry = store_current_chat_session_histories!(ui)
-                    .row_data(index)
-                    .unwrap();
-                question = entry.user;
-            }
-
-            // remove entries from [index, rows)
-            let rows = store_current_chat_session_histories!(ui).row_count();
-            for offset in 0..(rows - index) {
-                store_current_chat_session_histories!(ui).remove(rows - 1 - offset);
-            }
-
-            ui.global::<Logic>().invoke_send_question(question);
-        });
-
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_copy_last_bot_text(move || {
-        let ui = ui_handle.unwrap();
-        let index = store_current_chat_session_histories!(ui).row_count();
-        if index <= 0 {
-            return;
+fn stop_question(_ui: &AppWindow) {
+    tokio::spawn(async move {
+        let mut cc = CHAT_CACHE.lock().unwrap();
+        if let Some(cc) = cc.take() {
+            _ = cc.stop_tx.send(());
         }
-
-        let entry = store_current_chat_session_histories!(ui)
-            .row_data(index - 1)
-            .unwrap();
-
-        ui.global::<Logic>().invoke_copy_to_clipboard(entry.bot);
     });
-
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_remove_question(move |index| {
-        let ui = ui_handle.unwrap();
-        store_current_chat_session_histories!(ui).remove(index as usize);
-        update_db_entry(&ui);
-    });
-
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_toggle_edit_question(move |index| {
-        let ui = ui_handle.unwrap();
-        let index = index as usize;
-
-        let mut entry = store_current_chat_session_histories!(ui)
-            .row_data(index)
-            .unwrap();
-        entry.is_user_edit = !entry.is_user_edit;
-        store_current_chat_session_histories!(ui).set_row_data(index, entry);
-    });
-
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>()
-        .on_toggle_hide_bot_reasoner(move |index| {
-            let ui = ui_handle.unwrap();
-            let index = index as usize;
-
-            let mut entry = store_current_chat_session_histories!(ui)
-                .row_data(index)
-                .unwrap();
-            entry.is_hide_bot_reasoner = !entry.is_hide_bot_reasoner;
-            store_current_chat_session_histories!(ui).set_row_data(index, entry);
-        });
-
-    let ui_handle = ui.as_weak();
-    ui.global::<Logic>()
-        .on_clear_current_chat_session_prompt(move || {
-            let ui = ui_handle.unwrap();
-            let mut session = store_current_chat_session!(ui);
-            session.prompt = Default::default();
-            ui.global::<Store>().set_current_chat_session(session);
-
-            toast_success!(ui, tr("Clear current session prompt successfully"));
-        });
 }
 
 fn parse_prompt(
-    ui: &AppWindow,
+    _ui: &AppWindow,
     question: SharedString,
 ) -> (SharedString, SharedString, Option<f32>) {
-    let session = store_current_chat_session!(ui);
-    (session.prompt, question, None)
+    // Use default system prompt
+    let prompt = SharedString::from("You are a helpful AI assistant.");
+    (prompt, question, None)
 }
 
 fn stream_text(id: u64, item: StreamTextItem) {
@@ -304,11 +136,11 @@ fn stream_text(id: u64, item: StreamTextItem) {
             return;
         }
 
-        let chat_phase = ui.global::<Store>().get_chat_phase();
+        let chat_phase = global_store!(ui).get_chat_phase();
 
         if item.reasoning_text.is_some() {
             if chat_phase != ChatPhase::Chatting {
-                ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
+                global_store!(ui).set_chat_phase(ChatPhase::Chatting);
             }
 
             let rows = store_current_chat_session_histories!(ui).row_count();
@@ -347,7 +179,7 @@ fn stream_text(id: u64, item: StreamTextItem) {
 
             if text.contains("\n") {
                 if chat_phase != ChatPhase::Chatting {
-                    ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
+                    global_store!(ui).set_chat_phase(ChatPhase::Chatting);
                 }
 
                 md::parse_stream_bot_text(&ui);
@@ -361,7 +193,7 @@ fn chat_histories(ui: &AppWindow, question: SharedString) -> Vec<HistoryChat> {
     let (is_new_chat, histories) = if session.uuid.is_empty() {
         session.uuid = Uuid::new_v4().to_string().into();
         session.time = cutil::time::local_now("%m-%d %H:%M").into();
-        ui.global::<Store>().set_current_chat_session(session);
+        global_store!(ui).set_current_chat_session(session);
 
         (true, vec![])
     } else {
@@ -448,7 +280,7 @@ fn send_question(ui: &AppWindow, question: SharedString) {
     let (prompt, question, temperature) = parse_prompt(ui, question);
     let histories = chat_histories(ui, question.clone());
 
-    let enabled_reasoner_model = ui.global::<Store>().get_enabled_reasoner_model();
+    let enabled_reasoner_model = global_store!(ui).get_enabled_reasoner_model();
 
     let ui = ui.as_weak();
     tokio::spawn(async move {
@@ -470,14 +302,13 @@ fn load_entry_db(ui: &AppWindow, uuid: SharedString) {
     let ui = ui.as_weak();
 
     tokio::spawn(async move {
-        match db::entry::select(DB_TABLE, &uuid).await {
+        match entry::select(DB_TABLE, &uuid).await {
             Ok(item) => match serde_json::from_str::<ChatSession>(&item.data) {
                 Ok(session) => {
                     let _ = slint::invoke_from_event_loop(move || {
                         let ui = ui.unwrap();
 
-                        ui.global::<Store>()
-                            .set_current_chat_session(session.into());
+                        global_store!(ui).set_current_chat_session(session.into());
 
                         md::parse_histories_bot_text(&ui);
                     });
@@ -501,7 +332,7 @@ fn add_db_entry(ui: &AppWindow) {
     let ui = ui.as_weak();
     tokio::spawn(async move {
         let data = serde_json::to_string(&entry_db).unwrap();
-        match db::entry::insert(DB_TABLE, &entry_db.uuid, &data).await {
+        match entry::insert(DB_TABLE, &entry_db.uuid, &data).await {
             Err(e) => toast::async_toast_warn(
                 ui,
                 format!("{}. {}: {e:?}", tr("Add entry failed"), tr("Reason")),
@@ -517,7 +348,7 @@ fn update_db_entry(ui: &AppWindow) {
     let ui = ui.as_weak();
     tokio::spawn(async move {
         let data = serde_json::to_string(&entry_db).unwrap();
-        match db::entry::update(DB_TABLE, &entry_db.uuid, &data).await {
+        match entry::update(DB_TABLE, &entry_db.uuid, &data).await {
             Err(e) => toast::async_toast_warn(
                 ui,
                 format!("{}. {}: {e:?}", tr("Update entry failed"), tr("Reason")),
@@ -527,16 +358,10 @@ fn update_db_entry(ui: &AppWindow) {
     });
 }
 
-fn async_update_db_entry(ui: Weak<AppWindow>) {
-    _ = slint::invoke_from_event_loop(move || {
-        update_db_entry(&ui.unwrap());
-    });
-}
-
 pub fn delete_db_entry(ui: &AppWindow, uuid: SharedString) {
     let ui = ui.as_weak();
     tokio::spawn(async move {
-        match db::entry::delete(DB_TABLE, uuid.as_str()).await {
+        match entry::delete(DB_TABLE, uuid.as_str()).await {
             Err(e) => toast::async_toast_warn(
                 ui,
                 format!("{}. {}: {e:?}", tr("Remove entry failed"), tr("Reason")),
@@ -548,6 +373,114 @@ pub fn delete_db_entry(ui: &AppWindow, uuid: SharedString) {
 
 fn async_update_chat_phase(ui: Weak<AppWindow>, phase: ChatPhase) {
     _ = slint::invoke_from_event_loop(move || {
-        ui.unwrap().global::<Store>().set_chat_phase(phase);
+        global_store!(ui.unwrap()).set_chat_phase(phase);
     });
+}
+
+impl From<SettingModel> for ChatAPIConfig {
+    fn from(setting: SettingModel) -> Self {
+        ChatAPIConfig {
+            api_base_url: setting.chat.api_base_url,
+            api_model: setting.chat.model_name,
+            api_key: setting.chat.api_key,
+            temperature: None,
+        }
+    }
+}
+
+impl From<UIChatEntry> for HistoryChat {
+    fn from(entry: UIChatEntry) -> Self {
+        HistoryChat {
+            utext: entry.user.into(),
+            btext: entry.bot.into(),
+        }
+    }
+}
+
+pub async fn get_from_db() -> Vec<UIChatSession> {
+    let entries = match entry::select_all(DB_TABLE).await {
+        Ok(items) => items
+            .into_iter()
+            .filter_map(|item| serde_json::from_str::<ChatSession>(&item.data).ok())
+            .map(|item| item.into())
+            .collect(),
+
+        Err(e) => {
+            log::warn!("{:?}", e);
+            vec![]
+        }
+    };
+
+    entries
+}
+
+fn chat_session_init(ui: &AppWindow) {
+    let mut session = UIChatSession::default();
+    session.histories = ModelRc::new(VecModel::from(vec![]));
+    global_store!(ui).set_current_chat_session(session);
+}
+
+fn new_chat_session(ui: &AppWindow) {
+    chat_session_init(ui);
+}
+
+fn load_chat_session(ui: &AppWindow, uuid: slint::SharedString) {
+    load_entry_db(&ui, uuid);
+}
+
+fn retry_question(ui: &AppWindow, index: i32, mut question: slint::SharedString) {
+    let index = index as usize;
+
+    if question.is_empty() {
+        let entry = store_current_chat_session_histories!(ui)
+            .row_data(index)
+            .unwrap();
+        question = entry.user;
+    }
+
+    // remove entries from [index, rows)
+    let rows = store_current_chat_session_histories!(ui).row_count();
+    for offset in 0..(rows - index) {
+        store_current_chat_session_histories!(ui).remove(rows - 1 - offset);
+    }
+
+    global_logic!(ui).invoke_send_question(question);
+}
+
+fn copy_last_bot_text(ui: &AppWindow) {
+    let index = store_current_chat_session_histories!(ui).row_count();
+    if index <= 0 {
+        return;
+    }
+
+    let entry = store_current_chat_session_histories!(ui)
+        .row_data(index - 1)
+        .unwrap();
+
+    global_logic!(ui).invoke_copy_to_clipboard(entry.bot);
+}
+
+fn remove_question(ui: &AppWindow, index: i32) {
+    store_current_chat_session_histories!(ui).remove(index as usize);
+    update_db_entry(&ui);
+}
+
+fn toggle_edit_question(ui: &AppWindow, index: i32) {
+    let index = index as usize;
+
+    let mut entry = store_current_chat_session_histories!(ui)
+        .row_data(index)
+        .unwrap();
+    entry.is_user_edit = !entry.is_user_edit;
+    store_current_chat_session_histories!(ui).set_row_data(index, entry);
+}
+
+fn toggle_hide_bot_reasoner(ui: &AppWindow, index: i32) {
+    let index = index as usize;
+
+    let mut entry = store_current_chat_session_histories!(ui)
+        .row_data(index)
+        .unwrap();
+    entry.is_hide_bot_reasoner = !entry.is_hide_bot_reasoner;
+    store_current_chat_session_histories!(ui).set_row_data(index, entry);
 }

@@ -1,7 +1,6 @@
 import {
     Store,
     SettingPreference,
-    SettingProxy,
     SettingModel,
     TabIndex,
     SettingDetailIndex,
@@ -16,9 +15,6 @@ export global Logic {
 
     callback get-setting-preference() -> SettingPreference;
     callback set-setting-preference(SettingPreference);
-
-    callback get-setting-proxy() -> SettingProxy;
-    callback set-setting-proxy(SettingProxy);
 
     callback get-setting-model() -> SettingModel;
     callback set-setting-model(SettingModel);
@@ -59,15 +55,12 @@ export global Logic {
     callback new-chat-session();
     callback load-chat-session(uuid: string);
 
-    // if question.is_empty, we get the question from the Store.current-chat-session.histories
-    callback retry-question(index: int, question: string);
-
     callback stop-question();
     callback remove-question(index: int);
-    callback toggle-edit-question(index: int);
     callback send-question(question: string);
+    callback retry-question(index: int, question: string);
+    callback toggle-edit-question(index: int);
     callback toggle-hide-bot-reasoner(index: int);
-    callback clear-current-chat-session-prompt();
     callback copy-last-bot-text();
 
     callback chat-history-load(uuid: string);

@@ -1,25 +1,24 @@
-use crate::slint_generatedAppWindow::{AppWindow, ToastSetting, ToastStatus, Util};
+use crate::global_util;
+use crate::slint_generatedAppWindow::{AppWindow, ToastSetting, ToastStatus};
 use slint::{ComponentHandle, Timer, TimerMode, Weak};
 
 #[macro_export]
 macro_rules! toast_warn {
     ($ui:expr, $msg:expr) => {
-        $ui.global::<$crate::slint_generatedAppWindow::Util>()
-            .invoke_show_toast(
-                slint::format!("{}", $msg),
-                $crate::slint_generatedAppWindow::ToastStatus::Warning,
-            )
+        $crate::global_util!($ui).invoke_show_toast(
+            slint::format!("{}", $msg),
+            $crate::slint_generatedAppWindow::ToastStatus::Warning,
+        )
     };
 }
 
 #[macro_export]
 macro_rules! toast_success {
     ($ui:expr, $msg:expr) => {
-        $ui.global::<$crate::slint_generatedAppWindow::Util>()
-            .invoke_show_toast(
-                slint::format!("{}", $msg),
-                $crate::slint_generatedAppWindow::ToastStatus::Success,
-            )
+        $crate::global_util!($ui).invoke_show_toast(
+            slint::format!("{}", $msg),
+            $crate::slint_generatedAppWindow::ToastStatus::Success,
+        )
     };
 }
 
@@ -27,45 +26,38 @@ macro_rules! toast_success {
 #[macro_export]
 macro_rules! toast_info {
     ($ui:expr, $msg:expr) => {
-        $ui.global::<$crate::slint_generatedAppWindow::Util>()
-            .invoke_show_toast(
-                slint::format!("{}", $msg),
-                $crate::slint_generatedAppWindow::ToastStatus::Info,
-            )
+        $crate::global_util!($ui).invoke_show_toast(
+            slint::format!("{}", $msg),
+            $crate::slint_generatedAppWindow::ToastStatus::Info,
+        )
     };
 }
 
 #[allow(dead_code)]
 pub fn async_toast_warn(ui: Weak<AppWindow>, msg: String) {
     let _ = slint::invoke_from_event_loop(move || {
-        ui.unwrap()
-            .global::<Util>()
-            .invoke_show_toast(slint::format!("{}", msg), ToastStatus::Warning);
+        global_util!(ui.unwrap()).invoke_show_toast(slint::format!("{}", msg), ToastStatus::Warning);
     });
 }
 
 #[allow(dead_code)]
 pub fn async_toast_success(ui: Weak<AppWindow>, msg: String) {
     let _ = slint::invoke_from_event_loop(move || {
-        ui.unwrap()
-            .global::<Util>()
-            .invoke_show_toast(slint::format!("{}", msg), ToastStatus::Success);
+        global_util!(ui.unwrap()).invoke_show_toast(slint::format!("{}", msg), ToastStatus::Success);
     });
 }
 
 #[allow(dead_code)]
 pub fn async_toast_info(ui: Weak<AppWindow>, msg: String) {
     let _ = slint::invoke_from_event_loop(move || {
-        ui.unwrap()
-            .global::<Util>()
-            .invoke_show_toast(slint::format!("{}", msg), ToastStatus::Info);
+        global_util!(ui.unwrap()).invoke_show_toast(slint::format!("{}", msg), ToastStatus::Info);
     });
 }
 
 pub fn init(ui: &AppWindow) {
     let timer = Timer::default();
     let ui_handle = ui.as_weak();
-    ui.global::<Util>().on_show_toast(move |msg, status| {
+    global_util!(ui).on_show_toast(move |msg, status| {
         let ui = ui_handle.unwrap();
 
         if timer.running() {

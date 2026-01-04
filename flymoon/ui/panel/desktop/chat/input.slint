@@ -131,9 +131,6 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "m") {
                                         Store.is-toggle-bot-markdown = !Store.is-toggle-bot-markdown;
                                         return accept;
-                                    } else if (event.text == "/") {
-                                        Logic.clear-current-chat-session-prompt();
-                                        return accept;
                                     } else if (event.text == "-") {
                                         Logic.decrease-font-size();
                                         return accept;

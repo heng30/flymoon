@@ -1,30 +1,30 @@
 use super::tr::tr;
 use crate::{
-    config,
-    slint_generatedAppWindow::{AppWindow, Logic, SettingChatModel, SettingModel, Store, Theme},
+    config, global_logic, global_store, global_util,
+    slint_generatedAppWindow::{AppWindow, SettingChatModel, SettingModel, Theme},
 };
 use slint::ComponentHandle;
 
 pub fn init(ui: &AppWindow) {
     init_setting(ui);
 
-    ui.global::<Store>()
+    global_store!(ui)
         .set_is_first_run(config::is_first_run());
 
-    ui.global::<Store>()
+    global_store!(ui)
         .set_is_show_landing_page(config::is_first_run());
 
-    ui.global::<Logic>()
+    global_logic!(ui)
         .on_inner_tr(move |_is_cn, text| tr(text.as_str()).into());
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_get_setting_preference(move || {
+    global_logic!(ui).on_get_setting_preference(move || {
         let ui = ui_handle.unwrap();
-        ui.global::<Store>().get_setting_preference()
+        global_store!(ui).get_setting_preference()
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>()
+    global_logic!(ui)
         .on_set_setting_preference(move |mut setting| {
             let ui = ui_handle.unwrap();
 
@@ -45,12 +45,12 @@ pub fn init(ui: &AppWindow) {
             _ = config::save(all);
 
             if !ui.window().is_maximized() {
-                ui.global::<crate::Util>().invoke_update_window_size();
+                global_util!(ui).invoke_update_window_size();
             }
         });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_increase_font_size(move || {
+    global_logic!(ui).on_increase_font_size(move || {
         let ui = ui_handle.unwrap();
         let mut all = config::all();
 
@@ -58,13 +58,13 @@ pub fn init(ui: &AppWindow) {
         all.preference.font_size = font_size;
         _ = config::save(all);
 
-        let mut setting = ui.global::<Store>().get_setting_preference();
+        let mut setting = global_store!(ui).get_setting_preference();
         setting.font_size = slint::format!("{}", font_size);
-        ui.global::<Store>().set_setting_preference(setting);
+        global_store!(ui).set_setting_preference(setting);
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_decrease_font_size(move || {
+    global_logic!(ui).on_decrease_font_size(move || {
         let ui = ui_handle.unwrap();
         let mut all = config::all();
 
@@ -72,12 +72,12 @@ pub fn init(ui: &AppWindow) {
         all.preference.font_size = font_size;
         _ = config::save(all);
 
-        let mut setting = ui.global::<Store>().get_setting_preference();
+        let mut setting = global_store!(ui).get_setting_preference();
         setting.font_size = slint::format!("{}", font_size);
-        ui.global::<Store>().set_setting_preference(setting);
+        global_store!(ui).set_setting_preference(setting);
     });
 
-    ui.global::<Logic>().on_get_setting_model(move || {
+    global_logic!(ui).on_get_setting_model(move || {
         let config = config::model();
 
         SettingModel {
@@ -91,14 +91,14 @@ pub fn init(ui: &AppWindow) {
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_set_setting_model(move |setting| {
+    global_logic!(ui).on_set_setting_model(move |setting| {
         let ui = ui_handle.unwrap();
-        ui.global::<Store>()
+        global_store!(ui)
             .set_reasoner_model_available(!setting.chat.reasoner_model_name.trim().is_empty());
 
         let mut all = config::all();
 
-        all.model.chat = config::data::ChatModel {
+        all.model.chat = config::ChatModel {
             api_base_url: setting.chat.api_base_url.into(),
             model_name: setting.chat.model_name.into(),
             reasoner_model_name: setting.chat.reasoner_model_name.into(),
@@ -112,7 +112,7 @@ pub fn init(ui: &AppWindow) {
 fn init_setting(ui: &AppWindow) {
     let model = config::model();
     let config = config::preference();
-    let mut setting = ui.global::<Store>().get_setting_preference();
+    let mut setting = global_store!(ui).get_setting_preference();
 
     let font_size = u32::min(50, u32::max(10, config.font_size));
     setting.win_width = slint::format!("{}", u32::max(500, config.win_width));
@@ -125,10 +125,10 @@ fn init_setting(ui: &AppWindow) {
     setting.is_dark = config.is_dark;
 
     ui.global::<Theme>().invoke_set_dark(config.is_dark);
-    ui.global::<Store>().set_setting_preference(setting);
+    global_store!(ui).set_setting_preference(setting);
 
-    ui.global::<Store>()
+    global_store!(ui)
         .set_current_model_name(model.chat.model_name.into());
-    ui.global::<Store>()
+    global_store!(ui)
         .set_reasoner_model_available(!model.chat.reasoner_model_name.trim().is_empty());
 }

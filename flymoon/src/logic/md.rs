@@ -1,8 +1,9 @@
+use crate::global_logic;
 use crate::slint_generatedAppWindow::{
-    AppWindow, ChatEntry as UIChatEntry, Logic, MdCodeBlock as UIMdCodeBlock,
+    AppWindow, ChatEntry as UIChatEntry, MdCodeBlock as UIMdCodeBlock,
     MdElement as UIMdElement, MdElementType as UIMdElementType, MdHeading as UIMdHeading,
     MdImage as UIMdImage, MdListItem as UIMdListItem, MdMath as UIMdMath, MdTable as UIMdTable,
-    MdUrl as UIMdUrl, Store,
+    MdUrl as UIMdUrl,
 };
 use crate::{config::cache_dir, store_current_chat_session_histories};
 use cutil::{crypto, http};
@@ -158,8 +159,8 @@ impl From<MdElement> for UIMdElement {
 
 pub fn init(ui: &AppWindow) {
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>()
-        .on_download_image(move |histories_entry_index, index, url| {
+    global_logic!(ui)
+        .on_download_image(move |histories_entry_index, index, url: slint::SharedString| {
             let index = index as usize;
             let histories_entry_index = histories_entry_index as usize;
 
@@ -169,11 +170,12 @@ pub fn init(ui: &AppWindow) {
 
                 if let Ok(true) = std::fs::exists(&file_path) {
                     // FIXME: If I set the image outside the `tokio::spawn`, would panic
-                    async_load_image(ui, histories_entry_index, index, url, file_path);
+                    async_load_image(ui, histories_entry_index, index, url.clone(), file_path);
                 } else {
                     {
                         let mut cache = DOWNLOAD_IMAGE_CACHE.lock().unwrap();
-                        if let Some(entry) = cache.get_mut(url.as_str()) {
+                        let url_str = url.to_string();
+                        if let Some(entry) = cache.get_mut(&url_str) {
                             if entry.is_loading || entry.try_times >= 3 {
                                 return;
                             }
@@ -190,7 +192,8 @@ pub fn init(ui: &AppWindow) {
 
                     {
                         let mut cache = DOWNLOAD_IMAGE_CACHE.lock().unwrap();
-                        if let Some(entry) = cache.get_mut(url.as_str()) {
+                        let url_str = url.to_string();
+                        if let Some(entry) = cache.get_mut(&url_str) {
                             entry.is_loading = false;
                         }
                     }
@@ -199,8 +202,8 @@ pub fn init(ui: &AppWindow) {
         });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>()
-        .on_render_formula_svg(move |histories_entry_index, index, formula| {
+    global_logic!(ui)
+        .on_render_formula_svg(move |histories_entry_index, index, formula: slint::SharedString| {
             let index = index as usize;
             let histories_entry_index = histories_entry_index as usize;
 
@@ -211,10 +214,11 @@ pub fn init(ui: &AppWindow) {
                 if let Ok(true) = std::fs::exists(&file_path) {
                     async_load_math(ui, histories_entry_index, index, formula.clone(), file_path);
                 } else {
-                    match duct::cmd!("latex-image", "-f", &formula, "-o", &file_path).read() {
+                    let formula_str = formula.to_string();
+                    match duct::cmd!("latex-image", "-f", &formula_str, "-o", &file_path).read() {
                         Err(e) => log::warn!(
                             "latex-image can't render: `{}`. error: {}",
-                            formula,
+                            formula_str,
                             e.to_string()
                         ),
                         Ok(output) => {

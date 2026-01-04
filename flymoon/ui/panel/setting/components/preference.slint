@@ -1,4 +1,4 @@
-import { Theme, Logic, Store, Icons, SettingPreference, DeviceType } from "../../def.slint";
+import { Theme, Logic, Store, Icons, SettingPreference } from "../../def.slint";
 import { SettingDetailInner, SettingDetail, SettingDetailInnerVbox, SettingDetailLabel, RadioBtn, ConfirmBtn, SettingDetailSwitch, ConfirmDialogSetting, Label, LineInput, Select } from "../../../base/widgets.slint";
 
 export component Preference inherits SettingDetail {
@@ -34,7 +34,7 @@ export component Preference inherits SettingDetail {
     }
 
     SettingDetailInner {
-        if Store.device-type == DeviceType.Desktop: SettingDetailInnerVbox {
+        SettingDetailInnerVbox {
             win-size-txt := SettingDetailLabel {
                 text: Logic.tr("Window size");
             }
@@ -93,7 +93,7 @@ export component Preference inherits SettingDetail {
             }
         }
 
-        if Store.device-type == DeviceType.Desktop: SettingDetailInnerVbox {
+        SettingDetailInnerVbox {
             SettingDetailSwitch {
                 icon: Icons.status;
                 text: Logic.tr("Frameless window");
@@ -164,7 +164,7 @@ export component Preference inherits SettingDetail {
         }
     }
 
-    if Store.device-type == DeviceType.Desktop: VerticalLayout {
+    VerticalLayout {
         padding: Theme.padding * 4;
         padding-top: 0;
         alignment: LayoutAlignment.end;

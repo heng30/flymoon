@@ -1,6 +1,7 @@
 use super::tr::tr;
 use crate::{
-    slint_generatedAppWindow::{AppWindow, Logic},
+    global_logic,
+    slint_generatedAppWindow::AppWindow,
     toast_success, toast_warn,
 };
 use anyhow::{Result, bail};
@@ -66,7 +67,7 @@ fn paste_from_wayland_clipboard() -> Result<String> {
 
 pub fn init(ui: &AppWindow) {
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_copy_to_clipboard(move |msg| {
+    global_logic!(ui).on_copy_to_clipboard(move |msg| {
         let ui = ui_handle.unwrap();
         match copy_to_clipboard(&msg) {
             Err(e) => toast_warn!(
@@ -78,7 +79,7 @@ pub fn init(ui: &AppWindow) {
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_paste_from_clipboard(move || {
+    global_logic!(ui).on_paste_from_clipboard(move || {
         let ui = ui_handle.unwrap();
         match paste_from_clipboard() {
             Err(e) => {

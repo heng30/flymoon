@@ -28,12 +28,15 @@ env_logger.workspace = true
 display-info.workspace = true
 platform-dirs.workspace = true
 dummy_markdown.workspace = true
+pmacro.workspace = true
+paste.workspace = true
 uuid = { workspace = true, features = ["v4"] }
 tokio = { workspace = true, features = ["full"] }
 
 [build-dependencies]
 duct.workspace = true
 embed-resource.workspace = true
+slint-build.workspace = true
 
 [features]
 default = [

@@ -1,6 +1,4 @@
-slint::slint! {
-    export * from "ui/desktop-window.slint";
-}
+slint::include_modules!();
 
 #[macro_use]
 extern crate derivative;
@@ -23,14 +21,20 @@ pub fn init_logger() {
 
             writeln!(
                 buf,
-                "[{} {style}{}{style:#} {} {}] {}",
+                "[{} {style}{}{style:#} {}::{} {}] {}",
                 ts,
-                record.level().to_string(),
+                record.level(),
+                record
+                    .module_path()
+                    .unwrap_or("None")
+                    .split("::")
+                    .next()
+                    .unwrap_or("None"),
                 record
                     .file()
                     .unwrap_or("None")
                     .split('/')
-                    .last()
+                    .next_back()
                     .unwrap_or("None"),
                 record.line().unwrap_or(0),
                 record.args()
@@ -43,11 +47,8 @@ async fn ui_before() {
     init_logger();
     config::init();
 
-    cfg_if::cfg_if! {
-        if #[cfg(feature = "database")] {
-            db::init(config::db_path().to_str().expect("invalid db path")).await;
-        }
-    }
+    #[cfg(feature = "database")]
+    db::init(config::all().db_path.to_str().expect("invalid db path")).await;
 }
 
 fn ui_after(ui: &AppWindow) {
@@ -59,10 +60,9 @@ pub async fn desktop_main() {
 
     ui_before().await;
     let ui = AppWindow::new().unwrap();
-    ui.global::<Store>().set_device_type(DeviceType::Desktop);
     ui_after(&ui);
 
-    ui.global::<Util>().invoke_set_window_center();
+    global_util!(ui).invoke_set_window_center();
 
     ui.run().unwrap();
 
