@@ -1,7 +1,5 @@
 export enum DeviceType {
     Desktop,
-    Mobile,
-    Web,
 }
 
 export enum TabIndex {
@@ -18,8 +16,6 @@ export enum SettingDetailIndex {
     Preference,
     Proxy,
     Model,
-    Prompt,
-    MCP,
 }
 
 export struct SettingPreference {
@@ -101,11 +97,6 @@ export struct MdElement {
     table: MdTable,
 }
 
-export struct SearchLink {
-    title: string,
-    link: string,
-}
-
 export struct SettingChatModel {
     model-name: string,
     reasoner-model-name: string,
@@ -113,51 +104,13 @@ export struct SettingChatModel {
     api-key: string,
 }
 
-export struct SettingGoogleSearch {
-    cx: string,
-    api-key: string,
-    num: int,
-}
-
 export struct SettingModel {
     chat: SettingChatModel,
-    google-search: SettingGoogleSearch,
-}
-
-export struct PromptEntry {
-    uuid: string,
-    name: string,
-    shortcut: string,
-    detail: string,
-    temperature: float,
-}
-
-export enum MCPServerStatus {
-    None,
-    Loading,
-    Running,
-    Failed,
-}
-
-export struct MCPEntry {
-    uuid: string,
-    name: string,
-    shortcut: string,
-    config: string,
-    temperature: float,
-    status: MCPServerStatus,
-}
-
-export struct MCPElement{
-    tool-name: string,
-    resp: string,
 }
 
 export struct ChatEntry {
     user: string,
     bot: string,
-
-    mcp: [MCPElement],
 
     is-user-edit: bool,
 
@@ -169,21 +122,12 @@ export struct ChatEntry {
     // Markdown
     md-elems: [MdElement],
     link-urls: [MdUrl],
-
-    search_links: [SearchLink],
-}
-
-export enum PromptType {
-    Normal,
-    MCP,
 }
 
 export struct ChatSession {
     uuid: string,
     time: string,
     prompt: string,
-    prompt-type: PromptType,
-    mcp-config: string,
     histories: [ChatEntry],
 }
 
@@ -199,7 +143,6 @@ export enum ChatPhase {
     Chatting,
     Searching,
     Thinking,
-    MCP,
 }
 
 //////////////////////////////// Logic Struct End  ////////////////////////////////
@@ -235,56 +178,7 @@ export global Store {
     in-out property <bool> search-webpages-available;
     in-out property <bool> reasoner-model-available: true;
     in-out property <bool> enabled-reasoner-model;
-    in-out property <bool> is-show-current-prompt-dialog;
     in-out property <string> current-model-name: "deepseek-chat";
-
-    in-out property <[PromptEntry]> input-prompt-list-entries: [
-        // {
-        //     shortcut: "cn",
-        //     name: "text-1",
-        // },
-        // {
-        //     shortcut: "en",
-        //     name: "text-20000000",
-        // },
-        // {
-        //     shortcut: "math",
-        //     name: "text-1fwjifjweif",
-        // },
-    ];
-
-    in-out property <[PromptEntry]> prompt-entries: [
-        {
-            uuid: "uuid-1",
-            name: "text-1",
-            shortcut: "cn",
-            detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            temperature: 1.0,
-        },
-        {
-            uuid: "uuid-2",
-            name: "text-2",
-            shortcut: "en",
-            detail: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
-            temperature: 1.0,
-        },
-    ];
-
-    in-out property <[MCPEntry]> mcp-entries: [
-        {
-            uuid: "uuid-1",
-            name: "text-1",
-            shortcut: "cn",
-            status: MCPServerStatus.Loading,
-            config: "{\n  \"mcpServers\": {\n    \"your-mcp-server\": {\n      \"url\": \"http://localhost:4000/sse\"\n    }\n  }\n}",
-        },
-        {
-            uuid: "uuid-2",
-            name: "text-2",
-            shortcut: "en",
-            config: "{\n  \"mcpServers\": {\n    \"your-mcp-server\": {\n      \"url\": \"http://localhost:4000/sse\"\n    }\n  }\n}",
-        },
-    ];
 
     in-out property <[ChatHistory]> chat-histories-cache:[
         {
@@ -329,16 +223,6 @@ export global Store {
                         text: "how are you? I am fine.",
                     },
                 ],
-                mcp: [
-                    {
-                        tool-name: "Crate file",
-                        resp: " {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} {In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods} ",
-                    },
-                    {
-                        tool-name: "Remove file",
-                        resp: "{you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods}",
-                    },
-                ]
             },
             {
                 user: "In NixOS, you can install libalsa (ALSA library) in several ways, depending on how you want to use it. Here are the common methods",
@@ -442,13 +326,6 @@ export global Store {
                 link-urls: [
                     { text: "Nixos download page", url: "https://nixos.org" },
                     { text: "Google homepage", url: "https://google.com" },
-                ],
-                search-links: [
-                    {
-                        title: "Nixos download page fjwifjwei weifjweifj wifjwe ifjweifjweifj",
-                        link: "https://nixos.org"
-                    },
-                    { title: "Google homepage", link: "https://google.com" },
                 ],
             },
         ]

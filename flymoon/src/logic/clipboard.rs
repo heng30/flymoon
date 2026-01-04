@@ -6,7 +6,6 @@ use crate::{
 use anyhow::{Result, bail};
 use slint::ComponentHandle;
 
-#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
 fn copy_to_clipboard(msg: &str) -> Result<()> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "linux")] {
@@ -30,7 +29,6 @@ fn copy_to_clipboard(msg: &str) -> Result<()> {
     }
 }
 
-#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
 fn paste_from_clipboard() -> Result<String> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "linux")] {
@@ -51,22 +49,6 @@ fn paste_from_clipboard() -> Result<String> {
             Ok(msg) => Ok(msg),
         },
         Err(e) => bail!("{e:?}"),
-    }
-}
-
-#[cfg(target_os = "android")]
-fn copy_to_clipboard(msg: &str) -> Result<()> {
-    match terminal_clipboard::set_string(msg) {
-        Err(e) => bail!("{e:?}"),
-        _ => Ok(()),
-    }
-}
-
-#[cfg(target_os = "android")]
-fn paste_from_clipboard() -> Result<String> {
-    match terminal_clipboard::get_string() {
-        Err(e) => bail!("{e:?}"),
-        Ok(msg) => Ok(msg),
     }
 }
 

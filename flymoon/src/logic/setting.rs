@@ -1,9 +1,7 @@
 use super::tr::tr;
 use crate::{
     config,
-    slint_generatedAppWindow::{
-        AppWindow, Logic, SettingChatModel, SettingGoogleSearch, SettingModel, Store, Theme,
-    },
+    slint_generatedAppWindow::{AppWindow, Logic, SettingChatModel, SettingModel, Store, Theme},
 };
 use slint::ComponentHandle;
 
@@ -46,7 +44,7 @@ pub fn init(ui: &AppWindow) {
             all.preference.is_dark = setting.is_dark;
             _ = config::save(all);
 
-            if cfg!(feature = "desktop") && !ui.window().is_maximized() {
+            if !ui.window().is_maximized() {
                 ui.global::<crate::Util>().invoke_update_window_size();
             }
         });
@@ -89,11 +87,6 @@ pub fn init(ui: &AppWindow) {
                 reasoner_model_name: config.chat.reasoner_model_name.into(),
                 api_key: config.chat.api_key.into(),
             },
-            google_search: SettingGoogleSearch {
-                cx: config.google_search.cx.into(),
-                api_key: config.google_search.api_key.into(),
-                num: config.google_search.num,
-            },
         }
     });
 
@@ -103,9 +96,6 @@ pub fn init(ui: &AppWindow) {
         ui.global::<Store>()
             .set_reasoner_model_available(!setting.chat.reasoner_model_name.trim().is_empty());
 
-        ui.global::<Store>()
-            .set_search_webpages_available(!setting.google_search.api_key.trim().is_empty());
-
         let mut all = config::all();
 
         all.model.chat = config::data::ChatModel {
@@ -113,12 +103,6 @@ pub fn init(ui: &AppWindow) {
             model_name: setting.chat.model_name.into(),
             reasoner_model_name: setting.chat.reasoner_model_name.into(),
             api_key: setting.chat.api_key.into(),
-        };
-
-        all.model.google_search = config::data::GoogleSearch {
-            cx: setting.google_search.cx.into(),
-            api_key: setting.google_search.api_key.into(),
-            num: setting.google_search.num,
         };
 
         _ = config::save(all);
@@ -147,6 +131,4 @@ fn init_setting(ui: &AppWindow) {
         .set_current_model_name(model.chat.model_name.into());
     ui.global::<Store>()
         .set_reasoner_model_available(!model.chat.reasoner_model_name.trim().is_empty());
-    ui.global::<Store>()
-        .set_search_webpages_available(!model.google_search.api_key.trim().is_empty());
 }

@@ -7,10 +7,9 @@ use crate::{
     },
     slint_generatedAppWindow::{
         AppWindow, ChatEntry as UIChatEntry, ChatPhase, ChatSession as UIChatSession, Logic,
-        MCPElement as UIMCPElement, MCPEntry as UIMCPEntry, PromptEntry as UIPromptEntry,
-        PromptType, SearchLink as UISearchLink, Store,
+        Store,
     },
-    store_mcp_entries, store_prompt_entries, toast_success, toast_warn,
+    toast_success, toast_warn,
 };
 use bot::openai::{
     request::{APIConfig as ChatAPIConfig, HistoryChat},
@@ -19,7 +18,6 @@ use bot::openai::{
 };
 use cutil::time::chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
-use regex::Regex;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 use std::sync::{
     atomic::{AtomicU64, Ordering},
@@ -34,9 +32,6 @@ struct ChatCache {
     reasoner_start: Option<DateTime<Utc>>,
     bot_text: String,
 }
-
-const MCP_TOOL_START_SEP: &'static str = "```";
-const MCP_TOOL_END_SEP: &'static str = "```";
 
 static INC_CHAT_ID: AtomicU64 = AtomicU64::new(0);
 static CHAT_CACHE: Lazy<Mutex<Option<ChatCache>>> = Lazy::new(|| Mutex::new(None));
@@ -60,28 +55,6 @@ macro_rules! store_current_chat_session_histories {
     };
 }
 
-#[macro_export]
-macro_rules! store_current_chat_session_histories_search_links {
-    ($entry:expr) => {
-        $entry
-            .search_links
-            .as_any()
-            .downcast_ref::<VecModel<UISearchLink>>()
-            .expect("We know we set a VecModel earlier")
-    };
-}
-
-#[macro_export]
-macro_rules! store_current_chat_session_histories_mcp {
-    ($entry:expr) => {
-        $entry
-            .mcp
-            .as_any()
-            .downcast_ref::<VecModel<UIMCPElement>>()
-            .expect("We know we set UIMCPElement a VecModel earlier")
-    };
-}
-
 impl From<SettingModel> for ChatAPIConfig {
     fn from(setting: SettingModel) -> Self {
         ChatAPIConfig {
@@ -93,33 +66,11 @@ impl From<SettingModel> for ChatAPIConfig {
     }
 }
 
-impl From<SettingModel> for search::google::Config {
-    fn from(setting: SettingModel) -> Self {
-        Self {
-            cx: setting.google_search.cx,
-            api_key: setting.google_search.api_key,
-            num: setting.google_search.num as u8,
-        }
-    }
-}
-
 impl From<UIChatEntry> for HistoryChat {
     fn from(entry: UIChatEntry) -> Self {
-        let mcp_resp = if entry.mcp.row_count() > 0 {
-            entry
-                .mcp
-                .iter()
-                .map(|entry| entry.resp.clone().to_string())
-                .collect::<String>()
-        } else {
-            String::default()
-        };
-
-        let btext = format!("{}\n\n{}", entry.bot, mcp_resp).into();
-
         HistoryChat {
             utext: entry.user.into(),
-            btext,
+            btext: entry.bot.into(),
         }
     }
 }
@@ -136,8 +87,6 @@ impl From<UIChatSession> for ChatSession {
             uuid: entry.uuid.into(),
             time: entry.time.into(),
             prompt: entry.prompt.into(),
-            prompt_type: entry.prompt_type,
-            mcp_config: entry.mcp_config.into(),
             histories,
         }
     }
@@ -157,27 +106,7 @@ impl From<ChatSession> for UIChatSession {
             uuid: entry.uuid.into(),
             time: entry.time.into(),
             prompt: entry.prompt.into(),
-            prompt_type: entry.prompt_type,
-            mcp_config: entry.mcp_config.into(),
             histories,
-        }
-    }
-}
-
-impl From<search::SearchLink> for UISearchLink {
-    fn from(entry: search::SearchLink) -> Self {
-        Self {
-            title: entry.title.into(),
-            link: entry.link.into(),
-        }
-    }
-}
-
-impl From<UISearchLink> for search::SearchLink {
-    fn from(entry: UISearchLink) -> Self {
-        Self {
-            title: entry.title.into(),
-            link: entry.link.into(),
         }
     }
 }
@@ -310,7 +239,6 @@ pub fn init(ui: &AppWindow) {
             let ui = ui_handle.unwrap();
             let mut session = store_current_chat_session!(ui);
             session.prompt = Default::default();
-            session.prompt_type = PromptType::Normal;
             ui.global::<Store>().set_current_chat_session(session);
 
             toast_success!(ui, tr("Clear current session prompt successfully"));
@@ -321,46 +249,7 @@ fn parse_prompt(
     ui: &AppWindow,
     question: SharedString,
 ) -> (SharedString, SharedString, Option<f32>) {
-    let mut session = store_current_chat_session!(ui);
-
-    if question.is_empty() || (!question.starts_with("/") && !question.starts_with("@")) {
-        return (session.prompt, question, None);
-    }
-
-    if let Some(shortcut) = question.split_whitespace().next() {
-        if question.starts_with("/") {
-            if let Some(entry) = store_prompt_entries!(ui)
-                .iter()
-                .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
-            {
-                let question = question
-                    .trim_start_matches(&format!("/{}", entry.shortcut))
-                    .trim_start()
-                    .into();
-
-                session.prompt = entry.detail.clone();
-                session.prompt_type = PromptType::Normal;
-                ui.global::<Store>().set_current_chat_session(session);
-                return (entry.detail, question, Some(entry.temperature));
-            }
-        } else if question.starts_with("@") {
-            if let Some(entry) = store_mcp_entries!(ui)
-                .iter()
-                .find(|item| item.shortcut.as_str().eq(&shortcut[1..]))
-            {
-                let question = question
-                    .trim_start_matches(&format!("@{}", entry.shortcut))
-                    .trim_start()
-                    .into();
-
-                session.prompt_type = PromptType::MCP;
-                session.mcp_config = entry.config;
-                ui.global::<Store>().set_current_chat_session(session);
-                return (Default::default(), question, Some(entry.temperature));
-            }
-        }
-    }
-
+    let session = store_current_chat_session!(ui);
     (session.prompt, question, None)
 }
 
@@ -383,7 +272,6 @@ fn stream_text(id: u64, item: StreamTextItem) {
         return;
     }
 
-    // for mcp server
     if item.text.is_some() {
         let mut cc = CHAT_CACHE.lock().unwrap();
         if cc.is_some() {
@@ -419,7 +307,7 @@ fn stream_text(id: u64, item: StreamTextItem) {
         let chat_phase = ui.global::<Store>().get_chat_phase();
 
         if item.reasoning_text.is_some() {
-            if chat_phase != ChatPhase::Chatting && chat_phase != ChatPhase::MCP {
+            if chat_phase != ChatPhase::Chatting {
                 ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
             }
 
@@ -458,7 +346,7 @@ fn stream_text(id: u64, item: StreamTextItem) {
             store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
 
             if text.contains("\n") {
-                if chat_phase != ChatPhase::Chatting && chat_phase != ChatPhase::MCP {
+                if chat_phase != ChatPhase::Chatting {
                     ui.global::<Store>().set_chat_phase(ChatPhase::Chatting);
                 }
 
@@ -466,63 +354,6 @@ fn stream_text(id: u64, item: StreamTextItem) {
             }
         }
     });
-}
-
-async fn search_webpages(
-    ui: Weak<AppWindow>,
-    question: &str,
-    histories: &mut Vec<HistoryChat>,
-) -> bool {
-    log::info!("start searching wabpages...");
-
-    async_update_chat_phase(ui.clone(), ChatPhase::Searching);
-    let config = setting_model().into();
-
-    match search::google::search(question, config).await {
-        Ok((Some(text), search_links)) => {
-            log::info!("webpages content length: {}", text.len());
-            log::info!("finished searching webpages");
-
-            let text = format!(
-                "The following web contents are relevant to the user's question. Please consult these resources when preparing your answer. {text}"
-            );
-
-            histories.push(HistoryChat {
-                utext: text,
-                ..Default::default()
-            });
-
-            _ = slint::invoke_from_event_loop(move || {
-                let ui = ui.unwrap();
-
-                let rows = store_current_chat_session_histories!(ui).row_count();
-                if rows > 0 {
-                    let last_entry = store_current_chat_session_histories!(ui)
-                        .row_data(rows - 1)
-                        .unwrap();
-
-                    let search_links = search_links
-                        .into_iter()
-                        .map(|item| item.into())
-                        .collect::<Vec<UISearchLink>>();
-
-                    store_current_chat_session_histories_search_links!(last_entry)
-                        .set_vec(search_links);
-                }
-            });
-        }
-        Err(e) => {
-            async_update_chat_phase(ui.clone(), ChatPhase::None);
-            toast::async_toast_warn(
-                ui.clone(),
-                format!("{}. {}: {e:?}", tr("Search webpages failed"), tr("Reason")),
-            );
-            return false;
-        }
-        _ => (),
-    }
-
-    true
 }
 
 fn chat_histories(ui: &AppWindow, question: SharedString) -> Vec<HistoryChat> {
@@ -547,8 +378,6 @@ fn chat_histories(ui: &AppWindow, question: SharedString) -> Vec<HistoryChat> {
         user: question,
         md_elems: ModelRc::new(VecModel::from(vec![])),
         link_urls: ModelRc::new(VecModel::from(vec![])),
-        search_links: ModelRc::new(VecModel::from(vec![])),
-        mcp: ModelRc::new(VecModel::from(vec![])),
         ..Default::default()
     });
 
@@ -557,39 +386,6 @@ fn chat_histories(ui: &AppWindow, question: SharedString) -> Vec<HistoryChat> {
     }
 
     histories
-}
-
-async fn create_mcp_client(
-    ui: Weak<AppWindow>,
-    config: &str,
-) -> (Option<mcp::Client>, Option<String>) {
-    async_update_chat_phase(ui.clone(), ChatPhase::MCP);
-
-    match mcp::create_mcp_client(config).await {
-        Ok(client) => match gen_mcp_prompt(&client) {
-            Some(prompt) => {
-                async_set_current_chat_session_prompt(ui.clone(), prompt.clone().into());
-
-                return (Some(client), Some(prompt));
-            }
-            _ => {
-                toast::async_toast_warn(ui.clone(), format!("{}", tr("No MCP server tools")));
-            }
-        },
-        Err(e) => {
-            toast::async_toast_warn(
-                ui.clone(),
-                format!(
-                    "{}. {}: {e:?}",
-                    tr("Get MCP server prompt failed"),
-                    tr("Reason")
-                ),
-            );
-        }
-    }
-
-    async_update_chat_phase(ui.clone(), ChatPhase::None);
-    (None, None)
 }
 
 fn prepare_chat(
@@ -629,7 +425,7 @@ fn prepare_chat(
     (chat, id)
 }
 
-async fn start_chat(ui: Weak<AppWindow>, chat: Chat, id: u64, mcp_client: Option<mcp::Client>) {
+async fn start_chat(ui: Weak<AppWindow>, chat: Chat, id: u64) {
     match chat
         .start(id, |item| {
             stream_text(id, item);
@@ -642,45 +438,20 @@ async fn start_chat(ui: Weak<AppWindow>, chat: Chat, id: u64, mcp_client: Option
                 format!("{}. {}: {e:?}", tr("Chat failed"), tr("Reason")),
             );
         }
-        _ => {
-            if mcp_client.is_some() {
-                call_mcp_server_tool(ui.clone(), mcp_client.unwrap(), id).await;
-            }
-        }
+        _ => {}
     }
 
     async_update_chat_phase(ui, ChatPhase::None);
 }
 
 fn send_question(ui: &AppWindow, question: SharedString) {
-    let (mut prompt, question, temperature) = parse_prompt(ui, question);
-    let mut histories = chat_histories(ui, question.clone());
-
-    let mcp_config = store_current_chat_session!(ui).mcp_config;
-    let prompt_type = store_current_chat_session!(ui).prompt_type;
+    let (prompt, question, temperature) = parse_prompt(ui, question);
+    let histories = chat_histories(ui, question.clone());
 
     let enabled_reasoner_model = ui.global::<Store>().get_enabled_reasoner_model();
-    let enabled_search_webpages = ui.global::<Store>().get_enabled_search_webpages();
 
     let ui = ui.as_weak();
     tokio::spawn(async move {
-        if enabled_search_webpages && !search_webpages(ui.clone(), &question, &mut histories).await
-        {
-            return;
-        }
-
-        let mut mcp_client = None;
-        if !mcp_config.is_empty() && prompt_type == PromptType::MCP {
-            log::info!("start create mcp client...");
-            match create_mcp_client(ui.clone(), &mcp_config).await {
-                (Some(client), Some(p)) => {
-                    mcp_client = Some(client);
-                    prompt = p.into();
-                }
-                _ => return,
-            }
-        }
-
         log::info!("start sending question to model...");
         let (chat, id) = prepare_chat(
             ui.clone(),
@@ -691,7 +462,7 @@ fn send_question(ui: &AppWindow, question: SharedString) {
             enabled_reasoner_model,
         );
 
-        start_chat(ui, chat, id, mcp_client).await;
+        start_chat(ui, chat, id).await;
     });
 }
 
@@ -775,229 +546,8 @@ pub fn delete_db_entry(ui: &AppWindow, uuid: SharedString) {
     });
 }
 
-fn gen_mcp_prompt(client: &mcp::Client) -> Option<String> {
-    let tools = client.tool_set.tools();
-    if tools.is_empty() {
-        return None;
-    }
-
-    let mut prompt =
-        "You are a assistant, you can help user to complete various tasks. You have the following tools to use:\n".to_string();
-
-    for tool in tools {
-        prompt.push_str(&format!(
-            "\ntool name: {}\ndescription: {}\nparameters: {}\n",
-            tool.name(),
-            tool.description(),
-            serde_json::to_string_pretty(&tool.parameters()).unwrap_or_default()
-        ));
-    }
-
-    prompt.push_str(&format!(
-        r#"
-Each tool calling format:
-{}
-{{"name": "tool_name", "arguments": "tool_arguments"}}
-{}
-"#,
-        MCP_TOOL_START_SEP, MCP_TOOL_END_SEP
-    ));
-
-    Some(prompt)
-}
-
-async fn call_mcp_server_tool(ui: Weak<AppWindow>, client: mcp::Client, id: u64) {
-    let content = get_chat_cache_bot_text();
-    if content.is_empty() {
-        return;
-    }
-
-    log::info!("start call mcp server tool...");
-
-    async_update_chat_phase(ui.clone(), ChatPhase::MCP);
-
-    let tool_list = parse_tool_list(&content);
-    pretty_mcp_tool_sep(ui.clone(), tool_list.clone());
-
-    for text in &tool_list {
-        if let Ok(item) = serde_json::from_str::<mcp::tool::ToolCall>(&text) {
-            if item.name.is_empty() {
-                continue;
-            }
-
-            if !is_current_chat(id) {
-                return;
-            }
-
-            match client.tool_set.get_tool(&item.name) {
-                Some(tool) => {
-                    log::info!("tool: {}", item.name);
-                    log::info!("tool arguments: {:?}", item.arguments);
-
-                    match tool.call(item.arguments).await {
-                        Ok(result) => {
-                            if !is_current_chat(id) {
-                                return;
-                            }
-
-                            add_mcp_tool_response(ui.clone(), item.name, result);
-                        }
-                        Err(e) => {
-                            toast::async_toast_warn(
-                                ui.clone(),
-                                format!(
-                                    "{} - {}. {}: {e:?}",
-                                    item.name,
-                                    tr("MCP server tool call failed"),
-                                    tr("Reason")
-                                ),
-                            );
-                        }
-                    }
-                }
-                _ => {
-                    toast::async_toast_warn(
-                        ui.clone(),
-                        format!("{} - {}", item.name, tr("MCP server tool not found"),),
-                    );
-                }
-            }
-        }
-    }
-
-    async_update_db_entry(ui);
-}
-
-fn pretty_mcp_tool_sep(ui: Weak<AppWindow>, tool_list: Vec<String>) {
-    if tool_list.is_empty() {
-        return;
-    }
-
-    _ = slint::invoke_from_event_loop(move || {
-        let ui = ui.unwrap();
-
-        let rows = store_current_chat_session_histories!(ui).row_count();
-        if rows <= 0 {
-            return;
-        }
-
-        let last_index = rows - 1;
-        let mut entry = store_current_chat_session_histories!(ui)
-            .row_data(last_index)
-            .unwrap();
-
-        for item in tool_list.iter() {
-            entry.bot = entry
-                .bot
-                .replace(item.as_str(), &pretty_json(item.clone().into()))
-                .into();
-        }
-
-        entry.bot = entry
-            .bot
-            .replace(MCP_TOOL_START_SEP, "\n```")
-            // .replace(MCP_TOOL_END_SEP, "```")
-            .into();
-
-        store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
-        md::parse_last_history_bot_text(&ui);
-    });
-}
-
-#[allow(dead_code)]
-fn paser_mcp_response(result: &str) -> Option<String> {
-    let response_text = match serde_json::from_str::<super::mcp::MCPResponse>(result) {
-        Ok(v) => Some(
-            v.content
-                .into_iter()
-                .filter(|item| item.content_type == "text")
-                .map(|item| item.text)
-                .collect::<Vec<String>>()
-                .join("\n")
-                .to_string(),
-        ),
-        _ => None,
-    };
-
-    response_text
-}
-
-fn add_mcp_tool_response(ui: Weak<AppWindow>, name: String, result: String) {
-    _ = slint::invoke_from_event_loop(move || {
-        let ui = ui.unwrap();
-
-        let rows = store_current_chat_session_histories!(ui).row_count();
-        if rows <= 0 {
-            return;
-        }
-
-        let last_index = rows - 1;
-        let entry = store_current_chat_session_histories!(ui)
-            .row_data(last_index)
-            .unwrap();
-
-        store_current_chat_session_histories_mcp!(entry).push(UIMCPElement {
-            tool_name: name.into(),
-            resp: pretty_json(result.into()),
-        });
-
-        store_current_chat_session_histories!(ui).set_row_data(last_index, entry);
-        md::parse_stream_bot_text(&ui);
-    });
-}
-
-fn pretty_json(content: SharedString) -> SharedString {
-    match serde_json::from_str::<serde_json::Value>(&content) {
-        Ok(v) => serde_json::to_string_pretty(&v)
-            .unwrap_or(content.into())
-            .into(),
-        _ => content,
-    }
-}
-
-fn parse_tool_list(content: &str) -> Vec<String> {
-    let content = content.replace("```json", "```");
-
-    let re = Regex::new(&format!(
-        r"(?s){}[\s]*(.*?)[\s]*{}",
-        MCP_TOOL_START_SEP, MCP_TOOL_END_SEP
-    ))
-    .unwrap();
-
-    re.captures_iter(&content)
-        .filter_map(|cap| cap.get(1).map(|m| m.as_str().trim().to_string()))
-        .collect()
-}
-
-fn get_chat_cache_bot_text() -> String {
-    let cc = CHAT_CACHE.lock().unwrap();
-    if cc.is_some() {
-        cc.as_ref().unwrap().bot_text.clone()
-    } else {
-        String::default()
-    }
-}
-
-fn is_current_chat(id: u64) -> bool {
-    let cc = CHAT_CACHE.lock().unwrap();
-    if cc.is_some() {
-        cc.as_ref().unwrap().id == id
-    } else {
-        false
-    }
-}
-
 fn async_update_chat_phase(ui: Weak<AppWindow>, phase: ChatPhase) {
     _ = slint::invoke_from_event_loop(move || {
         ui.unwrap().global::<Store>().set_chat_phase(phase);
-    });
-}
-
-fn async_set_current_chat_session_prompt(ui: Weak<AppWindow>, prompt: SharedString) {
-    _ = slint::invoke_from_event_loop(move || {
-        let ui = ui.unwrap();
-        let mut session = ui.global::<Store>().get_current_chat_session();
-        session.prompt = prompt;
-        ui.global::<Store>().set_current_chat_session(session);
     });
 }

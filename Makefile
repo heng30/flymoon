@@ -1,62 +1,30 @@
 #!/bin/sh
 
 pwd=${shell pwd}
-
 app-name=flymoon
 version=`git describe --tags --abbrev=0`
+build-env=SLINT_STYLE=fluent
+run-env=RUST_LOG=debug
 
-build-env=
-android-build-env=SLINT_STYLE=material $(build-env)
-desktop-build-env=SLINT_STYLE=fluent $(build-env)
-web-build-env=SLINT_STYLE=fluent $(build-env) RUSTFLAGS='--cfg getrandom_backend="wasm_js"'
+all: build-release # latex-image-build-release
 
-run-env=RUST_LOG=debug,reqwest=warn,sqlx=warn
+build-debug:
+	$(build-env) cargo build
 
-all: desktop-build-release latex-image-build-release
+build-release:
+	$(build-env) cargo build --release
 
-android-build:
-	$(android-build-env) cargo apk build --lib -p ${app-name} --features=android
+debug:
+	$(build-env) $(run-env) cargo run --bin ${app-name}
 
-android-build-release:
-	$(android-build-env) cargo apk build --lib --release -p ${app-name} --features=android
+test:
+	$(build-env) $(run-env) cargo test -- --nocapture
 
-android-debug:
-	$(android-build-env) $(run-env) cargo apk run --lib -p ${app-name} --features=android
+clean:
+	cargo clean
 
-desktop-build-debug:
-	$(desktop-build-env) cargo build --features=desktop
-
-desktop-build-release:
-	$(desktop-build-env) cargo build --release --features=desktop
-
-desktop-build-release-winit:
-	SLINT_BACKEND=winit-femtovg $(desktop-build-env) cargo build --release --features=desktop
-
-desktop-debug:
-	$(desktop-build-env) $(run-env) cargo run --bin ${app-name} --features=desktop
-
-web-build-debug:
-	cd $(app-name) && $(web-build-env) wasm-pack build --no-opt --dev --target web --out-dir ./web/pkg --features=web
-
-# `--no-opt`: disable wasm-opt. Because wasm-opt can't work on rutc-1.87.0
-web-build-release:
-	cd $(app-name) && $(web-build-env) wasm-pack build --no-opt --release --target web --out-dir ./web/pkg --features=web
-
-# `--no-opt`: disable wasm-opt. Because wasm-opt can't work on rutc-1.87.0
-web-build-dist:
-	- rm -rf ./web/dist/*
-	cd $(app-name) && $(web-build-env) wasm-pack build --no-opt --release --target web --out-dir ./web/dist/pkg --features=web
-	cd $(app-name) && cp -f ./web/index.html ./web/dist && cp -f ./ui/images/brand.png ./web/dist/pkg/favicon.png
-
-web-server:
-	cd $(app-name) && python3 -m http.server -d web 8000
-
-web-server-dist:
-	cd $(app-name) && python3 -m http.server -d web/dist 8800
-
-packing-android:
-	cp -f target/release/apk/${app-name}.apk target/${app-name}-${version}-aarch64-linux-android.apk
-	echo "${app-name}-${version}-aarch64-linux-android.apk" > target/output-name
+check:
+	$(build-env) cargo check --bin ${app-name}
 
 packing-linux:
 	cp -f target/release/${app-name} target/${app-name}-${version}-x86_64-linux
@@ -70,43 +38,8 @@ packing-darwin:
 	cp -f target/release/${app-name} target/${app-name}-${version}-x86_64-darwin
 	echo "${app-name}-${version}-x86_64-darwin" > target/output-name
 
-packing-web:
-	tar -zcf target/$(app-name)-$(version)-web.tar.gz ${app-name}/web/dist
-	echo "$(app-name)-$(version)-web.tar.gz" > target/output-name
-
-reduce-linux-binary-size:
-	upx -9 target/release/$(app-name)
-
-slint-viewer-android:
-	$(android-build-env) slint-viewer --auto-reload -I $(app-name)/ui ${app-name}/ui/android-window.slint
-
-slint-viewer-desktop:
-	$(desktop-build-env) slint-viewer --auto-reload -I $(app-name)/ui ${app-name}/ui/desktop-window.slint
-
-slint-viewer-web:
-	$(web-build-env) slint-viewer --auto-reload -I $(app-name)/ui ${app-name}/ui/web-window.slint
-
-nix-shell:
-	nix-shell
-
-test:
-	$(build-env) $(run-env) cargo test -- --nocapture
-
-clippy:
-	cargo clippy
-
-outdated:
-	cargo outdated
-
-clean-incremental:
-	rm -rf ./target/debug/incremental
-	rm -rf ./target/aarch64-linux-android/debug/incremental
-
-clean-unused-dependences:
-	cargo machete
-
-clean:
-	cargo clean
+slint-viewer:
+	$(build-env) slint-viewer --auto-reload -I $(app-name)/ui ${app-name}/ui/desktop-window.slint
 
 deb:
 	cd ./${app-name}/pkg/deb && bash -e "./create_deb.sh"

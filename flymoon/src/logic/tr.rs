@@ -1,25 +1,10 @@
-#[cfg(any(
-    target_os = "windows",
-    target_os = "linux",
-    target_os = "macos",
-    target_os = "android"
-))]
 use crate::config;
 
 use std::collections::HashMap;
 
 pub fn tr(text: &str) -> String {
-    cfg_if::cfg_if! {
-        if #[cfg(any(
-            target_os = "windows",
-            target_os = "linux",
-            target_os = "macos",
-            target_os = "android"
-            ))] {
-            if config::preference().language == "en" {
-                return text.to_string();
-            }
-        }
+    if config::preference().language == "en" {
+        return text.to_string();
     }
 
     let items: HashMap<&str, &str> = HashMap::from([
@@ -46,7 +31,6 @@ pub fn tr(text: &str) -> String {
         ("Cancel", "取消"),
         ("chat", "聊天"),
         ("Chat", "聊天"),
-        ("Google Search", "谷歌搜索"),
         ("Chat failed", "聊天失败"),
         ("Choose language", "选择语言"),
         ("Choose Theme", "选择主题"),
@@ -59,8 +43,6 @@ pub fn tr(text: &str) -> String {
         ("Copy failed", "复制失败"),
         ("Copy success", "复制成功"),
         ("Create token account fee", "创建代币账户费用"),
-        ("cx", "CX"),
-        ("CX", "CX"),
         ("Dark", "暗色"),
         ("Delete", "删除"),
         ("Delete address", "删除地址"),
@@ -102,7 +84,6 @@ pub fn tr(text: &str) -> String {
         ("Jump to", "跳转到"),
         ("keyword", "关键词"),
         ("Light", "亮色"),
-        ("Link number", "链接数量"),
         ("Load entry failed", "加载条目失败"),
         ("Loading...", "加载中..."),
         (
@@ -123,7 +104,6 @@ pub fn tr(text: &str) -> String {
         ("Toggle reasoner model", "切换深度思考模式"),
         ("name", "名称"),
         ("Name", "名称"),
-        ("Network", "网络搜索"),
         ("new", "新建"),
         ("New chat", "新聊天"),
         ("No Data", "无数据"),
@@ -164,7 +144,6 @@ pub fn tr(text: &str) -> String {
         ("Scroll up", "向上滚动"),
         ("Search", "搜索"),
         ("Searching...", "搜索中..."),
-        ("Search webpages failed", "搜索网页失败"),
         ("Send address", "发送地址"),
         ("Send amount", "发送数量"),
         ("Send question", "发送问题"),
@@ -183,7 +162,6 @@ pub fn tr(text: &str) -> String {
         ("Select all", "全选"),
         ("Thinking...", "思考中..."),
         ("Toggle Markdown format of Bot", "切换Bot的Markdown格式"),
-        ("Toggle network searching", "切换网络搜索"),
         ("Transaction detail", "交易详情"),
         ("Transaction failed", "交易失败"),
         ("Transaction history", "交易历史"),
@@ -204,10 +182,6 @@ pub fn tr(text: &str) -> String {
         ("Info", "提醒"),
         ("Reboot to take setting effect", "重启使配置生效"),
         ("Frameless window", "无边框窗口"),
-        (
-            "Please go to the 'Settings' page and configure the 'Google Search' related settings",
-            "请到「设置」页面并设置「谷歌搜索」相关配置",
-        ),
         ("Clear", "清空"),
         (
             "Toggle current session prompt dialog",
@@ -225,25 +199,6 @@ pub fn tr(text: &str) -> String {
         ("Not started", "未启动"),
         ("Running", "正在运行"),
         ("Failed", "运行失败"),
-        (
-            "Input '@' to show MCP's tip panel at homepage",
-            "提问框输入'@' 在首页显示提示面板",
-        ),
-        ("Server configuration(JSON)", "MCP服务配置（JSON）"),
-        ("Start server failed", "启动MCP服务失败"),
-        ("Start server successfully", "启动MCP服务成功"),
-        ("Restart server failed", "重启MCP服务失败"),
-        ("Restart server successfully", "重启MCP服务成功"),
-        ("Stop server failed", "关闭MCP服务失败"),
-        ("Stop server successfully", "关闭MCP服务成功"),
-        ("Calling...", "调用工具..."),
-        ("mcp prompt", "mcp提示词"),
-        ("Tool", "工具"),
-        ("output", "输出"),
-        ("No MCP server tools", "没有MCP工具"),
-        ("Get MCP server prompt failed", "获取MCP工具提示词失败"),
-        ("MCP server tool call failed", "调用MCP服务工具失败"),
-        ("MCP server tool not found", "没有找到MCP服务工具"),
         (
             "Copy latest bot responsing contents",
             "复制最新的机器人回复内容",

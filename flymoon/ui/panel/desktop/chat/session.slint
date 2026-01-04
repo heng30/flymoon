@@ -1,6 +1,6 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
-import { ChatEntry, ChatPhase, MCPElement } from "../../../store.slint";
+import { ChatEntry, ChatPhase } from "../../../store.slint";
 import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading, Skeleton, SkeletonType, VideoControl, Divider } from "../../../base/widgets.slint";
 
 import { MdDetail, MdHeading, MdCodeBlock, MdText } from "md.slint";
@@ -215,44 +215,6 @@ component ReasonerText inherits VerticalLayout {
     }
 }
 
-component MCPDetail inherits Rectangle {
-    in-out property <[MCPElement]> entries;
-
-    height: vbox.preferred-height;
-
-    vbox := VerticalLayout {
-        for entry in entries: HorizontalLayout {
-            spacing: Theme.spacing * 4;
-
-            VerticalLayout {
-                alignment: center;
-
-                Divider {
-                    background: Theme.warning-color;
-                    width: Theme.padding / 2;
-                    height: inner-vbox.preferred-height - Theme.padding * 6;
-                }
-            }
-
-            inner-vbox := VerticalLayout {
-                MdHeading {
-                    heading: {
-                        level: 2,
-                        text: Logic.tr("Tool") + " API " + "\"" + entry.tool-name + "\"" + " " + Logic.tr("output"),
-                    };
-                }
-
-                if !entry.resp.is-empty: MdCodeBlock {
-                    code-block: {
-                        lang: "json",
-                        code: entry.resp,
-                    };
-                }
-            }
-        }
-    }
-}
-
 export component Session inherits Rectangle {
     callback focus-input;
 
@@ -358,18 +320,13 @@ export component Session inherits Rectangle {
                     entries: entry.md-elems;
                     urls: entry.link-urls;
                     histories-entry-index: index;
-                    search-links: entry.search-links;
                 }
 
                 if Store.is-toggle-bot-markdown && !entry.bot.is-empty: ChatDetail {
                     text: entry.bot;
                 }
 
-                if entry.mcp.length > 0: MCPDetail {
-                    entries: entry.mcp;
-                }
-
-                if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
+                if is-last-index && (Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
                     height: 200px;
 
                     sk := Skeleton {

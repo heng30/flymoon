@@ -15,12 +15,6 @@ pub fn init(ui: &AppWindow) {
                 "close-window" => {
                     ui.global::<Util>().invoke_close_window();
                 }
-                "prompt-delete" => {
-                    ui.global::<Logic>().invoke_prompt_delete(user_data);
-                }
-                "mcp-delete" => {
-                    ui.global::<Logic>().invoke_mcp_delete(user_data);
-                }
                 "chat-histories-remove-selected" => {
                     ui.global::<Logic>().invoke_chat_histories_remove_selected();
                 }

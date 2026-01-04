@@ -1,5 +1,5 @@
 import { Theme, Logic, Store, Icons, Util, TabIndex } from "../../def.slint";
-import { ChatPhase, PromptType } from "../../../store.slint";
+import { ChatPhase } from "../../../store.slint";
 import {
     Divider,
     ElevatedBtn,
@@ -56,14 +56,6 @@ export component Input inherits Rectangle {
         }
     }
 
-    function toggle-search-webpages() {
-        if (!Store.search-webpages-available) {
-            Util.show-toast(Logic.tr("Please go to the 'Settings' page and configure the 'Google Search' related settings"), ToastStatus.Info);
-            return;
-        }
-        Store.enabled-search-webpages = !Store.enabled-search-webpages;
-    }
-
     init => {
         te.focus();
     }
@@ -93,15 +85,6 @@ export component Input inherits Rectangle {
                             font-size: Theme.title4-font-size;
 
                             edited => {
-                                if (!self.text.is-empty) {
-                                    if (Util.start-with(self.text, "/")) {
-                                        Logic.prompt-popup(te.text);
-                                    } else if (Util.start-with(self.text, "@")) {
-                                        Logic.mcp-popup(te.text);
-                                    }
-                                }
-                                Logic.prompt-popup-clear(self.text);
-
                                 ensure-show-cursor();
                             }
 
@@ -142,17 +125,11 @@ export component Input inherits Rectangle {
                                     } else if (event.text == "d") {
                                         toggle-current-model-name();
                                         return accept;
-                                    } else if (event.text == "w") {
-                                        toggle-search-webpages();
-                                        return accept;
                                     } else if (event.text == "y") {
                                         Logic.copy-last-bot-text();
                                         return accept;
                                     } else if (event.text == "m") {
                                         Store.is-toggle-bot-markdown = !Store.is-toggle-bot-markdown;
-                                        return accept;
-                                    } else if (event.text == "p") {
-                                        Store.is-show-current-prompt-dialog = !Store.is-show-current-prompt-dialog;
                                         return accept;
                                     } else if (event.text == "/") {
                                         Logic.clear-current-chat-session-prompt();
@@ -211,39 +188,11 @@ export component Input inherits Rectangle {
                             toggle-current-model-name();
                         }
                     }
-
-                    TextBtn {
-                        border-color: Store.enabled-search-webpages ? Theme.thirdly-brand-color : Theme.placeholder-text-color;
-                        border-width: self.has-hover || Store.enabled-search-webpages ? 2px : 1px;
-                        border-radius: Theme.border-radius * 4;
-                        bg-color: Theme.hover-background;
-                        icon: Icons.network;
-                        colorize: self.border-color;
-                        text: Logic.tr("Network");
-                        gain-focus-when-clicked: false;
-
-                        clicked => {
-                            toggle-search-webpages();
-                        }
-                    }
                 }
 
                 HorizontalLayout {
                     alignment: LayoutAlignment.end;
                     spacing: Theme.spacing * 4;
-
-                    IconBtn {
-                        icon: Store.current-chat-session.prompt-type == PromptType.Normal ? Icons.prompt : Icons.mcp;
-                        tip: Store.current-chat-session.prompt-type == PromptType.Normal ? Logic.tr("prompt") : Logic.tr("mcp prompt");
-
-                        is-show-tip: true;
-                        gain-focus-when-clicked: false;
-                        colorize: Store.current-chat-session.prompt.is-empty ? Theme.icon-color : Theme.warning-color;
-
-                        clicked => {
-                            Store.is-show-current-prompt-dialog = true;
-                        }
-                    }
 
                     IconBtn {
                         icon: Icons.new;

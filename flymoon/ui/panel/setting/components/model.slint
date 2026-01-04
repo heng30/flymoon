@@ -19,11 +19,6 @@ export component Model inherits SettingDetail {
                 reasoner-model-name: reasoner-model-name-lineedit.text,
                 api-key: api-key-lineedit.text,
             },
-            google-search : {
-                cx: google-search-cx-lineedit.text,
-                api-key : google-search-api-key-lineedit.text,
-                num: google-search-num-select.current-value.to-float(),
-            }
         };
     }
 
@@ -32,23 +27,11 @@ export component Model inherits SettingDetail {
         model-name-lineedit.text = setting.chat.model-name;
         reasoner-model-name-lineedit.text = setting.chat.reasoner-model-name;
         api-key-lineedit.text = setting.chat.api-key;
-
-        google-search-cx-lineedit.text = setting.google-search.cx;
-        google-search-api-key-lineedit.text = setting.google-search.api-key;
-        google-search-num-select.current-value = Math.clamp(setting.google-search.num, 1, 10);
     }
 
     SettingDetailInner {
-        SettingDetailInnerVbox {
-            type-select := Select {
-                values: [Logic.tr("Chat"), Logic.tr("Google Search")];
-                current-value: self.values[0];
-            }
-        }
-
         Rectangle {
             VerticalLayout {
-                visible: type-select.current-index == 0;
                 spacing: Theme.spacing * 4;
 
                 SettingDetailInnerVbox {
@@ -109,54 +92,6 @@ export component Model inherits SettingDetail {
                     font-size: Theme.title4-font-size;
                     font-weight: Theme.bold-font-weight;
                     horizontal-alignment: TextHorizontalAlignment.center;
-                }
-            }
-
-            VerticalLayout {
-                visible: type-select.current-index == 1;
-                spacing: Theme.spacing * 4;
-                alignment: LayoutAlignment.start;
-
-                SettingDetailInnerVbox {
-                    SettingDetailLabel {
-                        text: Logic.tr("CX");
-                    }
-
-                    google-search-cx-lineedit := LineInput {
-                        placeholder-text: Logic.tr("cx");
-                    }
-                }
-
-                SettingDetailInnerVbox {
-                    SettingDetailLabel {
-                        text: Logic.tr("API key");
-                    }
-
-                    google-search-api-key-lineedit := LineInput {
-                        is-show-icon: true;
-                        icon: self.input-type == InputType.password ? Icons.close-eye : Icons.eye;
-                        input-type: InputType.password;
-                        placeholder-text: Logic.tr("api key");
-
-                        clicked => {
-                            if (self.input-type == InputType.password) {
-                                self.input-type = InputType.text;
-                            } else {
-                                self.input-type = InputType.password;
-                            }
-                        }
-                    }
-                }
-
-                SettingDetailInnerVbox {
-                    SettingDetailLabel {
-                        text: Logic.tr("Link number");
-                    }
-
-                    google-search-num-select := Select {
-                        values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-                        current-value: self.values[4];
-                    }
                 }
             }
         }

@@ -3,7 +3,6 @@ import { Divider, CenterLayout } from "../../../base/widgets.slint";
 
 import { Input } from "input.slint";
 import { Session } from "session.slint";
-import { InputPromptList } from "input-prompt-list.slint";
 
 export component Chat inherits VerticalLayout {
     in-out property <length> win-height;
@@ -17,11 +16,6 @@ export component Chat inherits VerticalLayout {
             focus-input => {
                 input.focus();
             }
-        }
-
-        if Store.input-prompt-list-entries.length > 0: InputPromptList {
-            x: 0;
-            y: input.y - self.height - Theme.padding * 3;
         }
     }
 
