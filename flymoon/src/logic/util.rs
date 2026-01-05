@@ -309,9 +309,9 @@ pub fn init_qrcode(ui: &AppWindow) {
 pub fn display_size() -> Option<(u32, u32)> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "linux")] {
-            if is_wayland() {
-                if let Ok(json_data) = duct::cmd!("wlr-randr", "--json").read() {
-                    if let Ok(displays) = serde_json::from_str::<Vec<Display>>(&json_data) {
+            if is_wayland()
+                && let Ok(json_data) = duct::cmd!("wlr-randr", "--json").read()
+                    && let Ok(displays) = serde_json::from_str::<Vec<Display>>(&json_data) {
                         for display in displays {
                             for mode in display.modes {
                                 if mode.current {
@@ -320,9 +320,6 @@ pub fn display_size() -> Option<(u32, u32)> {
                             }
                         }
                     }
-
-                }
-            }
         }
     }
 
@@ -333,7 +330,7 @@ pub fn display_size() -> Option<(u32, u32)> {
             }
         }
 
-        if displays.len() > 0 {
+        if !displays.is_empty() {
             return Some((displays[0].width, displays[0].height));
         }
     }

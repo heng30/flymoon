@@ -1,5 +1,5 @@
 import { Theme, Store, Logic, Icons, Util } from "../../def.slint";
-import { ChatEntry, MdElementType, MdImage, MdMath, MdElement, MdUrl, MdHeading, MdUrl, MdListItem, MdTable, MdCodeBlock } from "../../../store.slint";
+import { ChatEntry, MdElementType, MdMath, MdElement, MdUrl, MdHeading, MdListItem, MdTable, MdCodeBlock } from "../../../store.slint";
 import { IconBtn, Label, Link, ToolTipSetting, ComponentPosition } from "../../../base/widgets.slint";
 import { ScrollView } from "std-widgets.slint";
 
@@ -162,17 +162,6 @@ export component MdCodeBlock inherits HorizontalLayout {
     }
 }
 
-component MdImage inherits HorizontalLayout {
-    in-out property <MdImage> img;
-
-    padding-bottom: Theme.padding * 4;
-    alignment: LayoutAlignment.center;
-
-    Image {
-        source: img.img;
-    }
-}
-
 component MdMath inherits HorizontalLayout {
     in-out property <MdMath> img;
 
@@ -319,15 +308,6 @@ export component MdDetail inherits Rectangle {
                 img: entry.math;
             }
 
-            if entry.ty == MdElementType.Image: MdImage {
-                init => {
-                    if (!entry.img.is-loaded) {
-                        Logic.download-image(histories-entry-index, index, entry.img.url);
-                    }
-                }
-
-                img: entry.img;
-            }
         }
 
         if urls.length > 0: MdLinks {

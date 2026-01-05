@@ -1,10 +1,9 @@
-use pmacro::SlintFromConvert;
-use serde::{Deserialize, Serialize};
-use slint::Model;
-
 use crate::slint_generatedAppWindow::{
     ChatEntry as UIChatEntry, ChatHistory, ChatSession as UIChatSession,
 };
+use pmacro::SlintFromConvert;
+use serde::{Deserialize, Serialize};
+use slint::Model;
 
 pub const CHAT_SESSION_TABLE: &str = "chat_session";
 
@@ -19,11 +18,11 @@ pub async fn init(db_path: &str) {
 #[macro_export]
 macro_rules! db_add {
     ($table:expr, $ty:ident) => {
-        fn db_add(ui: slint::Weak<crate::slint_generatedAppWindow::AppWindow>, entry: $ty) {
+        fn db_add(ui: slint::Weak<$crate::slint_generatedAppWindow::AppWindow>, entry: $ty) {
             tokio::spawn(async move {
                 let data = serde_json::to_string(&entry).expect("Not implement `Serialize` trait");
                 if let Err(e) = sqldb::entry::insert($table, entry.uuid.as_str(), &data).await {
-                    crate::logic::toast::async_toast_warn(
+                    $crate::logic::toast::async_toast_warn(
                         ui,
                         format!("{}. {e}", crate::logic::tr::tr("insert entry failed")),
                     );
@@ -36,11 +35,11 @@ macro_rules! db_add {
 #[macro_export]
 macro_rules! db_update {
     ($table:expr, $ty:ident) => {
-        fn db_update(ui: slint::Weak<crate::slint_generatedAppWindow::AppWindow>, entry: $ty) {
+        fn db_update(ui: slint::Weak<$crate::slint_generatedAppWindow::AppWindow>, entry: $ty) {
             tokio::spawn(async move {
                 let data = serde_json::to_string(&entry).expect("Not implement `Serialize` trait");
                 if let Err(e) = sqldb::entry::update($table, entry.uuid.as_str(), &data).await {
-                    crate::logic::toast::async_toast_warn(
+                    $crate::logic::toast::async_toast_warn(
                         ui,
                         format!("{}. {e}", crate::logic::tr::tr("update entry failed")),
                     );
@@ -70,16 +69,56 @@ macro_rules! db_select_all {
 macro_rules! db_remove {
     ($table:expr) => {
         fn db_remove(
-            ui: slint::Weak<crate::slint_generatedAppWindow::AppWindow>,
+            ui: slint::Weak<$crate::slint_generatedAppWindow::AppWindow>,
             uuid: slint::SharedString,
         ) {
             let uuid = uuid.to_string();
             tokio::spawn(async move {
                 if let Err(e) = sqldb::entry::delete($table, uuid.as_str()).await {
-                    crate::logic::toast::async_toast_warn(
+                    $crate::logic::toast::async_toast_warn(
                         ui,
                         format!("{}. {e}", crate::logic::tr::tr("remove entry failed")),
                     );
+                }
+            });
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! db_select {
+    ($table:expr, $ty:ident) => {
+        fn db_select<F>(
+            ui: slint::Weak<$crate::slint_generatedAppWindow::AppWindow>,
+            uuid: slint::SharedString,
+            callback: F,
+        ) where
+            F: FnOnce(&$crate::slint_generatedAppWindow::AppWindow, $ty) + Send + 'static,
+        {
+            let uuid = uuid.to_string();
+            tokio::spawn(async move {
+                match sqldb::entry::select($table, uuid.as_str()).await {
+                    Ok(item) => match serde_json::from_str::<$ty>(&item.data) {
+                        Ok(data) => {
+                            let _ = slint::invoke_from_event_loop(move || {
+                                if let Some(ui) = ui.upgrade() {
+                                    callback(&ui, data);
+                                }
+                            });
+                        }
+                        Err(e) => {
+                            $crate::logic::toast::async_toast_warn(
+                                ui,
+                                format!("{}. {e}", crate::logic::tr::tr("parse entry failed")),
+                            );
+                        }
+                    },
+                    Err(e) => {
+                        $crate::logic::toast::async_toast_warn(
+                            ui,
+                            format!("{}. {e}", crate::logic::tr::tr("load entry failed")),
+                        );
+                    }
                 }
             });
         }
@@ -120,5 +159,3 @@ impl From<UIChatSession> for ChatHistory {
         }
     }
 }
-
-pub use sqldb::entry;

@@ -1,24 +1,19 @@
 use bot::openai::{
-    Chat,
+    Chat, ChatConfig,
     request::{APIConfig, HistoryChat},
     response::StreamTextItem,
 };
 
-fn stream_text(item: StreamTextItem) {
-    println!("{item:?}");
-}
-
-#[cfg(feature = "test-bot")]
 #[tokio::main]
 async fn main() {
     env_logger::init();
 
-    let api_key = std::env::var("OPENAI_API_KEY").expect("Missing DEEPSEEK_API_KEY in environment");
+    let api_key = std::env::var("OPENAI_API_KEY").expect("Missing OPENAI_API_KEY in environment");
 
     let prompt = "Your are a chat bot.";
     let question = "hi";
 
-    let config = APIConfig {
+    let request_config = APIConfig {
         api_base_url: "https://api.deepseek.com/v1".to_string(),
         api_model: "deepseek-chat".to_string(),
         api_key,
@@ -37,12 +32,20 @@ async fn main() {
         btext: "Hello! 👋 How can I assist you today? 😊".to_string(),
     }];
 
-    let (chat, stop_tx) = Chat::new(prompt, question, config, histories);
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<StreamTextItem>(100);
 
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_secs(100));
-        _ = stop_tx.send(());
+    let chat_config = ChatConfig { tx };
+    let chat = Chat::new(prompt, question, chat_config, request_config, histories);
+
+    let handle = tokio::spawn(async move {
+        while let Some(item) = rx.recv().await {
+            println!("{item:?}");
+        }
     });
 
-    _ = chat.start(1, stream_text).await;
+    if let Err(e) = chat.start().await {
+        eprintln!("Chat error: {e:?}");
+    }
+
+    _ = handle.await;
 }

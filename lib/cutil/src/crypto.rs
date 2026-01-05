@@ -9,8 +9,7 @@ pub fn hash(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::super::str::random_string;
-    use super::*;
+    use crate::str::random_string;
 
     #[test]
     fn test_random_string() {

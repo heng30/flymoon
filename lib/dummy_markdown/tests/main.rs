@@ -2,7 +2,7 @@
 mod tests {
     use dummy_markdown::parser;
 
-    const DOC: &'static str = r#"
+    const DOC: &str = r#"
 ### **Day 1: Understand Nix & NixOS Basics**
 - *Read the [Nix Pills](https://nixos.org/guides/nix-pills/)* (Chapters 1-4) to understand:
 
@@ -60,7 +60,7 @@ As with cmark and **cmark-gfm**, Comrak **will scrub** raw HTML and potentially 
 
     #[test]
     fn main() {
-        let (ui_elems, link_urls) = parser::run(DOC);
+        let (ui_elems, link_urls) = parser::run(DOC, true);
         println!("{:#?}", ui_elems);
         println!("{:#?}", link_urls);
     }

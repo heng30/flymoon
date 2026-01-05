@@ -34,21 +34,21 @@ pub fn init(ui: &AppWindow) {
 #[macro_export]
 macro_rules! global_store {
     ($ui:expr) => {
-        $ui.global::<crate::slint_generatedAppWindow::Store>()
+        $ui.global::<$crate::slint_generatedAppWindow::Store>()
     };
 }
 
 #[macro_export]
 macro_rules! global_logic {
     ($ui:expr) => {
-        $ui.global::<crate::slint_generatedAppWindow::Logic>()
+        $ui.global::<$crate::slint_generatedAppWindow::Logic>()
     };
 }
 
 #[macro_export]
 macro_rules! global_util {
     ($ui:expr) => {
-        $ui.global::<crate::slint_generatedAppWindow::Util>()
+        $ui.global::<$crate::slint_generatedAppWindow::Util>()
     };
 }
 
@@ -58,7 +58,7 @@ macro_rules! logic_cb {
         {{
             let ui_weak = $ui.as_weak();
             paste::paste! {
-                crate::global_logic!($ui)
+                $crate::global_logic!($ui)
                     .[<on_ $callback_name>](move |$($arg),*| {
                         $callback_name(&ui_weak.unwrap(), $($arg),*)
                     });
@@ -69,7 +69,7 @@ macro_rules! logic_cb {
         {{
             let ui_weak = $ui.as_weak();
             paste::paste! {
-                crate::global_logic!($ui)
+                $crate::global_logic!($ui)
                     .[<on_ $callback_name>](move || {
                         $callback_name(&ui_weak.unwrap())
                     });

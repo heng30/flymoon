@@ -1,7 +1,19 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
 import { ChatEntry, ChatPhase } from "../../../store.slint";
-import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading, Skeleton, SkeletonType, VideoControl, Divider } from "../../../base/widgets.slint";
+import {
+    ElevatedBtn,
+    TextBtn,
+    IconBtn,
+    Label,
+    CenterLayout,
+    PopupActionSetting,
+    Loading,
+    Skeleton,
+    SkeletonType,
+    VideoControl,
+    Divider,
+} from "../../../base/widgets.slint";
 
 import { MdDetail, MdHeading, MdCodeBlock, MdText } from "md.slint";
 
@@ -147,14 +159,14 @@ component BlankWelcome inherits HorizontalLayout {
         alignment: LayoutAlignment.center;
         spacing: Theme.spacing * 2;
 
-        Label {
+        t1-lb := Label {
             text: Logic.tr("Welcome to the Flymoon!");
             font-size: Theme.title1-font-size + 10px;
             font-weight: Theme.bold-font-weight;
             horizontal-alignment: TextHorizontalAlignment.center;
         }
 
-        Label {
+        t2-lb := Label {
             text: Logic.tr("You can ask me any questions");
             font-size: Theme.title3-font-size;
             font-weight: Theme.bold-font-weight;
@@ -162,6 +174,7 @@ component BlankWelcome inherits HorizontalLayout {
         }
 
         Image {
+            height: parent.height - t1-lb.preferred-height - t2-lb.preferred-height - parent.spacing * 2;
             source: Icons.brand;
         }
     }
@@ -185,7 +198,7 @@ component ReasonerText inherits VerticalLayout {
             bg-color: Theme.hover-background;
             icon: !entry.is-hide-bot-reasoner ? Icons.arrow-up : Icons.arrow-down;
             colorize: self.border-color;
-            text: Logic.tr("Reasoner") + " (" + entry.reasoner-spending-seconds + "s)";
+            text: Logic.tr("Reasoner");
             gain-focus-when-clicked: false;
             is-ltr: false;
 

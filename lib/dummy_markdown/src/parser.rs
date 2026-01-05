@@ -59,12 +59,12 @@ pub fn run(doc: &str, parser_math: bool) -> (Vec<MdElement>, Vec<MdUrl>) {
 
                     generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
 
-                    items.extend(ui_elems.into_iter());
-                    link_urls.extend(user_data.link_urls.into_iter());
+                    items.extend(ui_elems);
+                    link_urls.extend(user_data.link_urls);
                 }
                 MarkdownElement::Math(formula) => items.push(MdElement {
                     ty: MdElementType::Math,
-                    math: formula.into(),
+                    math: formula,
                     ..Default::default()
                 }),
                 _ => unreachable!(),
@@ -86,14 +86,14 @@ pub fn run(doc: &str, parser_math: bool) -> (Vec<MdElement>, Vec<MdUrl>) {
 
         generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
 
-        items.extend(ui_elems.into_iter());
-        link_urls.extend(user_data.link_urls.into_iter());
+        items.extend(ui_elems);
+        link_urls.extend(user_data.link_urls);
     }
 
     (items, link_urls)
 }
 
-fn heading_level_from(level: &HeadingLevel) -> i32 {
+fn heading_level_from(#[allow(clippy::needless_borrow)] level: &HeadingLevel) -> i32 {
     match level {
         HeadingLevel::H1 => 1,
         HeadingLevel::H2 => 2,
@@ -212,12 +212,13 @@ fn generate_ui_elements(
     ui_elems: &mut Vec<MdElement>,
     user_data: &mut GenerateMdElemUserData,
 ) {
+    #[allow(clippy::while_let_on_iterator)]
     while let Some(elem) = elems_iter.next() {
         match elem {
             MarkdownElement::Text(text) => {
                 ui_elems.push(MdElement {
                     ty: MdElementType::Text,
-                    text: text.clone().into(),
+                    text: text.clone(),
                     ..Default::default()
                 });
             }
@@ -234,7 +235,7 @@ fn generate_ui_elements(
 
                             ui_elems.push(MdElement {
                                 ty: MdElementType::Text,
-                                text: text.clone().into(),
+                                text: text.clone(),
                                 ..Default::default()
                             });
                         }
@@ -249,15 +250,12 @@ fn generate_ui_elements(
             }
             MarkdownElement::Image(elems) => {
                 for item in elems.iter() {
-                    match item {
-                        MarkdownElement::Url(url) => {
-                            ui_elems.push(MdElement {
-                                ty: MdElementType::ImageUrl,
-                                image_url: url.clone().into(),
-                                ..Default::default()
-                            });
-                        }
-                        _ => (),
+                    if let MarkdownElement::Url(url) = item {
+                        ui_elems.push(MdElement {
+                            ty: MdElementType::ImageUrl,
+                            image_url: url.clone(),
+                            ..Default::default()
+                        });
                     }
                 }
             }
@@ -265,11 +263,8 @@ fn generate_ui_elements(
                 let mut code = String::default();
 
                 for item in elems.iter() {
-                    match item {
-                        MarkdownElement::Text(text) => {
-                            code.push_str(&text);
-                        }
-                        _ => (),
+                    if let MarkdownElement::Text(text) = item {
+                        code.push_str(text);
                     }
                 }
 

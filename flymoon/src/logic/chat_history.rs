@@ -1,12 +1,12 @@
 use super::chat_session;
-use crate::{global_logic, logic_cb};
 use crate::slint_generatedAppWindow::{AppWindow, ChatHistory as UIChatHistory};
+use crate::{global_logic, logic_cb};
 use slint::{ComponentHandle, Model, VecModel};
 
 #[macro_export]
 macro_rules! store_chat_history_entries {
     ($ui:expr) => {
-        crate::global_store!($ui)
+        $crate::global_store!($ui)
             .get_chat_histories()
             .as_any()
             .downcast_ref::<VecModel<UIChatHistory>>()
@@ -17,7 +17,7 @@ macro_rules! store_chat_history_entries {
 #[macro_export]
 macro_rules! store_chat_history_entries_cache {
     ($ui:expr) => {
-        crate::global_store!($ui)
+        $crate::global_store!($ui)
             .get_chat_histories_cache()
             .as_any()
             .downcast_ref::<VecModel<UIChatHistory>>()
@@ -46,7 +46,7 @@ fn chat_histories_init(ui: &AppWindow) {
     let ui = ui.as_weak();
 
     tokio::spawn(async move {
-        let entries = chat_session::get_from_db().await;
+        let entries = chat_session::get_all_db_entries().await;
 
         let entries = entries
             .into_iter()
@@ -95,7 +95,7 @@ fn chat_histories_remove_selected(ui: &AppWindow) {
         if entry.checked {
             remove_indexs.push(index);
             remove_uuids.push(entry.uuid.clone());
-            chat_session::delete_db_entry(&ui, entry.uuid);
+            chat_session::delete_db_entry(ui, entry.uuid);
         }
     }
 
@@ -131,7 +131,6 @@ fn chat_histories_update_list(ui: &AppWindow, text: slint::SharedString) {
                 .to_lowercase()
                 .contains(text.to_lowercase().as_str())
         })
-        .map(|entry| entry.into())
         .collect::<Vec<_>>();
 
     store_chat_history_entries!(ui).set_vec(entries);
