@@ -31,7 +31,6 @@ impl From<MdElementType> for UIMdElementType {
             MdElementType::Heading => UIMdElementType::Heading,
             MdElementType::CodeBlock => UIMdElementType::CodeBlock,
             MdElementType::Table => UIMdElementType::Table,
-            _ => unreachable!(),
         }
     }
 }
@@ -102,15 +101,53 @@ impl From<MdTable> for UIMdTable {
 
 impl From<MdElement> for UIMdElement {
     fn from(entry: MdElement) -> Self {
-        UIMdElement {
-            ty: entry.ty.into(),
-            text: entry.text.into(),
-            math: entry.math.into(),
-            code_block: entry.code_block.into(),
-            list_item: entry.list_item.into(),
-            heading: entry.heading.into(),
-            table: entry.table.into(),
-            ..Default::default()
+        match entry {
+            MdElement::Text(text) => UIMdElement {
+                ty: UIMdElementType::Text,
+                text: text.into(),
+                ..Default::default()
+            },
+            MdElement::Math(formula) => UIMdElement {
+                ty: UIMdElementType::Math,
+                math: UIMdMath {
+                    formula: formula.into(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            MdElement::ImageUrl(url) => UIMdElement {
+                ty: UIMdElementType::Image,
+                text: url.into(),
+                ..Default::default()
+            },
+            MdElement::Heading(heading) => UIMdElement {
+                ty: UIMdElementType::Heading,
+                heading: heading.into(),
+                ..Default::default()
+            },
+            MdElement::CodeBlock(code_block) => UIMdElement {
+                ty: UIMdElementType::CodeBlock,
+                code_block: code_block.into(),
+                ..Default::default()
+            },
+            MdElement::Table(table) => UIMdElement {
+                ty: UIMdElementType::Table,
+                table: table.into(),
+                ..Default::default()
+            },
+            MdElement::FlatListItem(list_item) => UIMdElement {
+                ty: UIMdElementType::ListItem,
+                list_item: list_item.into(),
+                ..Default::default()
+            },
+            // Internal parsing elements should not reach UI
+            MdElement::Paragraph(_) | MdElement::List(_) | MdElement::ListItem(_) | MdElement::Link { .. } => {
+                log::warn!("Internal parsing element leaked to UI: {:?}", entry);
+                UIMdElement {
+                    ty: UIMdElementType::Text,
+                    ..Default::default()
+                }
+            }
         }
     }
 }
@@ -187,7 +224,7 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
         // find the first unmatched element
         let mut diff_row_index = None;
         for (index, elems) in ui_md_elems.iter().enumerate() {
-            if <dummy_markdown::MdElementType as Into<UIMdElementType>>::into(md_elems[index].ty)
+            if <dummy_markdown::MdElementType as Into<UIMdElementType>>::into(md_elems[index].ty())
                 != elems.ty
             {
                 diff_row_index = Some(index);
@@ -207,8 +244,8 @@ pub fn parse_stream_bot_text(ui: &AppWindow) {
             insert_row_index -= remove_counts;
         } else {
             // should not update it, because it has been verified.
-            if !(md_elems[rows - 1].ty == MdElementType::Math
-                || md_elems[rows - 1].ty == MdElementType::ImageUrl)
+            if !(md_elems[rows - 1].ty() == MdElementType::Math
+                || md_elems[rows - 1].ty() == MdElementType::ImageUrl)
             {
                 store_current_chat_session_histories_md_elems!(last_entry)
                     .set_row_data(rows - 1, md_elems[rows - 1].clone().into());

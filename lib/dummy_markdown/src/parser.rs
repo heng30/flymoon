@@ -1,33 +1,5 @@
 use super::*;
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
-use regex::Regex;
-
-#[derive(Debug, Clone)]
-enum MarkdownElement {
-    Text(String),
-    Math(String),
-    Url(String),
-    List(Vec<MarkdownElement>),
-    ListItem(Vec<MarkdownElement>),
-    Link(Vec<MarkdownElement>),
-    Image(Vec<MarkdownElement>),
-    Paragraph(Vec<MarkdownElement>),
-
-    TableHead(Vec<MarkdownElement>),
-    TableRow(Vec<MarkdownElement>),
-    TableCell(Vec<MarkdownElement>),
-    Table(Vec<MarkdownElement>),
-
-    CodeBlock {
-        lang: String,
-        elems: Vec<MarkdownElement>,
-    },
-
-    Heading {
-        level: HeadingLevel,
-        elems: Vec<MarkdownElement>,
-    },
-}
 
 #[derive(Debug, Clone, Default)]
 struct GenerateMdElemUserData {
@@ -36,65 +8,33 @@ struct GenerateMdElemUserData {
 }
 
 pub fn run(doc: &str, parser_math: bool) -> (Vec<MdElement>, Vec<MdUrl>) {
-    let mut items = vec![];
-    let mut link_urls = vec![];
-
-    if parser_math {
-        for item in split_text_and_latex(doc) {
-            match item {
-                MarkdownElement::Text(text) => {
-                    let mut options = Options::empty();
-                    options.insert(Options::ENABLE_TABLES);
-
-                    let mut parser = Parser::new_ext(&text, options);
-                    let mut elems = parse_events(&mut parser);
-                    log::trace!("{:#?}", elems);
-                    // println!("{:#?}", elems);
-
-                    let mut ui_elems = vec![];
-                    let mut elems_iter = elems.iter_mut();
-                    let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                        &mut elems_iter;
-                    let mut user_data = GenerateMdElemUserData::default();
-
-                    generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
-
-                    items.extend(ui_elems);
-                    link_urls.extend(user_data.link_urls);
-                }
-                MarkdownElement::Math(formula) => items.push(MdElement {
-                    ty: MdElementType::Math,
-                    math: formula,
-                    ..Default::default()
-                }),
-                _ => unreachable!(),
-            }
-        }
+    let doc = if !parser_math {
+        doc.to_string()
     } else {
-        let mut options = Options::empty();
-        options.insert(Options::ENABLE_TABLES);
+        preprocess_math(doc)
+    };
 
-        let mut parser = Parser::new_ext(doc, options);
-        let mut elems = parse_events(&mut parser);
-        log::trace!("{:#?}", elems);
-        // println!("{:#?}", elems);
-
-        let mut ui_elems = vec![];
-        let mut elems_iter = elems.iter_mut();
-        let elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> = &mut elems_iter;
-        let mut user_data = GenerateMdElemUserData::default();
-
-        generate_ui_elements(elems_iter_ref, &mut ui_elems, &mut user_data);
-
-        items.extend(ui_elems);
-        link_urls.extend(user_data.link_urls);
-    }
-
-    (items, link_urls)
+    let (ui_elems, user_data) = parse_text(&doc);
+    (ui_elems, user_data.link_urls)
 }
 
-fn heading_level_from(#[allow(clippy::needless_borrow)] level: &HeadingLevel) -> i32 {
-    match level {
+fn parse_text(text: &str) -> (Vec<MdElement>, GenerateMdElemUserData) {
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_TABLES);
+
+    let mut parser = Parser::new_ext(text, options);
+    let mut elems = parse_events(&mut parser);
+    log::trace!("{:#?}", elems);
+
+    let mut ui_elems = vec![];
+    let mut user_data = GenerateMdElemUserData::default();
+    process_elements(&mut elems, &mut ui_elems, &mut user_data);
+
+    (ui_elems, user_data)
+}
+
+fn heading_level_from(level: &HeadingLevel) -> i32 {
+    match *level {
         HeadingLevel::H1 => 1,
         HeadingLevel::H2 => 2,
         HeadingLevel::H3 => 3,
@@ -104,426 +44,295 @@ fn heading_level_from(#[allow(clippy::needless_borrow)] level: &HeadingLevel) ->
     }
 }
 
-fn parse_events(parser: &mut Parser<'_>) -> Vec<MarkdownElement> {
-    let mut elems: Vec<MarkdownElement> = vec![];
+fn parse_events(parser: &mut Parser<'_>) -> Vec<MdElement> {
+    let mut elems: Vec<MdElement> = vec![];
 
     while let Some(event) = parser.next() {
-        let items = &mut elems;
-
-        // println!("{event:?}");
-
         match event {
-            Event::Start(Tag::Paragraph) => {
-                items.push(MarkdownElement::Paragraph(parse_events(parser)));
-            }
-            Event::End(TagEnd::Paragraph) => {
-                return elems;
-            }
-            Event::Text(text) => {
-                items.push(MarkdownElement::Text(text.into_string()));
-            }
+            Event::Start(Tag::Paragraph) => elems.push(MdElement::Paragraph(parse_events(parser))),
+            Event::End(TagEnd::Paragraph) => return elems,
+            Event::Text(text) => elems.push(MdElement::Text(text.into_string())),
             Event::Code(code) => {
-                items.push(MarkdownElement::Text(code.into_string()));
+                let code_str = code.into_string();
+                // Check if this is inline math (starts with "math:")
+                if let Some(formula) = code_str.strip_prefix("math:") {
+                    elems.push(MdElement::Math(formula.to_string()));
+                } else {
+                    elems.push(MdElement::Text(code_str));
+                }
             }
             Event::Start(Tag::CodeBlock(kind)) => {
                 let lang = match kind {
                     CodeBlockKind::Fenced(lang) => lang.to_string(),
                     _ => String::default(),
                 };
+                let code_contents = parse_events(parser);
+                let code = extract_text(&code_contents);
 
-                items.push(MarkdownElement::CodeBlock {
-                    lang,
-                    elems: parse_events(parser),
-                });
+                // Check if this is a math code block
+                if lang == "math" {
+                    elems.push(MdElement::Math(code));
+                } else {
+                    elems.push(MdElement::CodeBlock(MdCodeBlock { lang, code }));
+                }
             }
-            Event::End(TagEnd::CodeBlock) => {
-                return elems;
-            }
+            Event::End(TagEnd::CodeBlock) => return elems,
             Event::Start(Tag::Link { dest_url, .. }) => {
-                let mut link_items = parse_events(parser);
-                link_items.push(MarkdownElement::Url(dest_url.into_string()));
-                items.push(MarkdownElement::Link(link_items));
-            }
-            Event::End(TagEnd::Link) => {
-                return elems;
-            }
-            Event::Start(Tag::Image { dest_url, .. }) => {
-                let mut img_items = parse_events(parser);
-                img_items.push(MarkdownElement::Url(dest_url.into_string()));
-                items.push(MarkdownElement::Image(img_items));
-            }
-            Event::End(TagEnd::Image) => {
-                return elems;
-            }
-            Event::Start(Tag::Heading { level, .. }) => {
-                items.push(MarkdownElement::Heading {
-                    level,
-                    elems: parse_events(parser),
+                let link_items = parse_events(parser);
+                elems.push(MdElement::Link {
+                    text: link_items,
+                    url: dest_url.into_string(),
                 });
             }
-            Event::End(TagEnd::Heading(_level)) => {
-                return elems;
+            Event::End(TagEnd::Link) => return elems,
+            Event::Start(Tag::Image { dest_url, .. }) => {
+                elems.push(MdElement::ImageUrl(dest_url.into_string()))
             }
-            Event::Start(Tag::List(_)) => {
-                items.push(MarkdownElement::List(parse_events(parser)));
+            Event::End(TagEnd::Image) => return elems,
+            Event::Start(Tag::Heading { level, .. }) => {
+                let heading_items = parse_events(parser);
+                let text = extract_text(&heading_items);
+                elems.push(MdElement::Heading(MdHeading {
+                    level: heading_level_from(&level),
+                    text,
+                }));
             }
-            Event::End(TagEnd::List(_)) => {
-                return elems;
-            }
-            Event::Start(Tag::Item) => {
-                items.push(MarkdownElement::ListItem(parse_events(parser)));
-            }
-            Event::End(TagEnd::Item) => {
-                return elems;
-            }
-            Event::Start(Tag::Table(_)) => {
-                items.push(MarkdownElement::Table(parse_events(parser)));
-            }
-            Event::End(TagEnd::Table) => {
-                return elems;
-            }
-            Event::Start(Tag::TableHead) => {
-                items.push(MarkdownElement::TableHead(parse_events(parser)));
-            }
-            Event::End(TagEnd::TableHead) => {
-                return elems;
-            }
-            Event::Start(Tag::TableRow) => {
-                items.push(MarkdownElement::TableRow(parse_events(parser)));
-            }
-            Event::End(TagEnd::TableRow) => {
-                return elems;
-            }
-            Event::Start(Tag::TableCell) => {
-                items.push(MarkdownElement::TableCell(parse_events(parser)));
-            }
-            Event::End(TagEnd::TableCell) => {
-                return elems;
-            }
-            _ => {}
+            Event::End(TagEnd::Heading(_level)) => return elems,
+            Event::Start(Tag::List(_)) => elems.push(MdElement::List(parse_events(parser))),
+            Event::End(TagEnd::List(_)) => return elems,
+            Event::Start(Tag::Item) => elems.push(MdElement::ListItem(parse_events(parser))),
+            Event::End(TagEnd::Item) => return elems,
+            Event::Start(Tag::Table(_)) => elems.push(MdElement::List(parse_events(parser))),
+            Event::End(TagEnd::Table) => return elems,
+            Event::Start(Tag::TableHead) => elems.push(MdElement::List(parse_events(parser))),
+            Event::End(TagEnd::TableHead) => return elems,
+            Event::Start(Tag::TableRow) => elems.push(MdElement::List(parse_events(parser))),
+            Event::End(TagEnd::TableRow) => return elems,
+            Event::Start(Tag::TableCell) => elems.push(MdElement::Paragraph(parse_events(parser))),
+            Event::End(TagEnd::TableCell) => return elems,
+            _ => (),
         }
     }
 
     elems
 }
 
-fn generate_ui_elements(
-    elems_iter: &mut dyn Iterator<Item = &mut MarkdownElement>,
+fn extract_text(elems: &[MdElement]) -> String {
+    elems
+        .iter()
+        .filter_map(|e| match e {
+            MdElement::Text(s) => Some(s.as_str()),
+            _ => None,
+        })
+        .collect()
+}
+
+fn process_elements(
+    elems: &mut [MdElement],
     ui_elems: &mut Vec<MdElement>,
     user_data: &mut GenerateMdElemUserData,
 ) {
-    #[allow(clippy::while_let_on_iterator)]
-    while let Some(elem) = elems_iter.next() {
+    for elem in elems.iter_mut() {
         match elem {
-            MarkdownElement::Text(text) => {
-                ui_elems.push(MdElement {
-                    ty: MdElementType::Text,
-                    text: text.clone(),
-                    ..Default::default()
+            MdElement::Text(text) => ui_elems.push(MdElement::Text(text.clone())),
+            MdElement::Math(_) => ui_elems.push(elem.clone()),
+            MdElement::ImageUrl(_) => ui_elems.push(elem.clone()),
+            MdElement::FlatListItem(_) => ui_elems.push(elem.clone()),
+            MdElement::Link { text, url } => {
+                let link_text = extract_text(text);
+                if !link_text.is_empty() {
+                    ui_elems.push(MdElement::Text(link_text.clone()));
+                }
+                user_data.link_urls.push(MdUrl {
+                    text: link_text,
+                    url: url.clone(),
                 });
             }
-            MarkdownElement::Link(elems) => {
-                if elems.len() != 2 {
-                    continue;
-                }
-
-                let mut ui_url = MdUrl::default();
-                for item in elems.iter() {
-                    match item {
-                        MarkdownElement::Text(text) => {
-                            ui_url.text = text.clone();
-
-                            ui_elems.push(MdElement {
-                                ty: MdElementType::Text,
-                                text: text.clone(),
-                                ..Default::default()
-                            });
+            MdElement::Heading(_) | MdElement::CodeBlock(_) | MdElement::Table(_) => {
+                ui_elems.push(elem.clone())
+            }
+            MdElement::Paragraph(children) => {
+                let mut text_buffer = String::new();
+                for child in children.iter() {
+                    match child {
+                        MdElement::Text(s) => {
+                            text_buffer.push_str(s);
                         }
-                        MarkdownElement::Url(url) => {
-                            ui_url.url = url.clone();
+                        _ => {
+                            if !text_buffer.is_empty() {
+                                ui_elems.push(MdElement::Text(text_buffer.clone()));
+                                text_buffer.clear();
+                            }
+                            let mut child_clone = child.clone();
+                            process_elements(
+                                std::slice::from_mut(&mut child_clone),
+                                ui_elems,
+                                user_data,
+                            );
                         }
-                        _ => (),
                     }
                 }
-
-                user_data.link_urls.push(ui_url);
-            }
-            MarkdownElement::Image(elems) => {
-                for item in elems.iter() {
-                    if let MarkdownElement::Url(url) = item {
-                        ui_elems.push(MdElement {
-                            ty: MdElementType::ImageUrl,
-                            image_url: url.clone(),
-                            ..Default::default()
-                        });
-                    }
+                if !text_buffer.is_empty() {
+                    ui_elems.push(MdElement::Text(text_buffer));
                 }
             }
-            MarkdownElement::CodeBlock { lang, elems } => {
-                let mut code = String::default();
-
-                for item in elems.iter() {
-                    if let MarkdownElement::Text(text) = item {
-                        code.push_str(text);
-                    }
-                }
-
-                ui_elems.push(MdElement {
-                    ty: MdElementType::CodeBlock,
-                    code_block: MdCodeBlock {
-                        lang: lang.to_string(),
-                        code,
-                    },
-                    ..Default::default()
-                });
-            }
-            MarkdownElement::Heading { level, elems } => {
-                let mut heading_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-
-                generate_ui_elements(&mut elems_iter_ref, &mut heading_elems, user_data);
-                let mut heading_text = String::default();
-                for item in heading_elems.iter() {
-                    if item.ty == MdElementType::Text {
-                        heading_text.push_str(&item.text);
-                    }
-                }
-
-                ui_elems.push(MdElement {
-                    ty: MdElementType::Heading,
-                    heading: MdHeading {
-                        level: heading_level_from(level),
-                        text: heading_text,
-                    },
-                    ..Default::default()
-                });
-            }
-            MarkdownElement::Paragraph(elems) => {
-                let mut paragraph_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-
-                generate_ui_elements(&mut elems_iter_ref, &mut paragraph_elems, user_data);
-
-                let mut text = String::default();
-                for item in paragraph_elems.into_iter() {
-                    if item.ty == MdElementType::Text {
-                        text.push_str(&item.text);
-                    } else {
-                        if !text.is_empty() {
-                            ui_elems.push(MdElement {
-                                ty: MdElementType::Text,
-                                text: text.clone(),
-                                ..Default::default()
-                            });
-                            text.clear();
-                        }
-                        ui_elems.push(item);
-                    }
-                }
-
-                if !text.is_empty() {
-                    ui_elems.push(MdElement {
-                        ty: MdElementType::Text,
-                        text,
-                        ..Default::default()
-                    });
-                }
-            }
-            MarkdownElement::List(elems) => {
-                let mut list_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-
+            MdElement::List(children) => {
                 user_data.list_level += 1;
-                generate_ui_elements(&mut elems_iter_ref, &mut list_elems, user_data);
+                process_elements(children, ui_elems, user_data);
                 user_data.list_level -= 1;
-
-                ui_elems.extend(list_elems);
             }
-            MarkdownElement::ListItem(elems) => {
-                let mut list_item_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
+            MdElement::ListItem(children) => {
+                let mut item_text = String::new();
+                let mut code_block = None;
 
-                generate_ui_elements(&mut elems_iter_ref, &mut list_item_elems, user_data);
-
-                let mut list_item_text = String::default();
-                let mut code_block = MdCodeBlock::default();
-
-                for item in list_item_elems.iter() {
-                    if item.ty == MdElementType::Text {
-                        list_item_text.push_str(&item.text);
-                    } else if item.ty == MdElementType::ListItem {
-                        if !list_item_text.is_empty() {
-                            ui_elems.push(MdElement {
-                                ty: MdElementType::ListItem,
-                                list_item: MdListItem {
-                                    level: user_data.list_level,
-                                    text: list_item_text.clone(),
-                                },
-                                ..Default::default()
-                            });
-                            list_item_text.clear();
+                for child in children.iter() {
+                    match child {
+                        MdElement::Text(s) => {
+                            item_text.push_str(s);
                         }
+                        MdElement::Link { text, url } => {
+                            let link_text = extract_text(text);
+                            item_text.push_str(&link_text);
 
-                        ui_elems.push(item.clone());
-                    } else if item.ty == MdElementType::CodeBlock {
-                        code_block.lang = item.code_block.lang.to_string();
-                        code_block.code.push_str(&item.code_block.code);
+                            user_data.link_urls.push(MdUrl {
+                                text: link_text,
+                                url: url.clone(),
+                            });
+                        }
+                        MdElement::Paragraph(para_children) => {
+                            for para_child in para_children.iter() {
+                                match para_child {
+                                    MdElement::Text(s) => item_text.push_str(s),
+                                    MdElement::Link { text, url } => {
+                                        let link_text = extract_text(text);
+                                        item_text.push_str(&link_text);
+                                        user_data.link_urls.push(MdUrl {
+                                            text: link_text,
+                                            url: url.clone(),
+                                        });
+                                    }
+                                    _ => (),
+                                }
+                            }
+                        }
+                        MdElement::ListItem(_) => {
+                            if !item_text.is_empty() {
+                                ui_elems.push(MdElement::FlatListItem(MdListItem {
+                                    level: user_data.list_level,
+                                    text: item_text.clone(),
+                                }));
+                                item_text.clear();
+                            }
+
+                            let mut child_clone = child.clone();
+                            process_elements(
+                                std::slice::from_mut(&mut child_clone),
+                                ui_elems,
+                                user_data,
+                            );
+                        }
+                        MdElement::CodeBlock(cb) => {
+                            code_block = Some(cb.clone());
+                        }
+                        _ => {
+                            if !item_text.is_empty() {
+                                ui_elems.push(MdElement::FlatListItem(MdListItem {
+                                    level: user_data.list_level,
+                                    text: item_text.clone(),
+                                }));
+                                item_text.clear();
+                            }
+                            let mut child_clone = child.clone();
+                            process_elements(
+                                std::slice::from_mut(&mut child_clone),
+                                ui_elems,
+                                user_data,
+                            );
+                        }
                     }
                 }
 
-                if !list_item_text.is_empty() {
-                    ui_elems.push(MdElement {
-                        ty: MdElementType::ListItem,
-                        list_item: MdListItem {
-                            level: user_data.list_level,
-                            text: list_item_text,
-                        },
-                        ..Default::default()
-                    });
+                if !item_text.is_empty() {
+                    ui_elems.push(MdElement::FlatListItem(MdListItem {
+                        level: user_data.list_level,
+                        text: item_text,
+                    }));
                 }
 
-                if !code_block.code.is_empty() {
-                    ui_elems.push(MdElement {
-                        ty: MdElementType::CodeBlock,
-                        code_block,
-                        ..Default::default()
-                    });
+                if let Some(cb) = code_block {
+                    ui_elems.push(MdElement::CodeBlock(cb));
                 }
             }
-            MarkdownElement::Table(elems) => {
-                let mut table_item_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-
-                generate_ui_elements(&mut elems_iter_ref, &mut table_item_elems, user_data);
-
-                let (mut head, mut rows) = (vec![], vec![]);
-
-                for item in table_item_elems.into_iter() {
-                    if item.ty == MdElementType::TableHead {
-                        head.extend(item.table_head);
-                    } else if item.ty == MdElementType::TableRow {
-                        rows.push(item.table_row);
-                    }
-                }
-
-                ui_elems.push(MdElement {
-                    ty: MdElementType::Table,
-                    table: MdTable { head, rows },
-                    ..Default::default()
-                });
-            }
-            MarkdownElement::TableHead(elems) => {
-                let mut table_head_item_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-
-                generate_ui_elements(&mut elems_iter_ref, &mut table_head_item_elems, user_data);
-
-                let table_head = table_head_item_elems
-                    .into_iter()
-                    .filter(|item| item.ty == MdElementType::TableCell)
-                    .map(|item| item.table_cell)
-                    .collect::<Vec<String>>();
-
-                ui_elems.push(MdElement {
-                    ty: MdElementType::TableHead,
-                    table_head,
-                    ..Default::default()
-                });
-            }
-            MarkdownElement::TableRow(elems) => {
-                let mut table_row_item_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-
-                generate_ui_elements(&mut elems_iter_ref, &mut table_row_item_elems, user_data);
-
-                let table_row = table_row_item_elems
-                    .into_iter()
-                    .filter(|item| item.ty == MdElementType::TableCell)
-                    .map(|item| item.table_cell)
-                    .collect::<Vec<String>>();
-
-                ui_elems.push(MdElement {
-                    ty: MdElementType::TableRow,
-                    table_row,
-                    ..Default::default()
-                });
-            }
-            MarkdownElement::TableCell(elems) => {
-                let mut table_cell_item_elems = vec![];
-                let mut elems_iter = elems.iter_mut();
-                let mut elems_iter_ref: &mut dyn Iterator<Item = &mut MarkdownElement> =
-                    &mut elems_iter;
-
-                generate_ui_elements(&mut elems_iter_ref, &mut table_cell_item_elems, user_data);
-
-                let mut text = String::default();
-                for item in table_cell_item_elems.into_iter() {
-                    if item.ty == MdElementType::Text {
-                        text.push_str(&item.text);
-                    }
-                }
-
-                ui_elems.push(MdElement {
-                    ty: MdElementType::TableCell,
-                    table_cell: text,
-                    ..Default::default()
-                });
-            }
-            _ => (),
         }
     }
 }
 
-fn split_text_and_latex(text: &str) -> Vec<MarkdownElement> {
-    let mut last_end = 0;
-    let mut items = vec![];
-    let re = Regex::new(r"(?s)\\\((.*?)\\\)|\\\[(.*?)\\\]").unwrap();
+/// Preprocess math formulas by replacing delimiters with code blocks
+/// Supports: \(...\), \[...\], $...$, $$...$$
+/// - Block math (\[...\], $$...$$) -> ```math\n...\n```
+/// - Inline math (\(...\), $...$) -> `...` (will be detected as math in parse_events)
+fn preprocess_math(text: &str) -> String {
+    let mut result = text.to_string();
 
-    for mat in re.find_iter(text) {
-        let start = mat.start();
+    // Replace in a specific order to avoid overlapping issues:
+    // 1. First replace longer delimiters ($$...$$ and \[...\])
+    // 2. Then replace shorter delimiters ($...$ and \(...\))
 
-        // normal text
-        if last_end < start {
-            items.push(MarkdownElement::Text(text[last_end..start].to_string()));
+    // Replace \[...\] with fenced code blocks
+    replace_delimited(&mut result, "\\[", "\\]", |formula| {
+        format!("```math\n{formula}\n```\n")
+    });
+
+    // Replace $$...$$ with fenced code blocks
+    replace_delimited(&mut result, "$$", "$$", |formula| {
+        format!("```math\n{formula}\n```\n")
+    });
+
+    // Replace \(...\) with inline code
+    replace_delimited(&mut result, "\\(", "\\)", |formula| {
+        format!("`math:{formula}`")
+    });
+
+    // Replace $...$ with inline code (but not part of $$...$$)
+    // Note: $$...$$ has already been replaced, so we can safely replace $...$
+    replace_delimited(&mut result, "$", "$", |formula| format!("`math:{formula}`"));
+
+    result
+}
+
+// Helper to find and replace a delimited pattern
+// Only replaces if both start and end delimiters are found
+fn replace_delimited(
+    text: &mut String,
+    start_delim: &str,
+    end_delim: &str,
+    replacement_template: impl Fn(&str) -> String,
+) {
+    let mut search_start = 0;
+    while search_start < text.len() {
+        // Find start delimiter
+        if let Some(start_pos) = text[search_start..].find(start_delim) {
+            let start_pos = search_start + start_pos;
+            let after_start = start_pos + start_delim.len();
+
+            // Find end delimiter (only after the start)
+            if let Some(end_pos) = text[after_start..].find(end_delim) {
+                let end_pos = after_start + end_pos;
+
+                // Extract and replace
+                let content = text[after_start..end_pos].trim().to_string();
+                let replacement = replacement_template(&content);
+                text.replace_range(start_pos..end_pos + end_delim.len(), &replacement);
+
+                // Move past the replacement
+                search_start = start_pos + replacement.len();
+            } else {
+                // No matching end delimiter, skip this start delimiter
+                search_start = after_start;
+            }
+        } else {
+            // No more start delimiters found
+            break;
         }
-
-        // LaTeX
-        let formula = &text[mat.start()..mat.end()];
-        let formula = formula
-            .trim_start_matches("\\(")
-            .trim_end_matches("\\)")
-            .trim()
-            .to_string();
-
-        let formula = formula
-            .trim_start_matches("\\[")
-            .trim_end_matches("\\]")
-            .trim()
-            .to_string();
-
-        items.push(MarkdownElement::Math(formula));
-
-        last_end = mat.end();
     }
-
-    // last normal text if exist
-    if last_end < text.len() {
-        items.push(MarkdownElement::Text(text[last_end..].to_string()));
-    }
-
-    items
 }

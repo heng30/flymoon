@@ -155,27 +155,35 @@ component BlankWelcome inherits HorizontalLayout {
     padding-top: Theme.padding * 8;
     opacity: Theme.is-dark ? Theme.golden-ratio : 0.8;
 
-    VerticalLayout {
+    vbox := VerticalLayout {
         alignment: LayoutAlignment.center;
         spacing: Theme.spacing * 2;
 
-        t1-lb := Label {
+        l1 := Label {
             text: Logic.tr("Welcome to the Flymoon!");
             font-size: Theme.title1-font-size + 10px;
             font-weight: Theme.bold-font-weight;
             horizontal-alignment: TextHorizontalAlignment.center;
         }
 
-        t2-lb := Label {
+        l2 := Label {
             text: Logic.tr("You can ask me any questions");
             font-size: Theme.title3-font-size;
             font-weight: Theme.bold-font-weight;
             horizontal-alignment: TextHorizontalAlignment.center;
         }
 
-        Image {
-            height: parent.height - t1-lb.preferred-height - t2-lb.preferred-height - parent.spacing * 2;
-            source: Icons.brand;
+        HorizontalLayout {
+            alignment: center;
+            padding-top: Theme.padding * 4;
+
+            Image {
+                private property <length> temp-height: vbox.height - vbox.spacing * 2 - l1.preferred-height - l2.preferred-height - parent.padding-top;
+
+                width: Math.min(root.width * 0.8, temp-height);
+                height: self.width;
+                source: Icons.brand;
+            }
         }
     }
 }

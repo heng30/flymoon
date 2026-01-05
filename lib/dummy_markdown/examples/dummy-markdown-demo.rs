@@ -1,8 +1,6 @@
-#[cfg(test)]
-mod tests {
-    use dummy_markdown::parser;
+use dummy_markdown::parser;
 
-    const DOC: &str = r#"
+const DOC: &str = r#"
 ### **Day 1: Understand Nix & NixOS Basics**
 - *Read the [Nix Pills](https://nixos.org/guides/nix-pills/)* (Chapters 1-4) to understand:
 
@@ -15,6 +13,7 @@ mod tests {
 - **Install NixOS** in a VM (VirtualBox, QEMU) or on a spare machine.
 - Follow the [NixOS Manual Installation Guide](https://nixos.org/manual/nixos/stable/index.html#sec-installation)
 - Run `nixos-rebuild switch` after making changes to `/etc/nixos/configuration.nix`.
+- Run [nixos-rebuild](/etc/nixos/configuration.nix)
 
 ![picture](https://nixos.org/manual/nixos/stable/a.png)
 
@@ -37,31 +36,29 @@ As with cmark and **cmark-gfm**, Comrak **will scrub** raw HTML and potentially 
   \]
 "#;
 
-    // Would you like a deeper dive into any of these topics?
+// Would you like a deeper dive into any of these topics?
 
-    // 2. **Add dependencies to your `Cargo.toml`**:
-    //    ```toml
-    //    [dependencies]
-    //    reqwest = { version = "0.11", features = ["json"] }
-    //    serde = { version = "1.0", features = ["derive"] }
-    //    tokio = { version = "1.0", features = ["full"] }
-    //    ```
+// 2. **Add dependencies to your `Cargo.toml`**:
+//    ```toml
+//    [dependencies]
+//    reqwest = { version = "0.11", features = ["json"] }
+//    serde = { version = "1.0", features = ["derive"] }
+//    tokio = { version = "1.0", features = ["full"] }
+//    ```
 
-    // | Header 1 | Header 2 | Header 3 |
-    // |----------|----------|----------|
-    // | Cell 1   | Cell 2   | Cell 5   |
-    // | Cell 3   |          | Cell 6   |
+// | Header 1 | Header 2 | Header 3 |
+// |----------|----------|----------|
+// | Cell 1   | Cell 2   | Cell 5   |
+// | Cell 3   |          | Cell 6   |
 
-    // $$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
+// $$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
 
-    // $$
-    // P_n(x) = f(a) + f'(a)(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \cdots + \frac{f^{(n)}(a)}{n!}(x-a)^n
-    // $$
+// $$
+// P_n(x) = f(a) + f'(a)(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \cdots + \frac{f^{(n)}(a)}{n!}(x-a)^n
+// $$
 
-    #[test]
-    fn main() {
-        let (ui_elems, link_urls) = parser::run(DOC, true);
-        println!("{:#?}", ui_elems);
-        println!("{:#?}", link_urls);
-    }
+fn main() {
+    let (ui_elems, link_urls) = parser::run(DOC, true);
+    println!("{:#?}", ui_elems);
+    println!("{:#?}", link_urls);
 }
