@@ -14,10 +14,7 @@
 This is a large language model chat client built with Rust and Slint GUI, compatible with OpenAI's API.
 
 - [x] Supports both chat and deep thinking modes
-- [x] Supports online Google search
 - [x] Automatically saves chat history
-- [x] Customizable system prompts
-- [x] Supports MCP
 
 ### How to build?
 - Install `Rust`, `Cargo`, `cargo-apk` and `wasm-pack`

@@ -1,7 +1,19 @@
 import { ListView } from "std-widgets.slint";
 import { Theme, Store, Logic, Icons } from "../../def.slint";
-import { ChatEntry, ChatPhase, MCPElement } from "../../../store.slint";
-import { ElevatedBtn, TextBtn, IconBtn, Label, CenterLayout, PopupActionSetting, Loading, Skeleton, SkeletonType, VideoControl, Divider } from "../../../base/widgets.slint";
+import { ChatEntry, ChatPhase } from "../../../store.slint";
+import {
+    ElevatedBtn,
+    TextBtn,
+    IconBtn,
+    Label,
+    CenterLayout,
+    PopupActionSetting,
+    Loading,
+    Skeleton,
+    SkeletonType,
+    VideoControl,
+    Divider,
+} from "../../../base/widgets.slint";
 
 import { MdDetail, MdHeading, MdCodeBlock, MdText } from "md.slint";
 
@@ -143,26 +155,35 @@ component BlankWelcome inherits HorizontalLayout {
     padding-top: Theme.padding * 8;
     opacity: Theme.is-dark ? Theme.golden-ratio : 0.8;
 
-    VerticalLayout {
+    vbox := VerticalLayout {
         alignment: LayoutAlignment.center;
         spacing: Theme.spacing * 2;
 
-        Label {
+        l1 := Label {
             text: Logic.tr("Welcome to the Flymoon!");
             font-size: Theme.title1-font-size + 10px;
             font-weight: Theme.bold-font-weight;
             horizontal-alignment: TextHorizontalAlignment.center;
         }
 
-        Label {
+        l2 := Label {
             text: Logic.tr("You can ask me any questions");
             font-size: Theme.title3-font-size;
             font-weight: Theme.bold-font-weight;
             horizontal-alignment: TextHorizontalAlignment.center;
         }
 
-        Image {
-            source: Icons.brand;
+        HorizontalLayout {
+            alignment: center;
+            padding-top: Theme.padding * 4;
+
+            Image {
+                private property <length> temp-height: vbox.height - vbox.spacing * 2 - l1.preferred-height - l2.preferred-height - parent.padding-top;
+
+                width: Math.min(root.width * 0.8, temp-height);
+                height: self.width;
+                source: Icons.brand;
+            }
         }
     }
 }
@@ -185,7 +206,7 @@ component ReasonerText inherits VerticalLayout {
             bg-color: Theme.hover-background;
             icon: !entry.is-hide-bot-reasoner ? Icons.arrow-up : Icons.arrow-down;
             colorize: self.border-color;
-            text: Logic.tr("Reasoner") + " (" + entry.reasoner-spending-seconds + "s)";
+            text: Logic.tr("Reasoner");
             gain-focus-when-clicked: false;
             is-ltr: false;
 
@@ -211,44 +232,6 @@ component ReasonerText inherits VerticalLayout {
             read-only: true;
             color: Theme.primary-text-color;
             text: entry.bot-reasoner;
-        }
-    }
-}
-
-component MCPDetail inherits Rectangle {
-    in-out property <[MCPElement]> entries;
-
-    height: vbox.preferred-height;
-
-    vbox := VerticalLayout {
-        for entry in entries: HorizontalLayout {
-            spacing: Theme.spacing * 4;
-
-            VerticalLayout {
-                alignment: center;
-
-                Divider {
-                    background: Theme.warning-color;
-                    width: Theme.padding / 2;
-                    height: inner-vbox.preferred-height - Theme.padding * 6;
-                }
-            }
-
-            inner-vbox := VerticalLayout {
-                MdHeading {
-                    heading: {
-                        level: 2,
-                        text: Logic.tr("Tool") + " API " + "\"" + entry.tool-name + "\"" + " " + Logic.tr("output"),
-                    };
-                }
-
-                if !entry.resp.is-empty: MdCodeBlock {
-                    code-block: {
-                        lang: "json",
-                        code: entry.resp,
-                    };
-                }
-            }
         }
     }
 }
@@ -358,18 +341,13 @@ export component Session inherits Rectangle {
                     entries: entry.md-elems;
                     urls: entry.link-urls;
                     histories-entry-index: index;
-                    search-links: entry.search-links;
                 }
 
                 if Store.is-toggle-bot-markdown && !entry.bot.is-empty: ChatDetail {
                     text: entry.bot;
                 }
 
-                if entry.mcp.length > 0: MCPDetail {
-                    entries: entry.mcp;
-                }
-
-                if is-last-index && (Store.chat-phase == ChatPhase.MCP || Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
+                if is-last-index && (Store.chat-phase == ChatPhase.Searching || Store.chat-phase == ChatPhase.Thinking): Rectangle {
                     height: 200px;
 
                     sk := Skeleton {

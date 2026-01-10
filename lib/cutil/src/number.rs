@@ -43,7 +43,7 @@ mod tests {
         for item in vec![
             "", "1.23", "12.12", "123.12", "1234.12", "1", "12", "123", "1234", "123456",
         ] {
-            output.push(format_number_with_commas(&item));
+            output.push(format_number_with_commas(item));
         }
 
         assert_eq!(verify, output);

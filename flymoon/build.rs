@@ -3,6 +3,12 @@ fn main() {
     set_windows_info();
 
     _ = write_app_version();
+
+    build_slint();
+}
+
+fn build_slint() {
+    slint_build::compile("ui/desktop-window.slint").unwrap();
 }
 
 fn write_app_version() -> Result<(), Box<dyn std::error::Error>> {

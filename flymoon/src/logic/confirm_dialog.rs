@@ -1,28 +1,23 @@
-use crate::slint_generatedAppWindow::{AppWindow, Logic, Util};
+use crate::{global_logic, global_util};
+use crate::slint_generatedAppWindow::AppWindow;
 use slint::ComponentHandle;
 
 pub fn init(ui: &AppWindow) {
     let ui_handle = ui.as_weak();
-    ui.global::<Util>()
-        .on_handle_confirm_dialog(move |handle_type, user_data| {
+    global_util!(ui)
+        .on_handle_confirm_dialog(move |handle_type, _user_data| {
             let ui = ui_handle.unwrap();
 
             #[allow(clippy::single_match)]
             match handle_type.as_str() {
                 "remove-all-cache" => {
-                    ui.global::<Logic>().invoke_remove_all_cache();
+                    global_logic!(ui).invoke_remove_all_cache();
                 }
                 "close-window" => {
-                    ui.global::<Util>().invoke_close_window();
-                }
-                "prompt-delete" => {
-                    ui.global::<Logic>().invoke_prompt_delete(user_data);
-                }
-                "mcp-delete" => {
-                    ui.global::<Logic>().invoke_mcp_delete(user_data);
+                    global_util!(ui).invoke_close_window();
                 }
                 "chat-histories-remove-selected" => {
-                    ui.global::<Logic>().invoke_chat_histories_remove_selected();
+                    global_logic!(ui).invoke_chat_histories_remove_selected();
                 }
                 _ => (),
             }

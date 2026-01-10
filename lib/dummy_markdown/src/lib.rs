@@ -9,11 +9,7 @@ pub enum MdElementType {
     ListItem,
     Heading,
     CodeBlock,
-
     Table,
-    TableHead,
-    TableRow,
-    TableCell,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -46,18 +42,58 @@ pub struct MdCodeBlock {
     pub code: String,
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct MdElement {
-    pub ty: MdElementType,
-    pub text: String,
-    pub math: String,
-    pub image_url: String,
-    pub code_block: MdCodeBlock,
-    pub list_item: MdListItem,
-    pub heading: MdHeading,
+#[derive(Debug, Clone)]
+pub enum MdElement {
+    Text(String),
+    Math(String),
+    ImageUrl(String),
 
-    pub table: MdTable,
-    pub table_cell: String,
-    pub table_head: Vec<String>,
-    pub table_row: Vec<String>,
+    Paragraph(Vec<MdElement>),
+    List(Vec<MdElement>),
+    ListItem(Vec<MdElement>),
+    Link { text: Vec<MdElement>, url: String },
+
+    Heading(MdHeading),
+    CodeBlock(MdCodeBlock),
+    Table(MdTable),
+
+    FlatListItem(MdListItem),
+}
+
+impl MdElement {
+    pub fn ty(&self) -> MdElementType {
+        match self {
+            MdElement::Text(_) => MdElementType::Text,
+            MdElement::Math(_) => MdElementType::Math,
+            MdElement::ImageUrl(_) => MdElementType::ImageUrl,
+            MdElement::Heading(_) => MdElementType::Heading,
+            MdElement::CodeBlock(_) => MdElementType::CodeBlock,
+            MdElement::Table(_) => MdElementType::Table,
+            MdElement::ListItem(_) | MdElement::FlatListItem(_) => MdElementType::ListItem,
+            MdElement::Paragraph(_) | MdElement::List(_) | MdElement::Link { .. } => {
+                MdElementType::Text
+            }
+        }
+    }
+
+    pub fn as_text(&self) -> Option<&str> {
+        match self {
+            MdElement::Text(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn as_math(&self) -> Option<&str> {
+        match self {
+            MdElement::Math(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn as_image_url(&self) -> Option<&str> {
+        match self {
+            MdElement::ImageUrl(s) => Some(s),
+            _ => None,
+        }
+    }
 }

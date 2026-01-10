@@ -1,4 +1,10 @@
-import { Store,  SettingPreference, SettingProxy, SettingModel, TabIndex, SettingDetailIndex, PromptEntry, MCPEntry } from "store.slint";
+import {
+    Store,
+    SettingPreference,
+    SettingModel,
+    TabIndex,
+    SettingDetailIndex,
+} from "store.slint";
 
 export global Logic {
     callback update-cache-size();
@@ -9,9 +15,6 @@ export global Logic {
 
     callback get-setting-preference() -> SettingPreference;
     callback set-setting-preference(SettingPreference);
-
-    callback get-setting-proxy() -> SettingProxy;
-    callback set-setting-proxy(SettingProxy);
 
     callback get-setting-model() -> SettingModel;
     callback set-setting-model(SettingModel);
@@ -49,32 +52,15 @@ export global Logic {
 
     //////////////////////////////// Logic Start  ////////////////////////////////
 
-    callback prompt-popup(text: string);
-    callback prompt-popup-clear(text: string);
-    callback prompt-delete(uuid: string);
-    callback prompt-update(promt: PromptEntry);
-
-    callback mcp-popup(text: string);
-    callback mcp-delete(uuid: string);
-    callback mcp-update(promt: MCPEntry);
-
-    callback start-mcp-server(index: int);
-    callback stop-mcp-server(index: int);
-    callback restart-mcp-server(index: int);
-    callback update-all-mcp-server-status();
-
     callback new-chat-session();
     callback load-chat-session(uuid: string);
 
-    // if question.is_empty, we get the question from the Store.current-chat-session.histories
-    callback retry-question(index: int, question: string);
-
     callback stop-question();
     callback remove-question(index: int);
-    callback toggle-edit-question(index: int);
     callback send-question(question: string);
+    callback retry-question(index: int, question: string);
+    callback toggle-edit-question(index: int);
     callback toggle-hide-bot-reasoner(index: int);
-    callback clear-current-chat-session-prompt();
     callback copy-last-bot-text();
 
     callback chat-history-load(uuid: string);
@@ -85,7 +71,6 @@ export global Logic {
     callback chat-histories-remove-selected();
     callback chat-histories-update-list(text: string);
 
-    callback download-image(histories-entry-index: int, index: int, url: string);
     callback render-formula-svg(histories-entry-index: int, index: int, formula: string);
 
     //////////////////////////////// Logic End  ////////////////////////////////

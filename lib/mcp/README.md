@@ -1,2 +1,0 @@
-- test cammand: `RUST_LOG=debug cargo test -- --nocapture`
-- run chat client: `RUST_LOG=debug cargo run --bin bot --features="test-bin"`

@@ -1,4 +1,5 @@
-use crate::slint_generatedAppWindow::{AppWindow, Logic, PopupActionSetting};
+use crate::global_logic;
+use crate::slint_generatedAppWindow::{AppWindow, PopupActionSetting};
 use slint::ComponentHandle;
 
 pub fn init(ui: &AppWindow) {
@@ -10,24 +11,24 @@ pub fn init(ui: &AppWindow) {
             #[allow(clippy::single_match)]
             match action.as_str() {
                 "remove-all-cache" => {
-                    ui.global::<Logic>().invoke_remove_all_cache();
+                    global_logic!(ui).invoke_remove_all_cache();
                 }
                 "retry-question" => {
-                    ui.global::<Logic>().invoke_retry_question(
+                    global_logic!(ui).invoke_retry_question(
                         user_data.parse::<i32>().unwrap(),
                         Default::default(),
                     );
                 }
                 "edit-question" => {
-                    ui.global::<Logic>()
+                    global_logic!(ui)
                         .invoke_toggle_edit_question(user_data.parse::<i32>().unwrap());
                 }
                 "remove-question" => {
-                    ui.global::<Logic>()
+                    global_logic!(ui)
                         .invoke_remove_question(user_data.parse::<i32>().unwrap());
                 }
                 "copy-question" => {
-                    ui.global::<Logic>().invoke_copy_to_clipboard(user_data);
+                    global_logic!(ui).invoke_copy_to_clipboard(user_data);
                 }
                 _ => (),
             }

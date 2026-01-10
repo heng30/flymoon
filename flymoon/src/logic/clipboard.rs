@@ -1,20 +1,19 @@
 use super::tr::tr;
 use crate::{
-    slint_generatedAppWindow::{AppWindow, Logic},
+    global_logic,
+    slint_generatedAppWindow::AppWindow,
     toast_success, toast_warn,
 };
 use anyhow::{Result, bail};
 use slint::ComponentHandle;
 
-#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
 fn copy_to_clipboard(msg: &str) -> Result<()> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "linux")] {
-            if super::util::is_wayland() {
-                if let Ok(_) = copy_to_wayland_clipboard(msg) {
+            if super::util::is_wayland()
+                && let Ok(_) = copy_to_wayland_clipboard(msg) {
                     return Ok(());
                 }
-            }
         }
     }
 
@@ -30,15 +29,13 @@ fn copy_to_clipboard(msg: &str) -> Result<()> {
     }
 }
 
-#[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
 fn paste_from_clipboard() -> Result<String> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "linux")] {
-            if super::util::is_wayland() {
-                if let Ok(text) = paste_from_wayland_clipboard() {
+            if super::util::is_wayland()
+                && let Ok(text) = paste_from_wayland_clipboard() {
                     return Ok(text);
                 }
-            }
         }
     }
 
@@ -51,22 +48,6 @@ fn paste_from_clipboard() -> Result<String> {
             Ok(msg) => Ok(msg),
         },
         Err(e) => bail!("{e:?}"),
-    }
-}
-
-#[cfg(target_os = "android")]
-fn copy_to_clipboard(msg: &str) -> Result<()> {
-    match terminal_clipboard::set_string(msg) {
-        Err(e) => bail!("{e:?}"),
-        _ => Ok(()),
-    }
-}
-
-#[cfg(target_os = "android")]
-fn paste_from_clipboard() -> Result<String> {
-    match terminal_clipboard::get_string() {
-        Err(e) => bail!("{e:?}"),
-        Ok(msg) => Ok(msg),
     }
 }
 
@@ -84,7 +65,7 @@ fn paste_from_wayland_clipboard() -> Result<String> {
 
 pub fn init(ui: &AppWindow) {
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_copy_to_clipboard(move |msg| {
+    global_logic!(ui).on_copy_to_clipboard(move |msg| {
         let ui = ui_handle.unwrap();
         match copy_to_clipboard(&msg) {
             Err(e) => toast_warn!(
@@ -96,7 +77,7 @@ pub fn init(ui: &AppWindow) {
     });
 
     let ui_handle = ui.as_weak();
-    ui.global::<Logic>().on_paste_from_clipboard(move || {
+    global_logic!(ui).on_paste_from_clipboard(move || {
         let ui = ui_handle.unwrap();
         match paste_from_clipboard() {
             Err(e) => {
