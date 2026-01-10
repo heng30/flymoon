@@ -1,6 +1,22 @@
 import { Theme, Store, Logic, Icons, Util } from "../../def.slint";
-import { ChatEntry, MdElementType, MdMath, MdElement, MdUrl, MdHeading, MdListItem, MdTable, MdCodeBlock } from "../../../store.slint";
-import { IconBtn, Label, Link, ToolTipSetting, ComponentPosition } from "../../../base/widgets.slint";
+import {
+    ChatEntry,
+    MdElementType,
+    MdMath,
+    MdElement,
+    MdUrl,
+    MdHeading,
+    MdListItem,
+    MdTable,
+    MdCodeBlock,
+} from "../../../store.slint";
+import {
+    IconBtn,
+    Label,
+    Link,
+    ToolTipSetting,
+    ComponentPosition,
+} from "../../../base/widgets.slint";
 import { ScrollView } from "std-widgets.slint";
 
 export component MdText inherits HorizontalLayout {
@@ -108,7 +124,7 @@ export component MdCodeBlock inherits HorizontalLayout {
         // `ScrollView` could catch scroll event. However, short content should not catch scroll event
         Rectangle {
             private property <float> rate: 0.5;
-            private property <bool> use-scrollview: txt-rect.preferred-height > (Theme.default-height * rate);
+            private property <bool> use-scrollview: false; // txt-rect.preferred-height > (Theme.default-height * rate);
 
             height: use-scrollview ? Theme.default-height * rate : txt-rect.preferred-height;
 
@@ -307,7 +323,6 @@ export component MdDetail inherits Rectangle {
 
                 img: entry.math;
             }
-
         }
 
         if urls.length > 0: MdLinks {
